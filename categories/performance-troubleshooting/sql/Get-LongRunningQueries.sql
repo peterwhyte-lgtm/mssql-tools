@@ -1,10 +1,15 @@
 ﻿/*
 Script Name : Get-LongRunningQueries
-Description : Returns Long Running Queries for DBA review and troubleshooting.
+Category    : performance-troubleshooting
+Purpose     : Identify long-running queries with current wait state, CPU, and elapsed time.
 Author      : Peter Whyte (https://sqldba.blog)
+Safe        : Read-only
+Impact      : Low
+Requires    : VIEW SERVER STATE
 */
--- Identify long-running queries and their current wait state
--- Run in SSMS or Azure Data Studio against the target instance.
+SET NOCOUNT ON;
+-- SAFE:ReadOnly
+-- IMPACT:Low
 
 SELECT
     r.session_id,

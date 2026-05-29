@@ -1,8 +1,16 @@
-﻿/*
-Script Name : Check Disk Space on SQL Server
-Description : Returns volume-level disk space for the SQL Server host.
-Use        : Capacity checks, storage reviews, and alert validation.
+/*
+Script Name : Get-DiskSpace
+Category    : storage-capacity-management
+Purpose     : Display volume-level disk space and free-space percentages on the SQL Server host.
+Author      : Peter Whyte (https://sqldba.blog)
+Safe        : Read-only
+Impact      : Low
+Requires    : VIEW SERVER STATE
 */
+SET NOCOUNT ON;
+-- SAFE:ReadOnly
+-- IMPACT:Low
+
 
 SELECT
     vs.volume_mount_point,
@@ -15,6 +23,7 @@ FROM sys.master_files AS mf
 CROSS APPLY sys.dm_os_volume_stats(mf.database_id, mf.file_id) AS vs
 GROUP BY vs.volume_mount_point, vs.logical_volume_name, vs.total_bytes, vs.available_bytes
 ORDER BY free_percent ASC;
+
 
 
 

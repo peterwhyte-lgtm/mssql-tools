@@ -1,10 +1,16 @@
 ﻿/*
 Script Name : Generate-RestoreScript
-Description : Returns Generate Restore Script for DBA review and troubleshooting.
+Category    : backups-and-recovery
+Purpose     : Generate a restore script for all user databases for DR and migration scenarios.
 Author      : Peter Whyte (https://sqldba.blog)
+Safe        : Read-only
+Impact      : Low
+Requires    : VIEW ANY DATABASE
 */
--- Generate a restore script for all user databases.
--- Review file paths before executing in a DR or migration scenario.
+SET NOCOUNT ON;
+-- SAFE:ReadOnly
+-- IMPACT:Low
+-- Review all file paths before executing in a DR or migration scenario.
 
 DECLARE @cmd nvarchar(max) = N'';
 

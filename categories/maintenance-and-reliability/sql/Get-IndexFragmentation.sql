@@ -1,10 +1,15 @@
-﻿/*
+/*
 Script Name : Get-IndexFragmentation
-Description : Returns Index Fragmentation for DBA review and troubleshooting.
+Category    : maintenance-and-reliability
+Purpose     : Check index fragmentation across user tables for maintenance planning.
 Author      : Peter Whyte (https://sqldba.blog)
+Safe        : Read-only
+Impact      : Low
+Requires    : VIEW DATABASE STATE
 */
--- Check index fragmentation across user tables.
--- Useful for maintenance planning and reliability reviews.
+SET NOCOUNT ON;
+-- SAFE:ReadOnly
+-- IMPACT:Low
 
 SELECT
     s.name AS schema_name,
@@ -18,6 +23,7 @@ JOIN sys.tables t ON i.object_id = t.object_id
 JOIN sys.schemas s ON t.schema_id = s.schema_id
 WHERE i.name IS NOT NULL
 ORDER BY ips.avg_fragmentation_in_percent DESC;
+
 
 
 

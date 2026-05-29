@@ -1,10 +1,15 @@
 ﻿/*
-Script Name : Check Index Fragmentation Across All Databases
-Description : Returns fragmentation details for indexes that likely need attention.
-Use        : Maintenance planning and index tuning reviews.
+Script Name : Get-IndexFragmentationAcrossDatabases
+Category    : performance-troubleshooting
+Purpose     : Check index fragmentation details across all user databases for maintenance planning.
+Author      : Peter Whyte (https://sqldba.blog)
+Safe        : Read-only
+Impact      : Medium
+Requires    : VIEW DATABASE STATE on each target database
 */
-
 SET NOCOUNT ON;
+-- SAFE:ReadOnly
+-- IMPACT:Medium — scans all user databases; run during off-peak hours on busy instances
 
 DECLARE @sql NVARCHAR(MAX) = N'';
 

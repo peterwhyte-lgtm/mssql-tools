@@ -1,10 +1,15 @@
 ﻿/*
 Script Name : Get-BlockingSessions
-Description : Returns Blocking Sessions for DBA review and troubleshooting.
+Category    : performance-troubleshooting
+Purpose     : Summarize current blocking sessions and blocked requests with wait types and timing.
 Author      : Peter Whyte (https://sqldba.blog)
+Safe        : Read-only
+Impact      : Low
+Requires    : VIEW SERVER STATE
 */
--- Summarize current blocking sessions and the blocked requests involved.
--- Use this during performance incidents or when waiting/lock contention is suspected.
+SET NOCOUNT ON;
+-- SAFE:ReadOnly
+-- IMPACT:Low
 
 SELECT
     s.session_id,

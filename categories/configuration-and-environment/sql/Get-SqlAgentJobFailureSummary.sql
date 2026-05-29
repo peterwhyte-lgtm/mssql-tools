@@ -1,10 +1,15 @@
 ﻿/*
 Script Name : Get-SqlAgentJobFailureSummary
-Description : Returns Sql Agent Job Failure Summary for DBA review and troubleshooting.
+Category    : configuration-and-environment
+Purpose     : Review recent SQL Agent job failures with run dates, steps, and error messages.
 Author      : Peter Whyte (https://sqldba.blog)
+Safe        : Read-only
+Impact      : Low
+Requires    : db_datareader on msdb
 */
--- Review recent SQL Agent job failures for incident triage.
--- This is useful for operational health checks and post-deployment validation.
+SET NOCOUNT ON;
+-- SAFE:ReadOnly
+-- IMPACT:Low
 
 SELECT
     j.name AS job_name,

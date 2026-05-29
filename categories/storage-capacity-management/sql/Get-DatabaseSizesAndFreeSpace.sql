@@ -1,10 +1,15 @@
-﻿/*
+/*
 Script Name : Get-DatabaseSizesAndFreeSpace
-Description : Returns database size and free-space details for all online user databases.
-Use        : Capacity planning, growth reviews, and storage reporting.
+Category    : storage-capacity-management
+Purpose     : Show database size and free-space details for all online user databases.
+Author      : Peter Whyte (https://sqldba.blog)
+Safe        : Read-only
+Impact      : Low
+Requires    : VIEW ANY DATABASE
 */
-
 SET NOCOUNT ON;
+-- SAFE:ReadOnly
+-- IMPACT:Low
 
 ;WITH file_stats AS (
     SELECT
@@ -30,6 +35,7 @@ SELECT
     ROUND(CASE WHEN log_size_mb > 0 THEN 100.0 * log_free_mb / log_size_mb ELSE NULL END, 2) AS log_free_percent
 FROM file_stats
 ORDER BY data_size_mb + log_size_mb DESC;
+
 
 
 

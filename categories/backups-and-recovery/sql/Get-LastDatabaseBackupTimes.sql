@@ -1,8 +1,15 @@
 ﻿/*
-Script Name : Show Last Backups on All Databases
-Description : Returns the latest backup timestamp for each backup type across user databases.
-Use        : Backup verification, DR reviews, and incident triage.
+Script Name : Get-LastDatabaseBackupTimes
+Category    : backups-and-recovery
+Purpose     : Display the latest backup timestamp per type (Full, Differential, Log) per database.
+Author      : Peter Whyte (https://sqldba.blog)
+Safe        : Read-only
+Impact      : Low
+Requires    : db_datareader on msdb
 */
+SET NOCOUNT ON;
+-- SAFE:ReadOnly
+-- IMPACT:Low
 
 WITH latest_backups AS (
     SELECT

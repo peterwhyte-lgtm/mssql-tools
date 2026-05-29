@@ -1,8 +1,15 @@
 ﻿/*
-Script Name : I/O Usage by Database
-Description : Returns database I/O totals for read/write troubleshooting.
-Use        : Performance reviews, storage bottleneck checks, and baseline work.
+Script Name : Get-DatabaseIoUsage
+Category    : performance-troubleshooting
+Purpose     : Display database I/O totals for read/write troubleshooting and performance reviews.
+Author      : Peter Whyte (https://sqldba.blog)
+Safe        : Read-only
+Impact      : Low
+Requires    : VIEW SERVER STATE
 */
+SET NOCOUNT ON;
+-- SAFE:ReadOnly
+-- IMPACT:Low
 
 WITH io_stats AS (
     SELECT

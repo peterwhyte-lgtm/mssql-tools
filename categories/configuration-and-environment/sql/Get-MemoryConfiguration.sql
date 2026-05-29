@@ -1,10 +1,15 @@
 ﻿/*
 Script Name : Get-MemoryConfiguration
-Description : Returns Memory Configuration for DBA review and troubleshooting.
+Category    : configuration-and-environment
+Purpose     : Review min/max server memory configuration and available physical memory status.
 Author      : Peter Whyte (https://sqldba.blog)
+Safe        : Read-only
+Impact      : Low
+Requires    : VIEW SERVER STATE
 */
--- Review memory configuration and basic usage counters.
--- Useful for baseline reviews and capacity planning.
+SET NOCOUNT ON;
+-- SAFE:ReadOnly
+-- IMPACT:Low
 
 SELECT
     name,

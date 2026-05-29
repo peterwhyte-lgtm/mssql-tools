@@ -1,11 +1,17 @@
 ﻿/*
 Script Name : Get-LinkedServerAndJobInventory
-Description : Returns Linked Server And Job Inventory for DBA review and troubleshooting.
+Category    : configuration-and-environment
+Purpose     : Inventory logins, linked servers, and SQL Agent jobs for pre-migration reviews.
 Author      : Peter Whyte (https://sqldba.blog)
+Safe        : Read-only
+Impact      : Low
+Requires    : VIEW ANY DATABASE, db_datareader on msdb
 */
--- Migration-oriented review script for logins, linked servers, and SQL Agent jobs.
--- IMPORTANT: Passwords are not scripted by SQL Server metadata and must be handled separately.
--- Use this to inventory objects before moving them to another instance.
+SET NOCOUNT ON;
+-- SAFE:ReadOnly
+-- IMPACT:Low
+-- Migration-oriented review: logins, linked servers, and SQL Agent jobs.
+-- Passwords are not scripted by SQL Server metadata and must be handled separately.
 
 SELECT 'LOGINS' AS object_type, name, type_desc, is_disabled
 FROM sys.server_principals

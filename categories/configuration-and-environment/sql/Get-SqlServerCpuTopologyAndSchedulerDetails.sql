@@ -1,11 +1,15 @@
 ﻿/*
-Script Name : Get SQL Server CPU Topology and Scheduler Details
-Description : Returns CPU topology, NUMA layout, scheduler visibility, 
-                and related CPU configuration for DBA review and troubleshooting.
-Author      : Peter Whyte ([sqldba.blog](https://sqldba.blog)
+Script Name : Get-SqlServerCpuTopologyAndSchedulerDetails
+Category    : configuration-and-environment
+Purpose     : Display CPU topology, NUMA layout, scheduler details, and server version context.
+Author      : Peter Whyte (https://sqldba.blog)
+Safe        : Read-only
+Impact      : Low
+Requires    : VIEW SERVER STATE
 */
-
 SET NOCOUNT ON;
+-- SAFE:ReadOnly
+-- IMPACT:Low
 
 -- SQL Server version and edition context.
 SELECT

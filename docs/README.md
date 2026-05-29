@@ -9,3 +9,6 @@ Use the docs in this order:
 4. Use roadmap.md for the next improvement priorities.
 5. Use structure.md for the repo map and folder conventions.
 6. Use templates.md for the standard script format and documentation style.
+7. Use script-standards.md for the current metadata and safety rules.
+
+The current per-script notes are in `docs/scripts/` for the most common DBA review helpers.

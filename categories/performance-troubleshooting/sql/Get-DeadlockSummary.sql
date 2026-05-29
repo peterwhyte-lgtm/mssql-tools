@@ -1,10 +1,15 @@
 ﻿/*
 Script Name : Get-DeadlockSummary
-Description : Returns Deadlock Summary for DBA review and troubleshooting.
+Category    : performance-troubleshooting
+Purpose     : Extract recent deadlock events from the system_health extended event session.
 Author      : Peter Whyte (https://sqldba.blog)
+Safe        : Read-only
+Impact      : Low
+Requires    : VIEW SERVER STATE
 */
--- Summarize recent deadlock events from the system_health extended event session.
--- Useful for performance troubleshooting when deadlocks are suspected.
+SET NOCOUNT ON;
+-- SAFE:ReadOnly
+-- IMPACT:Low
 
 SELECT
     XEvent.query('(event/data/value[@name="xml_report"]/value)[1]') AS deadlock_xml

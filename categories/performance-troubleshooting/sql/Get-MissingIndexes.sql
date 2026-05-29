@@ -1,10 +1,16 @@
 ﻿/*
 Script Name : Get-MissingIndexes
-Description : Returns Missing Indexes for DBA review and troubleshooting.
+Category    : performance-troubleshooting
+Purpose     : Identify candidate missing indexes from DMVs for performance tuning.
 Author      : Peter Whyte (https://sqldba.blog)
+Safe        : Read-only
+Impact      : Low
+Requires    : VIEW SERVER STATE, VIEW ANY DATABASE
 */
--- Identify candidate missing indexes from DMVs.
--- Useful during performance tuning and query optimization reviews.
+SET NOCOUNT ON;
+-- SAFE:ReadOnly
+-- IMPACT:Low
+-- Index suggestions are guidance only. Review carefully before creating any index.
 
 SELECT
     mig.index_group_handle,

@@ -1,8 +1,15 @@
 ﻿/*
-Script Name : Get Memory Configuration and Usage
-Description : Returns Memory Configuration And Usage for DBA review and troubleshooting.
+Script Name : Get-MemoryConfigurationAndUsage
+Category    : configuration-and-environment
+Purpose     : Display configured memory limits and current process memory allocation details.
 Author      : Peter Whyte (https://sqldba.blog)
+Safe        : Read-only
+Impact      : Low
+Requires    : VIEW SERVER STATE
 */
+SET NOCOUNT ON;
+-- SAFE:ReadOnly
+-- IMPACT:Low
 
 SELECT
     name,

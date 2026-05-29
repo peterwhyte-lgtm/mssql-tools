@@ -1,7 +1,15 @@
--- TempDB health and hotspot summary.
--- Helps identify large tempdb consumers and growth pressure.
-
+/*
+Script Name : Get-TempdbHotspots
+Category    : maintenance-and-reliability
+Purpose     : Identify large TempDB consumers and growth pressure with allocation statistics.
+Author      : Peter Whyte (https://sqldba.blog)
+Safe        : Read-only
+Impact      : Low
+Requires    : VIEW SERVER STATE
+*/
 SET NOCOUNT ON;
+-- SAFE:ReadOnly
+-- IMPACT:Low
 
 SELECT
     DB_NAME(tsu.database_id) AS database_name,
@@ -27,3 +35,4 @@ SELECT
     max_size / 128.0 AS max_size_mb
 FROM tempdb.sys.database_files
 ORDER BY size_mb DESC;
+

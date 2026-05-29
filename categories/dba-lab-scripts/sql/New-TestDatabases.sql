@@ -1,8 +1,16 @@
-﻿/*
+/*
 Script Name : New-TestDatabases
-Description : Returns New Test Databases for DBA review and troubleshooting.
+Category    : dba-lab-scripts
+Purpose     : Create multiple test databases with randomized names for lab and migration scenarios.
 Author      : Peter Whyte (https://sqldba.blog)
+Safe        : Creates objects
+Impact      : High
+Requires    : sysadmin or dbcreator
 */
+SET NOCOUNT ON;
+-- WARNING: Creates databases — review @Count and @Prefix before running
+-- IMPACT:High
+
 /*
 Creates many SQL Server databases with randomized names and configurable sizes.
 
@@ -97,6 +105,7 @@ BEGIN
 END
 
 PRINT 'Done.';
+
 
 
 

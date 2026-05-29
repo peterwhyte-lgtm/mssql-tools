@@ -1,7 +1,15 @@
--- DBA growth-risk summary for storage and capacity planning.
--- Useful for weekly reviews, migrations, and capacity trend checks.
-
+/*
+Script Name : Get-DatabaseGrowthRisk
+Category    : storage-capacity-management
+Purpose     : DBA growth-risk summary for storage and capacity planning trend analysis.
+Author      : Peter Whyte (https://sqldba.blog)
+Safe        : Read-only
+Impact      : Low
+Requires    : VIEW ANY DATABASE
+*/
 SET NOCOUNT ON;
+-- SAFE:ReadOnly
+-- IMPACT:Low
 
 ;WITH db_sizes AS (
     SELECT
@@ -30,3 +38,4 @@ SELECT
 FROM db_sizes
 WHERE database_name NOT IN ('master', 'model', 'msdb', 'tempdb')
 ORDER BY total_mb DESC;
+

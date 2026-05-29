@@ -1,8 +1,16 @@
-﻿/*
-Script Name : Transaction Log Size and Usage by Database
-Description : Returns transaction log size, used space, and percent used for each database.
-Use        : Log growth reviews, maintenance planning, and DR readiness checks.
+/*
+Script Name : Get-TransactionLogSizeAndUsage
+Category    : storage-capacity-management
+Purpose     : Show transaction log size, used space, and percent used per database.
+Author      : Peter Whyte (https://sqldba.blog)
+Safe        : Read-only
+Impact      : Low
+Requires    : VIEW ANY DATABASE
 */
+SET NOCOUNT ON;
+-- SAFE:ReadOnly
+-- IMPACT:Low
+
 
 SELECT
     d.name AS database_name,
@@ -16,6 +24,7 @@ INNER JOIN sys.databases AS d
 WHERE d.database_id > 4
 GROUP BY d.name
 ORDER BY log_size_mb DESC;
+
 
 
 

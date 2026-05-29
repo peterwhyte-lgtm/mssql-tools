@@ -1,8 +1,16 @@
-﻿/*
-Script Name : Audit SQL Server Users and Permissions
-Description : Returns User Permissions Audit for DBA review and troubleshooting.
+/*
+Script Name : Get-UserPermissionsAudit
+Category    : security-and-permissions
+Purpose     : Audit SQL Server logins and their types for permission reviews.
 Author      : Peter Whyte (https://sqldba.blog)
+Safe        : Read-only
+Impact      : Low
+Requires    : VIEW ANY DATABASE
 */
+SET NOCOUNT ON;
+-- SAFE:ReadOnly
+-- IMPACT:Low
+
 
 USE master;
 GO
@@ -15,6 +23,7 @@ FROM sys.server_principals AS sp
 WHERE sp.type IN ('S', 'U', 'G')
   AND sp.name NOT LIKE '##%'
 ORDER BY sp.name;
+
 
 
 

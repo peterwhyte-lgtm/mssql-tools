@@ -1,10 +1,15 @@
-﻿/*
+/*
 Script Name : Get-SysadminMembers
-Description : Returns Sysadmin Members for DBA review and troubleshooting.
+Category    : security-and-permissions
+Purpose     : List members of the sysadmin fixed server role for audits and privilege review.
 Author      : Peter Whyte (https://sqldba.blog)
+Safe        : Read-only
+Impact      : Low
+Requires    : VIEW ANY DATABASE
 */
--- List members of the sysadmin fixed server role.
--- Useful for audits and privilege review.
+SET NOCOUNT ON;
+-- SAFE:ReadOnly
+-- IMPACT:Low
 
 SELECT
     sp.name AS login_name,
@@ -17,6 +22,7 @@ JOIN sys.server_role_members srm ON sp.principal_id = srm.member_principal_id
 JOIN sys.server_principals sr ON srm.role_principal_id = sr.principal_id
 WHERE sr.name = 'sysadmin'
 ORDER BY sp.name;
+
 
 
 

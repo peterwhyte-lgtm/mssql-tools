@@ -1,8 +1,15 @@
 ﻿/*
-Script Name : Check Worker Threads and Active Sessions
-Description : Returns Worker Threads And Active Sessions for DBA review and troubleshooting.
+Script Name : Get-WorkerThreadsAndActiveSessions
+Category    : performance-troubleshooting
+Purpose     : Show current worker thread count and list active sessions with CPU and elapsed time.
 Author      : Peter Whyte (https://sqldba.blog)
+Safe        : Read-only
+Impact      : Low
+Requires    : VIEW SERVER STATE
 */
+SET NOCOUNT ON;
+-- SAFE:ReadOnly
+-- IMPACT:Low
 
 SELECT
     SUM(current_workers_count) AS current_worker_threads

@@ -1,19 +1,31 @@
-﻿/*
+/*
 Script Name : Get-DatabaseMailAndXpCmdShell
-Description : Returns Database Mail And Xp Cmd Shell for DBA review and troubleshooting.
+Category    : security-and-permissions
+Purpose     : Review whether Database Mail, xp_cmdshell, and CLR are enabled for security audits.
 Author      : Peter Whyte (https://sqldba.blog)
+Safe        : Read-only
+Impact      : Low
+Requires    : VIEW SERVER STATE (sysadmin to see xp_cmdshell value_in_use)
 */
--- Review whether database mail, xp_cmdshell, and CLR are enabled.
--- Use this for security review and compliance checks.
+SET NOCOUNT ON;
+-- SAFE:ReadOnly
+-- IMPACT:Low
+-- Queries sys.configurations directly — no sp_configure RECONFIGURE needed.
 
-EXEC sp_configure 'show advanced options', 1;
-RECONFIGURE;
+SELECT
+    name,
+    value           AS configured_value,
+    value_in_use    AS running_value,
+    description
+FROM sys.configurations
+WHERE name IN (
+    'xp_cmdshell',
+    'clr enabled',
+    'clr strict security',
+    'Database Mail XPs'
+)
+ORDER BY name;
 
-EXEC sp_configure 'xp_cmdshell';
-EXEC sp_configure 'clr enabled';
-EXEC sp_configure 'Database Mail XPs';
-
-RECONFIGURE;
 
 
 

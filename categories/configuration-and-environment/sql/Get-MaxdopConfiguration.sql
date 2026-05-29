@@ -1,8 +1,15 @@
 ﻿/*
-Script Name : Check MAXDOP Configuration
-Description : Returns Maxdop Configuration for DBA review and troubleshooting.
+Script Name : Get-MaxdopConfiguration
+Category    : configuration-and-environment
+Purpose     : Check MAXDOP configuration settings and CPU topology.
 Author      : Peter Whyte (https://sqldba.blog)
+Safe        : Read-only
+Impact      : Low
+Requires    : VIEW SERVER STATE
 */
+SET NOCOUNT ON;
+-- SAFE:ReadOnly
+-- IMPACT:Low
 
 SELECT
     name,

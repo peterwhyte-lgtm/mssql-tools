@@ -1,10 +1,15 @@
 ﻿/*
 Script Name : Get-MigrationChecklist
-Description : Returns Migration Checklist for DBA review and troubleshooting.
+Category    : configuration-and-environment
+Purpose     : Pre-migration validation checklist for backups, compatibility, jobs, and permissions.
 Author      : Peter Whyte (https://sqldba.blog)
+Safe        : Read-only
+Impact      : Low
+Requires    : VIEW ANY DATABASE
 */
--- Migration checklist and configuration review template.
--- Use this as a starting point before moving objects, jobs, logins, or linked servers.
+SET NOCOUNT ON;
+-- SAFE:ReadOnly
+-- IMPACT:Low
 
 SELECT 'Pre-migration checklist:' AS note;
 SELECT '1. Confirm backup/restore coverage.' AS checklist_item;

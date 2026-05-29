@@ -1,10 +1,15 @@
-﻿/*
+/*
 Script Name : Get-TempdbUsage
-Description : Returns Tempdb Usage for DBA review and troubleshooting.
+Category    : maintenance-and-reliability
+Purpose     : Review TempDB file sizes and usage for capacity checks and contention analysis.
 Author      : Peter Whyte (https://sqldba.blog)
+Safe        : Read-only
+Impact      : Low
+Requires    : VIEW SERVER STATE
 */
--- Review TempDB file sizes and usage for capacity and contention checks.
--- Helpful during performance incidents and growth planning.
+SET NOCOUNT ON;
+-- SAFE:ReadOnly
+-- IMPACT:Low
 
 SELECT
     name,
@@ -20,6 +25,7 @@ SELECT
     SUM(internal_object_reserved_page_count) * 8 AS internal_object_mb,
     SUM(version_store_reserved_page_count) * 8 AS version_store_mb
 FROM tempdb.sys.dm_db_file_space_usage;
+
 
 
 

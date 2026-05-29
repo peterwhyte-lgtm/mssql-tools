@@ -1,8 +1,15 @@
 ﻿/*
-Script Name : Get SQL Server Version and Edition
-Description : Returns core instance version, edition, and cluster details for operational reviews.
-Use        : Patch validation, support checks, and environment reporting.
+Script Name : Get-VersionAndEdition
+Category    : configuration-and-environment
+Purpose     : Display core instance version, edition, cluster status, and patch level.
+Author      : Peter Whyte (https://sqldba.blog)
+Safe        : Read-only
+Impact      : Low
+Requires    : Public (no special permissions required)
 */
+SET NOCOUNT ON;
+-- SAFE:ReadOnly
+-- IMPACT:Low
 
 SELECT
     SERVERPROPERTY('MachineName') AS machine_name,

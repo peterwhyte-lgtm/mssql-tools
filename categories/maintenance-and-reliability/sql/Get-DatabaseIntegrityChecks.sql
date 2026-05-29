@@ -1,11 +1,17 @@
-﻿/*
-Script Name : Get Database Integrity Check Readiness
-Description : Returns Database Integrity Checks for DBA review and troubleshooting.
+/*
+Script Name : Get-DatabaseIntegrityChecks
+Category    : maintenance-and-reliability
+Purpose     : Pre-check database readiness and configuration for integrity validation runs.
 Author      : Peter Whyte (https://sqldba.blog)
-
-Use this as a pre-check before a full integrity validation run.
-For an actual corruption check, run DBCC CHECKDB on a target database in SSMS.
+Safe        : Read-only
+Impact      : Low
+Requires    : VIEW ANY DATABASE, db_datareader on msdb
 */
+SET NOCOUNT ON;
+-- SAFE:ReadOnly
+-- IMPACT:Low
+-- Use as a pre-check before running DBCC CHECKDB.
+
 
 SELECT
     d.name AS database_name,
@@ -42,6 +48,7 @@ For a faster targeted check on one database:
 
 DBCC CHECKDB ('YourDatabaseName') WITH TABLOCK, PHYSICAL_ONLY, NO_INFOMSGS;
 */
+
 
 
 

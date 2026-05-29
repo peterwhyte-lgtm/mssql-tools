@@ -1,14 +1,22 @@
-﻿/*
-Script Name : Show recent SQL Server database and log file autogrowth events from the default trace.
-Description : Returns Database Growth Events for DBA review and troubleshooting.
+/*
+Script Name : Get-DatabaseGrowthEvents
+Category    : maintenance-and-reliability
+Purpose     : Show recent database and log file autogrowth events from the default trace.
 Author      : Peter Whyte (https://sqldba.blog)
+Safe        : Read-only
+Impact      : Low
+Requires    : ALTER TRACE (to read default trace file)
 */
+SET NOCOUNT ON;
+-- SAFE:ReadOnly
+-- IMPACT:Low
 
 DECLARE @DefaultTracePath NVARCHAR(4000);
 
-SELECT @DefaultTracePath = CAST(value AS NVARCHAR(4000))
-FROM sys.configurations
-WHERE name = 'default trace enabled';
+-- Get the active default trace file path.
+SELECT @DefaultTracePath = path
+FROM sys.traces
+WHERE is_default = 1;
 
 SELECT
     t.StartTime,
@@ -21,6 +29,7 @@ SELECT
 FROM fn_trace_gettable(@DefaultTracePath, DEFAULT) AS t
 WHERE t.EventClass IN (92, 93)
 ORDER BY t.StartTime DESC;
+
 
 
 
