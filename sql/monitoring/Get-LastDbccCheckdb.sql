@@ -11,8 +11,6 @@ Notes       : Uses DATABASEPROPERTYEX('LastGoodCheckDbTime') — available SQL S
               Microsoft recommends running CHECKDB at least weekly.
 */
 SET NOCOUNT ON;
--- SAFE:ReadOnly
--- IMPACT:Low
 
 SELECT
     d.name                                                                  AS database_name,

@@ -10,8 +10,6 @@ Notes       : Counters accumulate since last SQL Server restart. Latency > 20ms 
               > 10ms (write) on data files warrants investigation.
 */
 SET NOCOUNT ON;
--- SAFE:ReadOnly
--- IMPACT:Low
 
 WITH io_stats AS (
     SELECT

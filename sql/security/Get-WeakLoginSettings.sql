@@ -8,8 +8,6 @@ Impact      : Low
 Requires    : VIEW ANY DATABASE, sysadmin to see LOGINPROPERTY details
 */
 SET NOCOUNT ON;
--- SAFE:ReadOnly
--- IMPACT:Low
 
 SELECT
     sl.name                                                     AS login_name,

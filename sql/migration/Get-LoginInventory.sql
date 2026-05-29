@@ -8,8 +8,6 @@ Impact      : Low
 Requires    : VIEW ANY DATABASE
 */
 SET NOCOUNT ON;
--- SAFE:ReadOnly
--- IMPACT:Low
 SELECT
     sp.name AS login_name,
     sp.type_desc AS login_type,

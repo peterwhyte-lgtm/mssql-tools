@@ -10,8 +10,6 @@ Notes       : Orphaned users cause login failures for that account. Fix with
               ALTER USER [username] WITH LOGIN = [login_name]; or DROP USER [username].
 */
 SET NOCOUNT ON;
--- SAFE:ReadOnly
--- IMPACT:Low
 
 IF OBJECT_ID('tempdb..#orphaned') IS NOT NULL DROP TABLE #orphaned;
 

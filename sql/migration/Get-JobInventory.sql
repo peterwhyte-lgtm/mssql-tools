@@ -8,8 +8,6 @@ Impact      : Low
 Requires    : db_datareader on msdb
 */
 SET NOCOUNT ON;
--- SAFE:ReadOnly
--- IMPACT:Low
 SELECT
     j.name AS job_name,
     CASE WHEN j.enabled = 1 THEN 'Enabled' ELSE 'Disabled' END AS status,

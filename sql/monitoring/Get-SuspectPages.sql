@@ -11,8 +11,6 @@ Notes       : Any rows here indicate a serious integrity concern. Cross-referenc
               Entries persist until manually cleared or the database is restored clean.
 */
 SET NOCOUNT ON;
--- SAFE:ReadOnly
--- IMPACT:Low
 
 SELECT
     DB_NAME(sp.database_id)                                         AS database_name,

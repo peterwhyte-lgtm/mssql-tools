@@ -10,8 +10,6 @@ Notes       : Run against the target database. Fragmentation on tables under 100
               is unlikely to affect query performance — those are excluded.
 */
 SET NOCOUNT ON;
--- SAFE:ReadOnly
--- IMPACT:Low
 
 SELECT
     s.name                                                          AS schema_name,

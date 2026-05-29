@@ -8,8 +8,6 @@ Impact      : Low
 Requires    : VIEW SERVER STATE
 */
 SET NOCOUNT ON;
--- SAFE:ReadOnly
--- IMPACT:Low
 
 IF SERVERPROPERTY('IsHadrEnabled') = 0
     OR NOT EXISTS (SELECT 1 FROM sys.availability_groups)
