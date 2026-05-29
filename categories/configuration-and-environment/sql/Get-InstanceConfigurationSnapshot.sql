@@ -1,8 +1,15 @@
 ﻿/*
 Script Name : Get-InstanceConfigurationSnapshot
-Description : Returns Instance Configuration Snapshot for DBA review and troubleshooting.
+Category    : configuration-and-environment
+Purpose     : Capture a quick instance configuration snapshot for baseline reviews.
 Author      : Peter Whyte (https://sqldba.blog)
+Safe        : Read-only
+Impact      : Low
+Requires    : VIEW SERVER STATE
 */
+SET NOCOUNT ON;
+-- SAFE:ReadOnly
+-- IMPACT:Low
 -- Collect a quick instance configuration snapshot for environment review.
 -- This is useful for baseline checks, audits, and incident prep.
 

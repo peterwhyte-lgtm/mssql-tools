@@ -1,8 +1,15 @@
 ﻿/*
-Script Name : Check Backup Coverage Across All Databases
-Description : Returns the most recent full, differential, and log backup times for every user database.
-Use        : Backup coverage reviews, DR checks, and weekly operational reporting.
+Script Name : Get-BackupCoverage
+Category    : backups-and-recovery
+Purpose     : Review recent backup coverage across user databases.
+Author      : Peter Whyte (https://sqldba.blog)
+Safe        : Read-only
+Impact      : Low
+Requires    : VIEW ANY DATABASE / msdb access for backup history
 */
+SET NOCOUNT ON;
+-- SAFE:ReadOnly
+-- IMPACT:Low
 
 WITH latest_backups AS (
     SELECT

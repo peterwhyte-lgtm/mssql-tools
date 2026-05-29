@@ -1,8 +1,15 @@
 ﻿/*
 Script Name : Get-DatabaseHealth
-Description : Returns a compact health summary for user databases.
-Use        : Maintenance reviews, upgrade checks, and operational triage.
+Category    : maintenance-and-reliability
+Purpose     : Review the health and sizing posture of user databases.
+Author      : Peter Whyte (https://sqldba.blog)
+Safe        : Read-only
+Impact      : Low
+Requires    : VIEW ANY DATABASE
 */
+SET NOCOUNT ON;
+-- SAFE:ReadOnly
+-- IMPACT:Low
 
 SELECT
     d.name AS database_name,

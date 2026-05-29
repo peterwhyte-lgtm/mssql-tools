@@ -1,8 +1,15 @@
 ﻿/*
 Script Name : Get-WaitStatistics
-Description : Returns Wait Statistics for DBA review and troubleshooting.
+Category    : performance-troubleshooting
+Purpose     : Review instance wait statistics for performance triage.
 Author      : Peter Whyte (https://sqldba.blog)
+Safe        : Read-only
+Impact      : Low
+Requires    : VIEW SERVER STATE (or sysadmin for the full DMV view)
 */
+SET NOCOUNT ON;
+-- SAFE:ReadOnly
+-- IMPACT:Low
 -- Top wait statistics for the current instance.
 -- Useful for identifying bottlenecks during performance investigations.
 
