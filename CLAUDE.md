@@ -71,6 +71,7 @@ helpers/
 sql-templates/operations/   — production runbook templates (CDC, TDE, AG, statistics, etc.)
 output-files/               — generated CSVs, healthcheck folders, reviews
 docs/                       — roadmap, standards, runbook, structure notes
+blog/                       — draft blog posts for sqldba.blog (one post per script/workflow)
 ```
 
 The `hybrid/` folder exists in the layout but its subfolders are currently empty.
