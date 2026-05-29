@@ -29,9 +29,10 @@ If you want the fastest path into the repo, use this order:
 ### Example commands
 
 ```powershell
-pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\helpers\Show-RepoOverview.ps1
-pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\helpers\local-sql\Test-SqlConnectivity.ps1 -ServerInstance . -Database master
-pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\helpers\Invoke-SqlFile.ps1 -ScriptPath .\categories\storage-capacity-management\sql\Get-DatabaseSizesAndFreeSpace.sql
+.\run.ps1 Get-WaitStatistics
+.\run.ps1 Get-LongRunningQueries
+.\helpers\Run-Helper.ps1 -ScriptName Get-WaitStatistics
+.\helpers\local-sql\Test-SqlConnectivity.ps1 -ServerInstance . -Database master
 ```
 
 ## What we are optimizing for

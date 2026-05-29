@@ -23,5 +23,15 @@ Each category contains:
 
 1. Start in categories/<area>/sql for analysis and reporting.
 2. Use categories/<area>/powershell for local automation or validation.
-3. Use sql-templates/operations for runbook-style templates and change-order style procedures.
-4. Use helpers/ and tools/ for repo-wide utilities and maintenance tasks.
+3. For the most common review tasks, use the easy aliases:
+   - `./run.ps1 Get-WaitStatistics`
+   - `./run.ps1 Get-LongRunningQueries`
+   - `./run.ps1 Get-BackupCoverage`
+   - `./run.ps1 Get-SqlAgentJobOverview`
+   - `./run.ps1 Get-DatabaseHealth`
+   - `./run.ps1 Get-DatabaseSizesAndFreeSpace`
+   - `./run.ps1 Get-TransactionLogSizeAndUsage`
+   - `./run.ps1 Get-MemoryConfigurationAndUsage`
+   - `./run.ps1 Get-TempdbUsage`
+4. Use sql-templates/operations for runbook-style templates and change-order style procedures.
+5. Use helpers/ and tools/ for repo-wide utilities and maintenance tasks.

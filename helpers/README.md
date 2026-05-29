@@ -10,10 +10,19 @@ This folder is the quick-access layer for the DBA repo during day-to-day develop
 
 ## Useful commands
 
+From the repo root, the short forms are now:
+
 ```powershell
-pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\helpers\Show-RepoOverview.ps1
-pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\helpers\local-sql\Test-SqlConnectivity.ps1 -ServerInstance . -Database master
-pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\helpers\Invoke-SqlFile.ps1 -ScriptPath .\categories\storage-capacity-management\sql\Get-DatabaseSizesAndFreeSpace.sql
+.\run.ps1 Get-WaitStatistics
+.\run.ps1 Get-LongRunningQueries
+.\run.ps1 categories\performance-troubleshooting\powershell\Get-WaitStatistics.ps1
+```
+
+You can also call the helper directly:
+
+```powershell
+.\helpers\Run-Helper.ps1 -ScriptName Get-WaitStatistics
+.\helpers\Run-Helper.ps1 -ScriptPath .\categories\performance-troubleshooting\powershell\Get-WaitStatistics.ps1
 ```
 
 ## Helpful helpers

@@ -20,3 +20,13 @@ This folder contains the production-focused helpers for running SQL scripts from
 ```powershell
 pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\categories\performance-troubleshooting\powershell\Get-WaitStatistics.ps1
 ```
+
+## Extra high-value review wrappers
+
+```powershell
+./run.ps1 Get-DatabaseSizesAndFreeSpace
+./run.ps1 Get-TransactionLogSizeAndUsage
+./run.ps1 Get-DatabaseGrowthRisk
+./run.ps1 Get-MemoryConfigurationAndUsage
+./run.ps1 Get-TempdbUsage
+```
