@@ -167,6 +167,11 @@ tr:hover td{background:#161b22}
 .cell-long{display:block;max-width:380px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;color:#8b949e}
 .cell-long:hover{color:#c9d1d9}
 .cell-long.expanded{white-space:pre-wrap;word-break:break-all;overflow:visible}
+.save-png-btn{background:#1a3a2a;border:1px solid #3fb950;color:#3fb950;border-radius:6px;padding:5px 14px;font-size:.82rem;cursor:pointer;transition:background .15s}
+.save-png-btn:hover{background:#1f4a30}
+.save-png-btn:disabled{opacity:.4;cursor:default}
+.save-confirm{font-size:.78rem;color:#3fb950;margin-left:8px;opacity:0;transition:opacity .4s}
+.save-confirm.show{opacity:1}
 .pie-select{background:#0d1117;border:1px solid #30363d;color:#c9d1d9;border-radius:6px;padding:5px 10px;font-size:.82rem}
 .pie-select:focus{outline:none;border-color:#58a6ff}
 .chart-wrap canvas{max-height:400px}
@@ -317,6 +322,8 @@ function Build-CsvViewPage([string]$relPath) {
       <button onclick='setType("line")'     id='btn-line'>Line</button>
       <button onclick='setType("pie")'      id='btn-pie'>Pie</button>
       <button onclick='setType("doughnut")' id='btn-doughnut'>Doughnut</button>
+      <button onclick='savePng()' class='save-png-btn' id='btn-save-png'>Save PNG</button>
+      <span class='save-confirm' id='save-confirm'>Saved ✓</span>
     </div>
   </div>
   <div class='chart-wrap'><canvas id='chart'></canvas></div>
@@ -457,6 +464,30 @@ function fmtCell(val){
 }
 function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
+async function savePng(){
+  if(!chart)return;
+  const btn=document.getElementById('btn-save-png');
+  const confirm=document.getElementById('save-confirm');
+  btn.disabled=true;
+  try{
+    const imageData=chart.toBase64Image('image/png',1);
+    const resp=await fetch('/api/save-png',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({relPath:decodeURIComponent('$relEnc'),imageData})
+    });
+    const result=await resp.json();
+    if(result.ok){
+      confirm.textContent='Saved: '+result.file+' ✓';
+      confirm.classList.add('show');
+      setTimeout(()=>confirm.classList.remove('show'),3000);
+    } else {
+      alert('Save failed: '+(result.error||'unknown error'));
+    }
+  } catch(e){ alert('Save failed: '+e); }
+  finally{ btn.disabled=false; }
+}
+
 init();
 </script>
 "@
@@ -493,6 +524,22 @@ try {
                 $fp = Join-Path $repoRoot $p
                 if (Test-Path $fp) { ConvertTo-Json2 (Get-CsvJson $fp) }
                 else { '{"error":"not found"}' }
+            }
+            '/api/save-png' {
+                $contentType = 'application/json; charset=utf-8'
+                try {
+                    $reader  = [System.IO.StreamReader]::new($req.InputStream, [System.Text.Encoding]::UTF8)
+                    $payload = $reader.ReadToEnd() | ConvertFrom-Json
+                    $reader.Dispose()
+                    $csvFull = Join-Path $repoRoot $payload.relPath
+                    $pngFull = [System.IO.Path]::ChangeExtension($csvFull, '.png')
+                    $b64     = $payload.imageData -replace '^data:image/png;base64,', ''
+                    [System.IO.File]::WriteAllBytes($pngFull, [Convert]::FromBase64String($b64))
+                    $shortName = [System.IO.Path]::GetFileName($pngFull)
+                    "{`"ok`":true,`"file`":`"$shortName`"}"
+                } catch {
+                    "{`"ok`":false,`"error`":`"$($_.Exception.Message)`"}"
+                }
             }
             default     { Wrap-Page '404' "<p class='empty'>Not found.</p>" }
         }
