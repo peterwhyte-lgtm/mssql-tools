@@ -14,20 +14,20 @@ param(
 
 $repoRoot = Resolve-Path (Join-Path $PSScriptRoot '..\..')
 $searchRoots = @('sql', 'powershell', 'hybrid', 'helpers', 'tools')
-$matches = foreach ($root in $searchRoots) {
+$found = foreach ($root in $searchRoots) {
     Get-ChildItem -Path (Join-Path $repoRoot $root) -Recurse -File -ErrorAction SilentlyContinue
 } |
     Where-Object {
         $_.FullName -match [regex]::Escape($Keyword)
     }
 
-if (-not $matches) {
+if (-not $found) {
     Write-Warning "No script paths matched '$Keyword'."
     return
 }
 
 Write-Host "Likely scripts for '$Keyword':" -ForegroundColor Cyan
-$matches |
+$found |
     Select-Object -ExpandProperty FullName |
     ForEach-Object { $_.Replace((Join-Path $repoRoot ''), '') } |
     Sort-Object |

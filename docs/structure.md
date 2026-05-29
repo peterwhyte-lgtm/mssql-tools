@@ -40,6 +40,7 @@ This layout keeps the repo usable now while giving the toolkit a cleaner long-te
 - When the canonical layout is implemented, place operational SQL under `sql/<domain>/`, automation under `powershell/<domain>/`, and glue/reporting workflows under `hybrid/<workflow>/`.
 - If you need to run SQL from this repo against your local instance, use `helpers/local-sql/Test-SqlConnectivity.ps1` and `helpers/local-sql/Invoke-RepoSql.ps1`.
 - If you need to clean generated output, use `helpers/maintenance/Clear-OutputFiles.ps1`.
+- For the production-standard template, see `docs/standards.md` for SQL and PowerShell header, scope, and risk guidance.
 - If you want a starter script quickly, use `helpers/scaffolding/Generate-NextScript.ps1` or `helpers/scaffolding/Generate-NextPowerShell.ps1`.
 
 ### Example entry points

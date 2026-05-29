@@ -2,6 +2,12 @@
 .SYNOPSIS
 Runs the top wait-statistics review script for the current SQL Server instance.
 
+.NOTES
+ScriptType   : hybrid
+TargetScope  : single server
+RiskLevel    : SAFE
+Purpose      : Run the wait-statistics SQL query from the repo and export results.
+
 .DESCRIPTION
 A convenience wrapper for the repo’s performance wait-statistics query.
 It delegates to the local SQL helper so you can run the same script from

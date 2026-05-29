@@ -22,6 +22,7 @@ This repository is designed to support the DBA Scripts section of the site and t
 - A dedicated sql-templates/ operations layer for repeatable DBA runbooks and operational templates
 - Top-level helpers/ and tools/ folders for reusable utilities and repo maintenance
 - A small helper layer in helpers/ for quick repo checks, script discovery, and task routing during AI-assisted work
+- Production standards and operational guidance in docs/standards.md for SQL and PowerShell script classification, safety, and scope
 
 ## Start here
 
