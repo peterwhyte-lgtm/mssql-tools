@@ -45,6 +45,13 @@ function Open-InWebUi([string]$csvPath, [string]$outputFormat) {
 }
 
 $repoRoot = Resolve-Path (Join-Path $PSScriptRoot '..\..')
+
+# Session-level connection defaults — set via .\helpers\local-sql\Set-SqlConnection.ps1
+# Explicit params win; env vars fill in only when the param is still at its default value.
+if ($ServerInstance -eq '.' -and $env:DBASCRIPTS_SERVER) { $ServerInstance = $env:DBASCRIPTS_SERVER }
+if (-not $Username   -and $env:DBASCRIPTS_USER)          { $Username = $env:DBASCRIPTS_USER }
+if (-not $Password   -and $env:DBASCRIPTS_PASS)          { $Password = $env:DBASCRIPTS_PASS }
+
 $resolvedPath = if ([System.IO.Path]::IsPathRooted($ScriptPath)) { $ScriptPath } else { Join-Path $repoRoot $ScriptPath }
 $scriptName = [System.IO.Path]::GetFileNameWithoutExtension($resolvedPath)
 $category = if    ($resolvedPath -match '[\\/]categories[\\/]([^\\/]+)[\\/]') { $Matches[1] }
@@ -67,22 +74,25 @@ if (-not (Test-Path -LiteralPath $OutputDirectory)) {
     New-Item -ItemType Directory -Path $OutputDirectory -Force | Out-Null
 }
 
-Write-Host "[repo-sql] Script: $resolvedPath" -ForegroundColor Cyan
-Write-Host "[repo-sql] Server: $ServerInstance" -ForegroundColor Cyan
+$authLabel = if ($Username) { "SQL ($Username)" } else { 'Windows (integrated)' }
+Write-Host "[repo-sql] Script  : $resolvedPath" -ForegroundColor Cyan
+Write-Host "[repo-sql] Server  : $ServerInstance" -ForegroundColor Cyan
+Write-Host "[repo-sql] Auth    : $authLabel" -ForegroundColor Cyan
 Write-Host "[repo-sql] Database: $Database" -ForegroundColor Cyan
-Write-Host "[repo-sql] Output: $OutputFormat" -ForegroundColor Cyan
-Write-Host "[repo-sql] CSV: $OutputPath" -ForegroundColor Cyan
+Write-Host "[repo-sql] Output  : $OutputFormat" -ForegroundColor Cyan
+Write-Host "[repo-sql] CSV     : $OutputPath" -ForegroundColor Cyan
 
 $invokeSqlcmd = Get-Command Invoke-Sqlcmd -ErrorAction SilentlyContinue
 $sqlcmd = Get-Command sqlcmd.exe -ErrorAction SilentlyContinue
 
 if ($invokeSqlcmd) {
     $params = @{
-        ServerInstance = $ServerInstance
-        Database       = $Database
-        InputFile      = $resolvedPath
-        QueryTimeout   = $QueryTimeout
-        ErrorAction    = 'Stop'
+        ServerInstance        = $ServerInstance
+        Database              = $Database
+        InputFile             = $resolvedPath
+        QueryTimeout          = $QueryTimeout
+        TrustServerCertificate = $true
+        ErrorAction           = 'Stop'
     }
 
     if ($Username -and $Password) {
