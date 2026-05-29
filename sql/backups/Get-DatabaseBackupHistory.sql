@@ -1,4 +1,4 @@
-﻿/*
+/*
 Script Name : Get-DatabaseBackupHistory
 Category    : backups-and-recovery
 Purpose     : Review detailed backup history for all databases over the last 2 months.
@@ -8,8 +8,6 @@ Impact      : Low
 Requires    : db_datareader on msdb
 */
 SET NOCOUNT ON;
--- SAFE:ReadOnly
--- IMPACT:Low
 
 DECLARE @MonthsBack INT = 2;
 

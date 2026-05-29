@@ -1,0 +1,21 @@
+# Generated CSV output from DBA script runs
+output-files/**/*.csv
+output-files/**/*.tmp.csv
+output-files/healthcheck/
+
+# Backup files (test fixtures included — use git add -f to force-track if needed)
+output-files/**/*.bak
+
+# PowerShell artefacts
+*.ps1.bak
+
+# Windows
+Thumbs.db
+Desktop.ini
+[Dd]esktop.ini
+$RECYCLE.BIN/
+
+# VS Code
+.vscode/settings.json
+.vscode/launch.json
+.vscode/*.code-workspace

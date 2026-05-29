@@ -8,8 +8,6 @@ Impact      : Low
 Requires    : VIEW ANY DATABASE
 */
 SET NOCOUNT ON;
--- SAFE:ReadOnly
--- IMPACT:Low
 
 ;WITH db_sizes AS (
     SELECT

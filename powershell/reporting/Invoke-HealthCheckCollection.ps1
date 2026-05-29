@@ -15,20 +15,25 @@ Each script's output is saved as a named CSV under output-files\healthcheck\<ser
 Run this first, then pass the output folder to Review-HealthCheckOutput.ps1 to surface findings.
 
 Scripts collected:
-  server-info         - SQL version, edition, instance name
-  os-hardware         - OS release, CPU count, RAM, uptime
-  database-health     - database state, recovery model, auto-shrink flags
-  database-sizes      - data/log sizes and free space per database
-  database-files      - per-file paths, sizes, growth settings
-  backup-times        - last full/diff/log backup per database
-  backup-coverage     - databases with missing or stale backups
-  tlog-usage          - transaction log size and space used
-  memory-config       - max server memory, current committed, buffer pool
-  wait-stats          - top wait types since last restart
-  active-sessions     - currently connected users and requests
-  tempdb-usage        - tempdb file usage and session spill activity
-  job-failures        - SQL Agent job failures from the last 7 days
-  recent-errors       - error log entries from the last 24 hours
+  server-info           - SQL version, edition, instance name
+  os-hardware           - OS release, CPU count, RAM, uptime
+  database-health       - database state, recovery model, auto-shrink flags
+  database-sizes        - data/log sizes and free space per database
+  database-files        - per-file paths, sizes, growth settings
+  backup-times          - last full/diff/log backup per database
+  backup-coverage       - databases with missing or stale backups (with status flag)
+  tlog-usage            - transaction log size and space used
+  memory-config         - max server memory, current committed, buffer pool
+  wait-stats            - top wait types since last restart (benign waits filtered)
+  active-sessions       - currently connected users and requests
+  tempdb-usage          - tempdb file usage per file with free space
+  job-failures          - SQL Agent job failures from the last 7 days
+  recent-errors         - error log entries from the last 24 hours
+  dbcc-checkdb          - last successful DBCC CHECKDB per database
+  suspect-pages         - any pages in msdb.dbo.suspect_pages
+  io-usage              - per-database I/O totals with read/write latency
+  security-surface-area - xp_cmdshell, CLR, Database Mail enabled state
+  weak-logins           - SQL logins with policy/expiration off or sa enabled
 
 .PARAMETER ServerInstance
 SQL Server instance to query. Defaults to '.'.
@@ -50,7 +55,8 @@ pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\powershell\reporting\Rev
 
 param(
     [string]$ServerInstance = '.',
-    [string]$OutputRoot
+    [string]$OutputRoot,
+    [switch]$Quiet
 )
 
 $ErrorActionPreference = 'Stop'
@@ -92,13 +98,11 @@ $scripts = @(
     }
     [PSCustomObject]@{
         Label = 'database-health'
-        Paths = @('sql\monitoring\Get-DatabaseHealth.sql',
-                  'categories\maintenance-and-reliability\sql\Get-DatabaseHealth.sql')
+        Paths = @('sql\monitoring\Get-DatabaseHealth.sql')
     }
     [PSCustomObject]@{
         Label = 'database-sizes'
-        Paths = @('sql\monitoring\Get-DatabaseSizesAndFreeSpace.sql',
-                  'categories\storage-capacity-management\sql\Get-DatabaseSizesAndFreeSpace.sql')
+        Paths = @('sql\monitoring\Get-DatabaseSizesAndFreeSpace.sql')
     }
     [PSCustomObject]@{
         Label = 'database-files'
@@ -106,28 +110,23 @@ $scripts = @(
     }
     [PSCustomObject]@{
         Label = 'backup-times'
-        Paths = @('sql\backups\Get-LastDatabaseBackupTimes.sql',
-                  'categories\backups-and-recovery\sql\Get-LastDatabaseBackupTimes.sql')
+        Paths = @('sql\backups\Get-LastDatabaseBackupTimes.sql')
     }
     [PSCustomObject]@{
         Label = 'backup-coverage'
-        Paths = @('sql\backups\Get-BackupCoverage.sql',
-                  'categories\backups-and-recovery\sql\Get-BackupCoverage.sql')
+        Paths = @('sql\backups\Get-BackupCoverage.sql')
     }
     [PSCustomObject]@{
         Label = 'tlog-usage'
-        Paths = @('sql\monitoring\Get-TransactionLogSizeAndUsage.sql',
-                  'categories\storage-capacity-management\sql\Get-TransactionLogSizeAndUsage.sql')
+        Paths = @('sql\monitoring\Get-TransactionLogSizeAndUsage.sql')
     }
     [PSCustomObject]@{
         Label = 'memory-config'
-        Paths = @('sql\monitoring\Get-MemoryConfigurationAndUsage.sql',
-                  'categories\configuration-and-environment\sql\Get-MemoryConfigurationAndUsage.sql')
+        Paths = @('sql\monitoring\Get-MemoryConfigurationAndUsage.sql')
     }
     [PSCustomObject]@{
         Label = 'wait-stats'
-        Paths = @('sql\performance\Get-WaitStatistics.sql',
-                  'categories\performance-troubleshooting\sql\Get-WaitStatistics.sql')
+        Paths = @('sql\performance\Get-WaitStatistics.sql')
     }
     [PSCustomObject]@{
         Label = 'active-sessions'
@@ -135,17 +134,35 @@ $scripts = @(
     }
     [PSCustomObject]@{
         Label = 'tempdb-usage'
-        Paths = @('sql\monitoring\Get-TempdbUsage.sql',
-                  'categories\maintenance-and-reliability\sql\Get-TempdbUsage.sql')
+        Paths = @('sql\monitoring\Get-TempdbUsage.sql')
     }
     [PSCustomObject]@{
         Label = 'job-failures'
-        Paths = @('sql\monitoring\Get-SqlAgentJobFailureSummary.sql',
-                  'categories\configuration-and-environment\sql\Get-SqlAgentJobFailureSummary.sql')
+        Paths = @('sql\monitoring\Get-SqlAgentJobFailureSummary.sql')
     }
     [PSCustomObject]@{
         Label = 'recent-errors'
         Paths = @('sql\monitoring\Get-RecentErrorLogEntries.sql')
+    }
+    [PSCustomObject]@{
+        Label = 'dbcc-checkdb'
+        Paths = @('sql\monitoring\Get-LastDbccCheckdb.sql')
+    }
+    [PSCustomObject]@{
+        Label = 'suspect-pages'
+        Paths = @('sql\monitoring\Get-SuspectPages.sql')
+    }
+    [PSCustomObject]@{
+        Label = 'io-usage'
+        Paths = @('sql\performance\Get-DatabaseIoUsage.sql')
+    }
+    [PSCustomObject]@{
+        Label = 'security-surface-area'
+        Paths = @('sql\security\Get-DatabaseMailAndXpCmdShell.sql')
+    }
+    [PSCustomObject]@{
+        Label = 'weak-logins'
+        Paths = @('sql\security\Get-WeakLoginSettings.sql')
     }
 )
 
@@ -171,11 +188,20 @@ foreach ($s in $scripts) {
     }
     else {
         try {
-            & $runner -ScriptPath $resolvedSql `
-                      -ServerInstance $ServerInstance `
-                      -Database 'master' `
-                      -OutputFormat 'Csv' `
-                      -OutputPath $csvPath
+            if ($Quiet) {
+                & $runner -ScriptPath $resolvedSql `
+                          -ServerInstance $ServerInstance `
+                          -Database 'master' `
+                          -OutputFormat 'Csv' `
+                          -OutputPath $csvPath *>$null
+            }
+            else {
+                & $runner -ScriptPath $resolvedSql `
+                          -ServerInstance $ServerInstance `
+                          -Database 'master' `
+                          -OutputFormat 'Csv' `
+                          -OutputPath $csvPath
+            }
         }
         catch {
             $status = 'FAILED'

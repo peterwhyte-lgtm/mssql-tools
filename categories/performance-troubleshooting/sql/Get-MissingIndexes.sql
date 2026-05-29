@@ -1,4 +1,4 @@
-﻿/*
+/*
 Script Name : Get-MissingIndexes
 Category    : performance-troubleshooting
 Purpose     : Identify candidate missing indexes from DMVs for performance tuning.
@@ -8,8 +8,6 @@ Impact      : Low
 Requires    : VIEW SERVER STATE, VIEW ANY DATABASE
 */
 SET NOCOUNT ON;
--- SAFE:ReadOnly
--- IMPACT:Low
 -- Index suggestions are guidance only. Review carefully before creating any index.
 
 SELECT

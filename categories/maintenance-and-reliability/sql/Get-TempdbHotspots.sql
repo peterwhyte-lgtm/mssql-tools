@@ -8,8 +8,6 @@ Impact      : Low
 Requires    : VIEW SERVER STATE
 */
 SET NOCOUNT ON;
--- SAFE:ReadOnly
--- IMPACT:Low
 
 SELECT
     DB_NAME(tsu.database_id) AS database_name,

@@ -22,26 +22,35 @@ Shows what would be removed without deleting anything.
 #>
 
 param(
-    [string]$Path = (Join-Path $PSScriptRoot '..\output-files'),
+    [string]$Path = (Join-Path (Resolve-Path (Join-Path $PSScriptRoot '..\..')) 'output-files'),
     [ValidateSet('all', 'age')]
     [string]$Mode = 'all',
     [int]$BackupAgeDays = 30,
     [switch]$WhatIf
 )
 
-if (-not (Test-Path -LiteralPath $Path)) {
-    throw "Output path not found: $Path"
+$repoRoot = Resolve-Path (Join-Path $PSScriptRoot '..\..')
+
+$resolvedPath = if ([System.IO.Path]::IsPathRooted($Path)) {
+    $Path
+}
+else {
+    Join-Path $repoRoot $Path
+}
+
+if (-not (Test-Path -LiteralPath $resolvedPath)) {
+    throw "Output path not found: $resolvedPath"
 }
 
 if ($Mode -eq 'age') {
     $cutoff = (Get-Date).AddDays(-$BackupAgeDays)
-    $items = Get-ChildItem -LiteralPath $Path -File -Recurse -Force |
+    $items = Get-ChildItem -LiteralPath $resolvedPath -File -Recurse -Force |
         Where-Object {
             $_.Extension -in '.bak', '.bakup', '.trn' -and $_.LastWriteTime -lt $cutoff
         }
 
     if (-not $items) {
-        Write-Host "No backup files older than $BackupAgeDays day(s) were found under $Path" -ForegroundColor Yellow
+        Write-Host "No backup files older than $BackupAgeDays day(s) were found under $resolvedPath" -ForegroundColor Yellow
         return
     }
 
@@ -52,21 +61,21 @@ if ($Mode -eq 'age') {
     }
 
     $items | Remove-Item -Force -ErrorAction Stop
-    Write-Host "Removed $($items.Count) backup file(s) older than $BackupAgeDays day(s) from $Path" -ForegroundColor Green
+    Write-Host "Removed $($items.Count) backup file(s) older than $BackupAgeDays day(s) from $resolvedPath" -ForegroundColor Green
     return
 }
 
-$items = Get-ChildItem -LiteralPath $Path -Force -Recurse
+$items = Get-ChildItem -LiteralPath $resolvedPath -Force
 if (-not $items) {
-    Write-Host "No files found under $Path" -ForegroundColor Yellow
+    Write-Host "No files found under $resolvedPath" -ForegroundColor Yellow
     return
 }
 
 if ($WhatIf) {
     $items | Select-Object -ExpandProperty FullName | Write-Host
-    Write-Host "Would remove $($items.Count) item(s) from $Path." -ForegroundColor Cyan
+    Write-Host "Would remove $($items.Count) item(s) from $resolvedPath." -ForegroundColor Cyan
     return
 }
 
 $items | Remove-Item -Force -Recurse -ErrorAction Stop
-Write-Host "Cleared $($items.Count) item(s) from $Path" -ForegroundColor Green
+Write-Host "Cleared $($items.Count) item(s) from $resolvedPath" -ForegroundColor Green

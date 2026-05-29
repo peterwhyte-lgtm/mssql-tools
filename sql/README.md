@@ -7,5 +7,6 @@ Suggested domains:
 - backups/ — backup coverage, restore validation, backup history
 - security/ — permission and access reviews
 - monitoring/ — health, job, and operational visibility checks
+- migration/ — database, login, job, and linked-server inventory for upgrade and estate moves
 
 The canonical working path is now the top-level sql/ layer, with helper and wrapper scripts in helpers/ and powershell/.

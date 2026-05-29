@@ -10,8 +10,6 @@ Notes       : Usage counters reset on SQL Server restart. High user_updates with
               candidate for removal. high user_scans = possible missing index on that table.
 */
 SET NOCOUNT ON;
--- SAFE:ReadOnly
--- IMPACT:Low
 
 SELECT
     DB_NAME(ius.database_id)                                                AS database_name,

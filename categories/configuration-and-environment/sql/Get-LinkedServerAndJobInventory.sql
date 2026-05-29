@@ -1,4 +1,4 @@
-﻿/*
+/*
 Script Name : Get-LinkedServerAndJobInventory
 Category    : configuration-and-environment
 Purpose     : Inventory logins, linked servers, and SQL Agent jobs for pre-migration reviews.
@@ -8,8 +8,6 @@ Impact      : Low
 Requires    : VIEW ANY DATABASE, db_datareader on msdb
 */
 SET NOCOUNT ON;
--- SAFE:ReadOnly
--- IMPACT:Low
 -- Migration-oriented review: logins, linked servers, and SQL Agent jobs.
 -- Passwords are not scripted by SQL Server metadata and must be handled separately.
 

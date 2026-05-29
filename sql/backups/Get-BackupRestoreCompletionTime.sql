@@ -1,4 +1,4 @@
-﻿/*
+/*
 Script Name : Get-BackupRestoreCompletionTime
 Category    : backups-and-recovery
 Purpose     : Monitor active backup and restore operations with estimated completion time.
@@ -8,8 +8,6 @@ Impact      : Low
 Requires    : VIEW SERVER STATE
 */
 SET NOCOUNT ON;
--- SAFE:ReadOnly
--- IMPACT:Low
 
 SELECT
     r.command,

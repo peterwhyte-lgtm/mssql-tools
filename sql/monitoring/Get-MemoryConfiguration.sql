@@ -1,29 +1,19 @@
-﻿/*
+/*
 Script Name : Get-MemoryConfiguration
 Category    : configuration-and-environment
-Purpose     : Review min/max server memory configuration and available physical memory status.
+Purpose     : Show configured memory limits alongside current OS-level memory availability.
 Author      : Peter Whyte (https://sqldba.blog)
 Safe        : Read-only
 Impact      : Low
 Requires    : VIEW SERVER STATE
 */
 SET NOCOUNT ON;
--- SAFE:ReadOnly
--- IMPACT:Low
 
 SELECT
-    name,
-    value_in_use,
-    value
-FROM sys.configurations
-WHERE name IN ('max server memory (MB)', 'min server memory (MB)', 'optimize for ad hoc workloads');
-
-SELECT
-    total_physical_memory_kb / 1024 AS total_physical_memory_mb,
-    available_physical_memory_kb / 1024 AS available_physical_memory_mb,
-    system_memory_state_desc
-FROM sys.dm_os_sys_memory;
-
-
-
-
+    (SELECT value_in_use FROM sys.configurations WHERE name = 'min server memory (MB)')         AS min_server_memory_mb,
+    (SELECT value_in_use FROM sys.configurations WHERE name = 'max server memory (MB)')         AS max_server_memory_mb,
+    (SELECT value_in_use FROM sys.configurations WHERE name = 'optimize for ad hoc workloads')  AS optimize_for_ad_hoc,
+    sm.total_physical_memory_kb     / 1024                                                      AS total_physical_memory_mb,
+    sm.available_physical_memory_kb / 1024                                                      AS available_physical_memory_mb,
+    sm.system_memory_state_desc
+FROM sys.dm_os_sys_memory AS sm;

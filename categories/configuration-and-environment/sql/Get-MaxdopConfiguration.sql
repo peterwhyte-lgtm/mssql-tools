@@ -1,4 +1,4 @@
-﻿/*
+/*
 Script Name : Get-MaxdopConfiguration
 Category    : configuration-and-environment
 Purpose     : Check MAXDOP configuration settings and CPU topology.
@@ -8,8 +8,6 @@ Impact      : Low
 Requires    : VIEW SERVER STATE
 */
 SET NOCOUNT ON;
--- SAFE:ReadOnly
--- IMPACT:Low
 
 SELECT
     name,

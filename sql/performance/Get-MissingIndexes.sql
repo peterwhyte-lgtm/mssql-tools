@@ -10,8 +10,6 @@ Notes       : Impact scores reset on SQL Server restart. Review carefully — DM
               individual queries; creating every suggestion causes index bloat and write overhead.
 */
 SET NOCOUNT ON;
--- SAFE:ReadOnly
--- IMPACT:Low
 
 SELECT
     mid.statement                                                                       AS table_name,

@@ -13,6 +13,7 @@ This repository is designed to support the DBA Scripts section of the site and t
 ## What is included
 
 - Production-safe diagnostics and monitoring scripts for day-to-day DBA work
+- Migration-ready inventory scripts under sql/migration/ for databases, logins, jobs, and linked servers
 - SSMS-first SQL queries with practical comments, safety tags, and evidence-oriented output
 - PowerShell helpers for local ops, cleanup, orchestration, and quick triage
 - A clear separation between investigation scripts, automation helpers, and repo-wide utilities

@@ -27,7 +27,10 @@ $ErrorActionPreference = 'Stop'
 $repoRoot = Resolve-Path (Join-Path $PSScriptRoot '..\..')
 $resolvedPath = if ([System.IO.Path]::IsPathRooted($ScriptPath)) { $ScriptPath } else { Join-Path $repoRoot $ScriptPath }
 $scriptName = [System.IO.Path]::GetFileNameWithoutExtension($resolvedPath)
-$category = if ($resolvedPath -match '[\\/]categories[\\/]([^\\/]+)[\\/]') { $Matches[1] } else { 'general' }
+$category = if    ($resolvedPath -match '[\\/]categories[\\/]([^\\/]+)[\\/]') { $Matches[1] }
+            elseif ($resolvedPath -match '[\\/]sql[\\/]([^\\/]+)[\\/]')        { $Matches[1] }
+            elseif ($resolvedPath -match '[\\/]powershell[\\/]([^\\/]+)[\\/]') { $Matches[1] }
+            else                                                                 { 'general' }
 
 if (-not (Test-Path -LiteralPath $resolvedPath)) {
     throw "SQL script not found: $ScriptPath"

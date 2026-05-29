@@ -11,6 +11,13 @@ SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
 
+IF SERVERPROPERTY('IsHadrEnabled') = 0
+    OR NOT EXISTS (SELECT 1 FROM sys.availability_groups)
+BEGIN
+    SELECT 'Always On Availability Groups is not enabled or no groups are configured on this instance.' AS status;
+END
+ELSE
+BEGIN
 
 SELECT
     ag.name AS ag_name,
@@ -32,7 +39,5 @@ INNER JOIN sys.availability_groups AS ag
     ON ar.group_id = ag.group_id
 ORDER BY ag.name, database_name, ar.replica_server_name;
 
-
-
-
+END
 

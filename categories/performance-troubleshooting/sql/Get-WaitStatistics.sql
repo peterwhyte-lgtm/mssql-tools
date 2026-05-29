@@ -1,4 +1,4 @@
-﻿/*
+/*
 Script Name : Get-WaitStatistics
 Category    : performance-troubleshooting
 Purpose     : Review instance wait statistics for performance triage.
@@ -8,8 +8,6 @@ Impact      : Low
 Requires    : VIEW SERVER STATE (or sysadmin for the full DMV view)
 */
 SET NOCOUNT ON;
--- SAFE:ReadOnly
--- IMPACT:Low
 -- Top wait statistics for the current instance.
 -- Useful for identifying bottlenecks during performance investigations.
 

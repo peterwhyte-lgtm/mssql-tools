@@ -1,4 +1,4 @@
-﻿/*
+/*
 Script Name : Get-LongRunningQueries
 Category    : performance-troubleshooting
 Purpose     : Identify long-running queries with current wait state, CPU, and elapsed time.
@@ -8,8 +8,6 @@ Impact      : Low
 Requires    : VIEW SERVER STATE
 */
 SET NOCOUNT ON;
--- SAFE:ReadOnly
--- IMPACT:Low
 
 SELECT
     r.session_id,

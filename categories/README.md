@@ -1,6 +1,7 @@
-# Category-first DBA layout
+# Legacy compatibility map
 
-This folder is the main navigation layer for the repo.
+This folder is kept as a compatibility view for older references and migrations.
+It is not the primary navigation layer for the repo anymore.
 
 ## What lives here
 

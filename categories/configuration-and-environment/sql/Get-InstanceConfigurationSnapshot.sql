@@ -1,4 +1,4 @@
-﻿/*
+/*
 Script Name : Get-InstanceConfigurationSnapshot
 Category    : configuration-and-environment
 Purpose     : Capture a quick instance configuration snapshot for baseline reviews.
@@ -8,8 +8,6 @@ Impact      : Low
 Requires    : VIEW SERVER STATE
 */
 SET NOCOUNT ON;
--- SAFE:ReadOnly
--- IMPACT:Low
 -- Collect a quick instance configuration snapshot for environment review.
 -- This is useful for baseline checks, audits, and incident prep.
 

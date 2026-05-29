@@ -15,12 +15,21 @@ to surface issues. Each finding is rated CRITICAL, WARNING, or INFO.
 Rules applied:
   CRITICAL  - database not ONLINE
   CRITICAL  - database with no full backup ever
+  CRITICAL  - suspect pages recorded in msdb.dbo.suspect_pages
+  CRITICAL  - sa login is enabled
   WARNING   - full backup older than 25 hours
   WARNING   - log backup older than 4 hours for FULL recovery databases
   WARNING   - transaction log > 80% used
   WARNING   - auto_shrink enabled on any database
   WARNING   - SQL Agent job failures in the last 7 days
   WARNING   - percent-based autogrowth configured on any file
+  WARNING   - DBCC CHECKDB not run in over 7 days
+  WARNING   - DBCC CHECKDB never recorded for a database
+  WARNING   - read or write I/O latency > 50 ms
+  WARNING   - SQL login with password policy or expiration disabled
+  WARNING   - max server memory left at SQL Server default (unconfigured)
+  WARNING   - data files with less than 10% free space
+  WARNING   - specific wait types indicating I/O, log, or memory pressure
   INFO      - sessions with active blocking
   INFO      - sessions with open transactions
   INFO      - error log entries present (requires manual review)
@@ -147,12 +156,12 @@ foreach ($row in $backups) {
 # ── tlog-usage ───────────────────────────────────────────────────────────────
 $tlogs = Read-Csv-Safe 'tlog-usage'
 foreach ($row in $tlogs) {
-    if ([double]::TryParse($row.log_used_percent, [ref]$null)) {
-        $pct = [double]$row.log_used_percent
-        if ($pct -gt 80) {
-            Add-Finding 'WARNING' 'Transaction Log' $row.database_name (
-                "Log is $pct% used ($($row.log_used_mb) MB of $($row.log_size_mb) MB) — risk of log-full")
-        }
+    $pct = 0.0
+    # Column is log_used_pct in updated script; fall back to log_used_percent for older CSVs
+    $pctCol = if ($row.PSObject.Properties['log_used_pct']) { $row.log_used_pct } else { $row.log_used_percent }
+    if ([double]::TryParse($pctCol, [ref]$pct) -and $pct -gt 80) {
+        Add-Finding 'WARNING' 'Transaction Log' $row.database_name (
+            "Log is $pct% used ($($row.log_used_mb) MB of $($row.log_size_mb) MB) — risk of log-full")
     }
 }
 
@@ -200,14 +209,114 @@ if ($errors.Count -gt 0) {
         "$($errors.Count) non-routine entry/entries in last 24h — review recent-errors.csv")
 }
 
+# ── dbcc-checkdb ──────────────────────────────────────────────────────────────
+$checkdb = Read-Csv-Safe 'dbcc-checkdb'
+foreach ($row in $checkdb) {
+    if (-not $row.last_good_checkdb -or $row.last_good_checkdb -eq '') {
+        Add-Finding 'WARNING' 'DBCC CHECKDB' $row.database_name (
+            'No CHECKDB on record for this database on this instance')
+    }
+    elseif ([int]::TryParse($row.days_since_checkdb, [ref]$null)) {
+        $days = [int]$row.days_since_checkdb
+        if ($days -gt 7) {
+            Add-Finding 'WARNING' 'DBCC CHECKDB' $row.database_name (
+                "Last good CHECKDB was $days days ago (threshold: 7 days)")
+        }
+    }
+}
+
+# ── suspect-pages ─────────────────────────────────────────────────────────────
+$suspects = Read-Csv-Safe 'suspect-pages'
+$activeSuspects = @($suspects | Where-Object {
+    $_.event_type -notmatch 'Restored|Repaired|Deallocated'
+})
+if ($activeSuspects.Count -gt 0) {
+    $dbNames = ($activeSuspects | Select-Object -ExpandProperty database_name -Unique) -join ', '
+    Add-Finding 'CRITICAL' 'Suspect Pages' 'msdb.dbo.suspect_pages' (
+        "$($activeSuspects.Count) active suspect page(s) — run DBCC CHECKDB immediately. Databases: $dbNames")
+}
+
+# ── io-usage (latency) ────────────────────────────────────────────────────────
+$ioStats = Read-Csv-Safe 'io-usage'
+foreach ($row in $ioStats) {
+    $readLat  = 0.0
+    $writeLat = 0.0
+    [double]::TryParse($row.read_latency_ms,  [ref]$readLat)  | Out-Null
+    [double]::TryParse($row.write_latency_ms, [ref]$writeLat) | Out-Null
+    if ($readLat -gt 50) {
+        Add-Finding 'WARNING' 'I/O Latency' $row.database_name (
+            "Read latency is $([Math]::Round($readLat, 1)) ms (threshold: 50ms) — check disk subsystem")
+    }
+    if ($writeLat -gt 50) {
+        Add-Finding 'WARNING' 'I/O Latency' $row.database_name (
+            "Write latency is $([Math]::Round($writeLat, 1)) ms (threshold: 50ms) — check disk subsystem")
+    }
+}
+
+# ── weak-logins (security) ────────────────────────────────────────────────────
+$logins = Read-Csv-Safe 'weak-logins'
+foreach ($login in $logins) {
+    if (-not $login.risk_flag -or $login.risk_flag -eq 'OK') { continue }
+    $sev = if ($login.risk_flag -eq 'SA_ENABLED') { 'CRITICAL' } else { 'WARNING' }
+    Add-Finding $sev 'Security' $login.login_name (
+        "Login risk flag: $($login.risk_flag)")
+}
+
+# ── wait-stats (pressure patterns) ───────────────────────────────────────────
+$waits = Read-Csv-Safe 'wait-stats'
+$concernWaits = @{
+    'PAGEIOLATCH_SH'     = 'Data file read I/O bottleneck — disk reads are slow'
+    'PAGEIOLATCH_EX'     = 'Data file write I/O bottleneck — disk writes are slow'
+    'WRITELOG'           = 'Transaction log write bottleneck — check log disk or sync-commit AG'
+    'RESOURCE_SEMAPHORE' = 'Memory grant pressure — queries queuing for execution memory'
+    'CXPACKET'           = 'Parallelism waits — review MAXDOP and cost threshold for parallelism'
+    'CXCONSUMER'         = 'Parallelism waits — review MAXDOP and cost threshold for parallelism'
+    'LCK_M_X'            = 'Exclusive lock waits — blocking or high write concurrency'
+    'ASYNC_NETWORK_IO'   = 'Client network waits — application not consuming results fast enough'
+}
+foreach ($row in $waits) {
+    if ($concernWaits.ContainsKey($row.wait_type)) {
+        $pct = 0.0
+        if ([double]::TryParse($row.pct_total_wait, [ref]$pct) -and $pct -gt 10) {
+            Add-Finding 'WARNING' 'Wait Statistics' $row.wait_type (
+                "$([Math]::Round($pct,1))% of total wait time — $($concernWaits[$row.wait_type])")
+        }
+    }
+}
+
+# ── memory-config (unconfigured max server memory) ───────────────────────────
+$memConfig = Read-Csv-Safe 'memory-config'
+foreach ($row in $memConfig) {
+    $maxMem = 0L
+    if ([long]::TryParse($row.max_server_memory_mb, [ref]$maxMem) -and $maxMem -ge 2147483647) {
+        Add-Finding 'WARNING' 'Memory Config' 'max server memory' (
+            'max server memory is at the SQL Server default (2,147,483,647 MB = uncapped) — SQL Server may consume all available RAM')
+    }
+}
+
+# ── database-sizes (low free space) ──────────────────────────────────────────
+$dbSizes = Read-Csv-Safe 'database-sizes'
+foreach ($row in $dbSizes) {
+    $freePct = 0.0
+    if ([double]::TryParse($row.data_free_pct, [ref]$freePct) -and $freePct -lt 10) {
+        Add-Finding 'WARNING' 'Disk Space' $row.database_name (
+            "Data files $freePct% free ($($row.data_free_mb) MB free of $($row.data_size_mb) MB) — autogrowth risk")
+    }
+}
+
 # ── Output ───────────────────────────────────────────────────────────────────
 
 Write-Host ''
 Write-Host '============================================' -ForegroundColor Cyan
 Write-Host '  DBA Health Check Review' -ForegroundColor Cyan
 Write-Host '============================================' -ForegroundColor Cyan
-Write-Host "  Folder : $FolderPath"
-Write-Host "  Time   : $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
+Write-Host "  Folder    : $FolderPath"
+$folderLeaf = Split-Path -Leaf $FolderPath
+if ($folderLeaf -match '(\d{8}-\d{6})$') {
+    $collectedAt = [DateTime]::ParseExact($Matches[1], 'yyyyMMdd-HHmmss', $null)
+    Write-Host "  Collected : $($collectedAt.ToString('yyyy-MM-dd HH:mm:ss'))"
+}
+Write-Host "  Reviewed  : $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
 Write-Host '--------------------------------------------'
 
 if ($findings.Count -eq 0) {

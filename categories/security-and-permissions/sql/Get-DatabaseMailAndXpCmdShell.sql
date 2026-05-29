@@ -8,8 +8,6 @@ Impact      : Low
 Requires    : VIEW SERVER STATE (sysadmin to see xp_cmdshell value_in_use)
 */
 SET NOCOUNT ON;
--- SAFE:ReadOnly
--- IMPACT:Low
 -- Queries sys.configurations directly — no sp_configure RECONFIGURE needed.
 
 SELECT

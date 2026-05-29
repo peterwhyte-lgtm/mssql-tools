@@ -1,4 +1,4 @@
-﻿/*
+/*
 Script Name : Get-MemoryConfiguration
 Category    : configuration-and-environment
 Purpose     : Review min/max server memory configuration and available physical memory status.
@@ -8,8 +8,6 @@ Impact      : Low
 Requires    : VIEW SERVER STATE
 */
 SET NOCOUNT ON;
--- SAFE:ReadOnly
--- IMPACT:Low
 
 SELECT
     name,

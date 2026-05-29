@@ -8,8 +8,6 @@ Impact      : Low
 Requires    : VIEW SERVER STATE (xp_readerrorlog; sysadmin in practice for most instances)
 */
 SET NOCOUNT ON;
--- SAFE:ReadOnly
--- IMPACT:Low
 
 IF OBJECT_ID('tempdb..#error_log') IS NOT NULL DROP TABLE #error_log;
 

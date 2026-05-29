@@ -8,8 +8,6 @@ Impact      : Low
 Requires    : ALTER TRACE (to read default trace file)
 */
 SET NOCOUNT ON;
--- SAFE:ReadOnly
--- IMPACT:Low
 
 DECLARE @DefaultTracePath NVARCHAR(4000);
 

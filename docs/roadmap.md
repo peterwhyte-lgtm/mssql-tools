@@ -1,118 +1,163 @@
 # DBA Scripts Roadmap
 
-This repo is being shaped as a practical production DBA toolkit for the blog and for day-to-day SQL Server operations.
+## Current state (as of 2026-05-29)
 
-## What the repo already covers
+The repo is a functional, comprehensive production DBA toolkit. Key capabilities:
 
-The current layout now includes practical coverage for:
-- performance troubleshooting and wait/blocking analysis
-- storage and capacity review
-- backup and restore basics and readiness checks
-- configuration, memory, MAXDOP, and SQL Agent reviews
-- security and permission auditing
-- HA/DR and lab-style database generation
-- integrity/readiness checks before DBCC validation work
-- canonical top-level navigation under sql/, powershell/, and hybrid/
-- top-level helpers/ and tools/ for quick repo operations and AI-assisted work
+- **SQL scripts**: ~45 canonical scripts across `sql/monitoring/`, `sql/performance/`, `sql/backups/`, `sql/security/`, `sql/migration/`
+- **PS wrappers**: Every SQL script has a matching PS wrapper — no coverage gaps
+- **Healthcheck workflow**: `Invoke-HealthCheckCollection.ps1` collects 19 scripts → `Review-HealthCheckOutput.ps1` flags 17 rule categories (CRITICAL / WARNING / INFO)
+- **Security coverage**: server roles, database roles, orphaned users, login permissions, weak login settings, surface area config
+- **Standards**: all canonical SQL scripts have standard headers, `SET NOCOUNT ON`, safety annotations, no NOLOCK, no deprecated catalog views
 
-## Execution summary intake: Phase 1 scorecard
+---
 
-The repo has moved from a loose script dump into a canonical DBA toolkit with top-level SQL and PowerShell folders. This roadmap is the live tracker for the next production-focused improvement chunk.
+## Fresh-eyes review findings (production DBA first look)
 
-### Current score (out of 10)
+These are the friction points a DBA would hit on first use, in order of impact.
 
-| Area | Score | Notes |
-| --- | ---: | --- |
-| Repository structure | 9/10 | Canonical sql/, powershell/, and helper layout are now in place. |
-| Navigation and discoverability | 8/10 | The canonical folders and helper entry points are much easier to follow from the repo root. |
-| Output collection | 8/10 | Helper runs now write full CSV reports under `output-files/reviews/` and still show preview output in the terminal. |
-| Helper usability | 8/10 | The launcher and repo helpers are now clearer and easier to use for everyday DBA checks. |
-| Script standards and headers | 8/10 | The main SQL scripts now carry the standard metadata, safety annotations, and read-only guidance needed for day-to-day use. |
-| CI and quality gates | 0/10 | No SQL linter, Markdown lint, or link-check automation is in place yet. |
-| Script documentation depth | 6/10 | The repo now relies on script headers and category guidance rather than separate Markdown notes for every script. |
+### 1. No `.gitignore` — output CSVs will be committed accidentally
 
-### Phase 1 focus (this chunk)
+`output-files/` accumulates `.csv` and `.tmp.csv` files every time a script runs. There is no `.gitignore`. A DBA who does `git add .` will commit hundreds of CSV files. `output-files/test-backup-review/` also contains `.bak` fixture files that appear to be committed by accident.
 
-1. Finish the repo skeleton and helper layout cleanup.
-2. Make the helper output path predictable and reusable for DBA reviews.
-3. Lock in the category and helper entry points so the repo is easy to navigate.
-4. Capture the remaining standards work as the next chunk in this roadmap.
+**Fix:** Add `.gitignore` covering `output-files/**/*.csv`, `.tmp.csv`, `output-files/healthcheck/`, and standard PS/SQL patterns.
 
-### Phase 1 completion notes
+---
 
-Completed in this pass:
-- canonical sql/, powershell/, and helper organization
-- launcher and repo-root helper flow
-- output-files review collection path
-- top-level docs and quick-start navigation updates
+### 2. Healthcheck collection is extremely noisy
 
-Pending for the next chunk:
-- finish the remaining SQL scripts with the same header and safety pattern
-- keep the repo guidance focused on standards, templates, and operational workflows
-- add CI automation for SQL linting, Markdown validation, and link checks
-- expand the most useful hybrid helpers for backup age, DR readiness, and maintenance reporting
+`Invoke-HealthCheckCollection.ps1` prints `[repo-sql]` headers for every script (5 lines each × 19 scripts = 95+ lines of noise) plus 25-row table previews. The summary and output folder path are buried at the bottom.
 
-1. Reworked the repo into a canonical layout with top-level SQL and PowerShell folders and compatibility support for older references.
-2. Added top-level helpers for repo overview, output cleanup, quick task routing, script discovery, and script generation.
-3. Added an output-files skeleton for demo reports, backup-review output, and sample backup fixtures.
-4. Updated the main docs so the repo is easier to navigate from both the high-level and script-specific views.
+**Fix:** Add a `-Quiet` switch that suppresses per-script verbose output, showing only the `[OK]` / `[FAILED]` status lines and the final summary.
 
-## Priority areas for the next deep dive
+---
 
-The three highest-value areas to improve next are:
+### 3. `categories/` is a silent source of confusion
 
-1. Operational template quality
-   - Make sql-templates/operations more production-ready and ServiceNow-style for change orders and runbooks.
-2. Category discoverability
-   - Improve the front-of-repo navigation so DBAs can locate the right category and script faster.
-3. Helper automation quality
-   - Replace starter helpers with real operational scripts for backup age, DR, and maintenance checks.
+`categories/` contains old copies of most scripts — many with older content (missing bug fixes, wrong formulas, old headers). `docs/catalog.md` still pointed to `categories/` paths throughout.
 
-The next wave should focus on:
+**Fix:** Add `categories/ARCHIVED.md` redirecting to `sql/` and `powershell/`. Delete `docs/catalog.md`.
 
-1. SQL Agent health and job failure analysis
-   - completed: job history and failure visibility via Get-SqlAgentJobOverview.sql and Get-SqlAgentJobFailureSummary.sql
-2. TempDB and I/O diagnostics
-   - completed: usage and I/O views via Get-TempdbUsage.sql and Get-DatabaseIoUsage.sql
-3. Deadlock and blocking deep dives
-   - completed: blocking and wait summaries via Get-BlockingSessions.sql and Get-DeadlockSummary.sql
-4. Backup/restore validation and DR rehearsal
-   - completed: backup coverage and restore estimates via Get-BackupCoverage.sql, Get-BackupRestoreDurationEstimate.sql, Generate-BackupScript.sql, and Generate-RestoreScript.sql
-5. Migration inventory and change prep
-   - completed: inventory and checklist helpers via Get-LinkedServerAndJobInventory.sql and Get-MigrationChecklist.sql
-6. Corruption and integrity checks
-   - added: Get-DatabaseIntegrityChecks.sql as a pre-check and DBCC guidance script
+---
 
-## Work completed in this update
+### 4. `docs/standards.md` and `docs/catalog.md` were stale and misleading
 
-This update finished the first chunk of the execution-summary plan:
-- repository structure and helper organization
-- output collection path for review runs
-- improved launcher and repo navigation flow
-- documentation updates that make the current repo layout easier to use
+`docs/standards.md` showed the OLD header format conflicting with what scripts actually use. `docs/catalog.md` was a legacy-paths catalog pointing to `categories/` everywhere.
 
-The remaining execution-summary items are intentionally deferred to the next chunk so the repo can be improved in measurable, low-risk steps.
+**Fix:** Delete `docs/catalog.md`. Rewrite `docs/standards.md` to match the actual header format.
 
-- Added a canonical top-level layout under sql/, powershell/, and hybrid/ for real DBA browsing.
-- Added helper utilities under helpers/ for repo overview, cleanup, routing, and proactive script generation.
-- Added output-files structure for demo reports and backup-review output.
-- Fixed obvious repo path and navigation inconsistencies across README, quick-start, and catalog docs.
-- Added starter script generation helpers so new DBA scripts can be scaffolded quickly.
+---
 
-## Current focus
+### 5. `Invoke-RepoSql.ps1` used `categories/` path logic for CSV output naming
 
-### Phase 2 progress (standards and documentation)
+Scripts run from `sql/monitoring/` were categorised as `general` in the output path.
 
-This chunk started the standards pass called out in the execution summary:
-- created a reusable standards note at `docs/script-standards.md`
-- added structured metadata headers, `SET NOCOUNT ON;`, and safety annotations to representative scripts in the performance, backup, maintenance, and configuration categories
+**Fix:** Update the regex to also detect `sql/monitoring`, `sql/performance`, etc.
 
-Next actions in this phase:
-1. extend the same header and safety pattern across the rest of the SQL scripts
-2. keep the operational guidance in script comments and category docs rather than separate Markdown pages
-3. add CI automation for SQL linting and Markdown validation
+---
 
-- Keep scripts easy to copy into SSMS and Azure Data Studio
-- Preserve simple, production-friendly comments and notes
-- Expand the most useful DBA workflows first, not just the most theoretical ones
-- Keep category names aligned with real troubleshooting tasks and blog topics
+### 6. No discovery mode in `run.ps1`
+
+Running `.\run.ps1` with no script name threw. No way to browse available scripts.
+
+**Fix:** Add `-List` mode showing all scripts grouped by category.
+
+---
+
+### 7. `hybrid/` folder was empty but documented as a key layer
+
+All three subfolders (`agent-job-monitoring/`, `backup-validation/`, `sql-inventory-reporting/`) were empty.
+
+**Fix:** Delete the empty subfolders. Update `hybrid/README.md` to reflect current state.
+
+---
+
+### 8. `docs/runbook.md` was a skeleton
+
+The daily runbook was 10 lines with no paths, commands, or thresholds.
+
+**Fix:** Expand into a genuine daily/weekly/incident runbook with canonical commands, thresholds, and scenario coverage.
+
+---
+
+### 9. Review findings had no collection timestamp
+
+No visible signal that findings may be from stale data.
+
+**Fix:** Parse the timestamp from the folder name and show "Collected: YYYY-MM-DD HH:MM:SS" in the review header.
+
+---
+
+### 10. No multi-server support
+
+Every script targets a single `$ServerInstance`.
+
+**Status:** Deferred — see P3.
+
+---
+
+## Roadmap priorities
+
+### P1 — Completed 2026-05-29
+
+| Item | Status |
+|------|--------|
+| Add `.gitignore` | ✓ Complete |
+| Healthcheck `-Quiet` switch | ✓ Complete |
+| Fix `Invoke-RepoSql.ps1` category detection | ✓ Complete |
+| Delete `docs/catalog.md` | ✓ Complete |
+| Rewrite `docs/standards.md` | ✓ Complete |
+| Archive `categories/` with ARCHIVED.md | ✓ Complete |
+
+### P2 — Completed 2026-05-29
+
+| Item | Status |
+|------|--------|
+| `run.ps1` list/discovery mode (`-List`) | ✓ Complete |
+| Collection timestamp in review output header | ✓ Complete |
+| Expand `docs/runbook.md` | ✓ Complete |
+| Resolve `hybrid/` — delete empty subfolders, update README | ✓ Complete |
+
+### P3 — Pending
+
+| Item | Effort | Notes |
+|------|--------|-------|
+| `Get-DatabasePermissions.sql` + wrapper | Small | Object-level explicit grants per database |
+| `Get-ProxyAndCredentials.sql` + wrapper | Small | Agent proxies and credentials (privilege escalation surface) |
+| `Invoke-MultiServerHealthCheck.ps1` | Medium | Server list file → per-server collection → consolidated findings |
+
+### P4 — CI and quality gates (currently 0/10)
+
+| Item | Notes |
+|------|-------|
+| SQLFluff T-SQL linting | GitHub Actions, flag unsafe patterns |
+| markdownlint | Enforce docs consistency |
+| Broken link checker | Flag stale `categories/` references in docs |
+| PS wrapper smoke test | Assert every wrapper resolves its SQL path at import time |
+
+---
+
+## Completion log
+
+| Date | Item |
+|------|------|
+| 2026-05-29 | Added `.gitignore` — covers CSVs, .bak files, healthcheck output |
+| 2026-05-29 | Healthcheck `-Quiet` switch — `Invoke-HealthCheckCollection.ps1` |
+| 2026-05-29 | Fixed `Invoke-RepoSql.ps1` category detection — now resolves `sql/monitoring`, `sql/performance` etc. |
+| 2026-05-29 | Deleted `docs/catalog.md` — was pointing to stale `categories/` paths |
+| 2026-05-29 | Rewrote `docs/standards.md` — matches actual header format in use |
+| 2026-05-29 | Archived `categories/` — added ARCHIVED.md, empty subfolders not searched by overview tools |
+| 2026-05-29 | `run.ps1` list/discovery mode — `.\run.ps1 -List` shows all scripts grouped by category |
+| 2026-05-29 | Collection timestamp in review header — `Review-HealthCheckOutput.ps1` now shows when data was collected |
+| 2026-05-29 | Expanded `docs/runbook.md` — real daily/weekly/incident runbook with canonical commands and thresholds |
+| 2026-05-29 | Resolved `hybrid/` — deleted empty subfolders, updated README to reflect current state |
+| 2026-05-29 | Created CLAUDE.md — full architecture, usage patterns, healthcheck table, and standards reference |
+| 2026-05-29 | Full canonical `sql/` + `powershell/` layout with zero PS wrapper coverage gaps |
+| 2026-05-29 | All SQL scripts single-result-set, standard headers, no NOLOCK, no deprecated catalog views |
+| 2026-05-29 | Bug fixes: TempDB growth formula, TransactionLog used vs free column naming, MemoryConfig multi-result-set, BlockingSessions OUTER APPLY, AG non-AG guard, SqlAgentJobFailureSummary unreadable int dates |
+| 2026-05-29 | Key improvements: WaitStatistics benign wait filter + pct_total, LongRunningQueries DB_NAME + seconds, MissingIndexes impact score + suggested statement, BlockingSummary head-blocker context |
+| 2026-05-29 | New diagnostic scripts: OsAndHardwareInfo, DatabaseFilesDetail, RecentErrorLogEntries, ActiveSessions, LastDbccCheckdb, SuspectPages, JobScheduleSummary, TopIoQueries, IndexUsageStats, SlowQueriesFromCache |
+| 2026-05-29 | Security suite: ServerRoleMembers, DatabaseRoleMembers, OrphanedUsers, LoginPermissions, WeakLoginSettings + powershell/security/ wrappers |
+| 2026-05-29 | `Invoke-HealthCheckCollection.ps1` (19 scripts) + `Review-HealthCheckOutput.ps1` (17 rule categories) |
+| 2026-05-29 | `powershell/migration/` folder with wrappers for all 4 migration SQL scripts |
+| 2026-05-29 | Canonical layout under `sql/`, `powershell/`, `helpers/`, `docs/` with top-level `run.ps1` launcher |

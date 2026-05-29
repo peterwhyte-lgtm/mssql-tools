@@ -1,4 +1,4 @@
-﻿/*
+/*
 Script Name : Get-MemoryConfigurationAndUsage
 Category    : configuration-and-environment
 Purpose     : Display configured memory limits and current process memory allocation details.
@@ -8,8 +8,6 @@ Impact      : Low
 Requires    : VIEW SERVER STATE
 */
 SET NOCOUNT ON;
--- SAFE:ReadOnly
--- IMPACT:Low
 
 SELECT
     name,

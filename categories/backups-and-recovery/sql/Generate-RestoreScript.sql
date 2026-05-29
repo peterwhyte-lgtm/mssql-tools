@@ -1,4 +1,4 @@
-﻿/*
+/*
 Script Name : Generate-RestoreScript
 Category    : backups-and-recovery
 Purpose     : Generate a restore script for all user databases for DR and migration scenarios.
@@ -8,8 +8,6 @@ Impact      : Low
 Requires    : VIEW ANY DATABASE
 */
 SET NOCOUNT ON;
--- SAFE:ReadOnly
--- IMPACT:Low
 -- Review all file paths before executing in a DR or migration scenario.
 
 DECLARE @cmd nvarchar(max) = N'';

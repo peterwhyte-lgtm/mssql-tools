@@ -1,4 +1,4 @@
-﻿/*
+/*
 Script Name : Get-DeadlockSummary
 Category    : performance-troubleshooting
 Purpose     : Extract recent deadlock events from the system_health extended event session.
@@ -8,8 +8,6 @@ Impact      : Low
 Requires    : VIEW SERVER STATE
 */
 SET NOCOUNT ON;
--- SAFE:ReadOnly
--- IMPACT:Low
 
 SELECT
     XEvent.query('(event/data/value[@name="xml_report"]/value)[1]') AS deadlock_xml

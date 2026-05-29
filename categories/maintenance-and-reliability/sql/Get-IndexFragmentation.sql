@@ -8,8 +8,6 @@ Impact      : Low
 Requires    : VIEW DATABASE STATE
 */
 SET NOCOUNT ON;
--- SAFE:ReadOnly
--- IMPACT:Low
 
 SELECT
     s.name AS schema_name,

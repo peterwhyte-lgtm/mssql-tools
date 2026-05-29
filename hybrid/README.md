@@ -1,10 +1,10 @@
 # Hybrid layer
 
-This top-level hybrid folder is the canonical home for operational workflows that combine SQL execution, PowerShell orchestration, and reporting.
+This folder is reserved for multi-step operational workflows that combine SQL execution, PowerShell orchestration, and structured reporting.
 
-Suggested workflow areas:
-- sql-inventory-reporting/ — inventory and summary reporting
-- agent-job-monitoring/ — job health and alerting workflows
-- backup-validation/ — validation and recovery readiness reporting
+Currently, the primary workflow lives at:
 
-These folders are intended as the future production-facing entry points for the repo.
+- `powershell\reporting\Invoke-HealthCheckCollection.ps1` — 19-script collection pass
+- `powershell\reporting\Review-HealthCheckOutput.ps1` — findings review with CRITICAL/WARNING/INFO output
+
+Subfolders in this directory will be added as specific multi-step workflows are built out (agent job monitoring, backup validation, estate reporting across server fleets).

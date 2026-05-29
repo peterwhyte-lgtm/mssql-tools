@@ -9,7 +9,6 @@ Requires    : sysadmin or dbcreator
 */
 SET NOCOUNT ON;
 -- WARNING: Creates databases — review @Count and @Prefix before running
--- IMPACT:High
 
 /*
 Creates many SQL Server databases with randomized names and configurable sizes.

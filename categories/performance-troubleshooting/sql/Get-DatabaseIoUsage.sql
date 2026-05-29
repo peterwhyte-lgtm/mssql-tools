@@ -1,4 +1,4 @@
-﻿/*
+/*
 Script Name : Get-DatabaseIoUsage
 Category    : performance-troubleshooting
 Purpose     : Display database I/O totals for read/write troubleshooting and performance reviews.
@@ -8,8 +8,6 @@ Impact      : Low
 Requires    : VIEW SERVER STATE
 */
 SET NOCOUNT ON;
--- SAFE:ReadOnly
--- IMPACT:Low
 
 WITH io_stats AS (
     SELECT

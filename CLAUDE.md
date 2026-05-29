@@ -1,0 +1,156 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## What this repo is
+
+A production SQL Server DBA toolkit for Peter Whyte (sqldba.blog). It contains read-only diagnostic SQL scripts, PowerShell orchestration wrappers, a healthcheck collection and review workflow, security audit scripts, and migration inventory helpers. All scripts target SQL Server 2012+. Output goes to `output-files/`.
+
+## How to run scripts
+
+The three entry points, in order of preference:
+
+```powershell
+# 1. Root launcher — fuzzy name match, searches all powershell/ subfolders
+.\run.ps1 Get-WaitStatistics
+.\run.ps1 Get-WaitStatistics -ServerInstance MYSERVER\INST01 -OutputFormat Csv
+
+# 2. Direct wrapper — explicit path, passes all params through
+pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\powershell\reporting\Get-WaitStatistics.ps1 -ServerInstance . -OutputFormat Csv
+
+# 3. SQL directly via the repo runner (for SSMS-style results in terminal)
+pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\helpers\local-sql\Invoke-RepoSql.ps1 -ScriptPath .\sql\performance\Get-WaitStatistics.sql -ServerInstance .
+```
+
+Full healthcheck workflow:
+```powershell
+# Collect 19 scripts, save CSVs to output-files\healthcheck\<server>-<timestamp>\
+.\powershell\reporting\Invoke-HealthCheckCollection.ps1 -ServerInstance .
+
+# Review the latest collection folder and surface CRITICAL / WARNING / INFO findings
+.\powershell\reporting\Review-HealthCheckOutput.ps1
+
+# Or target a specific folder
+.\powershell\reporting\Review-HealthCheckOutput.ps1 -FolderPath ".\output-files\healthcheck\.-20260529-185000" -OutputFormat Csv
+```
+
+Preflight and discovery:
+```powershell
+.\helpers\triage\Show-RepoOverview.ps1                          # inventory: script counts by category
+.\helpers\triage\Find-UsefulScript.ps1 -Keyword blocking        # find scripts by keyword
+.\helpers\local-sql\Test-SqlConnectivity.ps1 -ServerInstance .  # verify SQL connectivity
+.\helpers\maintenance\Clear-OutputFiles.ps1                     # wipe output-files\ before a fresh run
+```
+
+## Layout — canonical vs legacy
+
+**Use `sql/` and `powershell/` for all new work.** The `categories/` folder is a legacy compatibility copy; it is stale, not maintained, and exists only so old references don't break.
+
+```
+sql/
+  monitoring/    — health, memory, MAXDOP, jobs, AG, TempDB, DBCC, suspect pages
+  performance/   — waits, blocking, long queries, missing indexes, I/O, plan cache
+  backups/       — coverage, history, DR estimates, restore generation
+  security/      — roles, permissions, orphans, weak logins, surface area
+  migration/     — database/login/job/linked-server inventory for migrations
+
+powershell/
+  inventory/          — storage, growth, disk, instance snapshots
+  reporting/          — performance wrappers + Invoke-HealthCheckCollection + Review-HealthCheckOutput
+  health-checks/      — DBCC, suspect pages, TempDB hotspots, integrity pre-checks
+  backup-automation/  — backup/restore execution and history wrappers
+  security/           — wrappers for all sql/security/ scripts
+  migration/          — wrappers for all sql/migration/ scripts
+
+helpers/
+  local-sql/    — Invoke-RepoSql.ps1 (the core runner), Test-SqlConnectivity.ps1
+  triage/       — Show-RepoOverview.ps1, Find-UsefulScript.ps1, Quick-TaskRouter.ps1
+  scaffolding/  — Generate-NextPowerShell.ps1 (stub new wrappers quickly)
+  maintenance/  — Clear-OutputFiles.ps1, update-powershell.ps1
+
+sql-templates/operations/   — production runbook templates (CDC, TDE, AG, statistics, etc.)
+output-files/               — generated CSVs, healthcheck folders, reviews
+docs/                       — roadmap, standards, runbook, structure notes
+```
+
+The `hybrid/` folder exists in the layout but its subfolders are currently empty.
+
+## How PowerShell wrappers work
+
+Every script in `powershell/**/*.ps1` (except helpers and orchestrators) is a thin wrapper:
+
+1. Resolves `$repoRoot` as two levels up from `$PSScriptRoot`
+2. Builds `$sqlScript = Join-Path $repoRoot 'sql\<category>\<Name>.sql'`
+3. Delegates to `helpers\local-sql\Invoke-RepoSql.ps1` with `-ScriptPath`, `-ServerInstance`, `-Database`, `-OutputFormat`, `-OutputPath`
+
+`Invoke-RepoSql.ps1` tries `Invoke-Sqlcmd` first (SqlServer module), falls back to `sqlcmd.exe`. Always writes a CSV to `output-files\reviews\<category>\<scriptname>-<timestamp>.csv` and prints a table preview. If neither tool is available it throws.
+
+`run.ps1` → `helpers\Run-Helper.ps1` → resolves script by name fuzzy match → `& $target @Arguments`. It searches `helpers/`, `sql/`, `powershell/`, `hybrid/`, `tools/` recursively. Throws if more than one match — callers must be specific.
+
+## SQL script standards
+
+Every SQL script must have this header block then the two safety annotations:
+
+```sql
+/*
+Script Name : Get-ExampleScript
+Category    : performance-troubleshooting
+Purpose     : One-line description of what this returns.
+Author      : Peter Whyte (https://sqldba.blog)
+Safe        : Read-only
+Impact      : Low
+Requires    : VIEW SERVER STATE
+*/
+SET NOCOUNT ON;
+-- SAFE:ReadOnly
+-- IMPACT:Low
+```
+
+`Safe` values: `Read-only` / `Writes data` / `Creates objects`  
+`Impact` values: `Low` / `Medium` / `High`
+
+**`docs/standards.md` is outdated** — it shows an older header format. The format above is what the scripts actually use.
+
+## Adding new scripts
+
+New SQL script: `sql/<category>/Get-Something.sql` using the header above.
+
+New PS wrapper: copy any existing wrapper in `powershell/<subcategory>/`, update the three variables (`syn`, `$sqlScript` path, `Write-Host` message). The `$PSScriptRoot '..\..'` path is correct for all subfolders one level under `powershell/`.
+
+If there is no matching subcategory, add to `powershell/reporting/` for read/query scripts or `powershell/inventory/` for environment/config scripts.
+
+## Healthcheck collection — what it covers
+
+`Invoke-HealthCheckCollection.ps1` runs 19 scripts and saves named CSVs:
+
+| CSV label | SQL script |
+|-----------|-----------|
+| server-info | Get-VersionAndEdition.sql |
+| os-hardware | Get-OsAndHardwareInfo.sql |
+| database-health | Get-DatabaseHealth.sql |
+| database-sizes | Get-DatabaseSizesAndFreeSpace.sql |
+| database-files | Get-DatabaseFilesDetail.sql |
+| backup-times | Get-LastDatabaseBackupTimes.sql |
+| backup-coverage | Get-BackupCoverage.sql |
+| tlog-usage | Get-TransactionLogSizeAndUsage.sql |
+| memory-config | Get-MemoryConfigurationAndUsage.sql |
+| wait-stats | Get-WaitStatistics.sql |
+| active-sessions | Get-ActiveSessions.sql |
+| tempdb-usage | Get-TempdbUsage.sql |
+| job-failures | Get-SqlAgentJobFailureSummary.sql |
+| recent-errors | Get-RecentErrorLogEntries.sql |
+| dbcc-checkdb | Get-LastDbccCheckdb.sql |
+| suspect-pages | Get-SuspectPages.sql |
+| io-usage | Get-DatabaseIoUsage.sql |
+| security-surface-area | Get-DatabaseMailAndXpCmdShell.sql |
+| weak-logins | Get-WeakLoginSettings.sql |
+
+`Review-HealthCheckOutput.ps1` reads those CSVs and fires on: databases not ONLINE, missing backups, stale full/log backups, tlog >80% used, auto-shrink, auto-close, percent-based autogrowth, DBCC CHECKDB not run in >7 days, any suspect pages (CRITICAL), SA enabled (CRITICAL), weak SQL login settings, I/O latency >50ms, specific wait type patterns (PAGEIOLATCH, WRITELOG, RESOURCE_SEMAPHORE, CXPACKET), max server memory unconfigured, and data files <10% free.
+
+## Important caveats
+
+- `categories/` contains stale duplicates of scripts. Never edit files there — edit the canonical `sql/` or `powershell/` versions.
+- AG scripts (`Get-AvailabilityGroupReplicaState.sql`, `Get-AvailabilityGroupLatency.sql`) guard against non-AG instances and return a status row instead of throwing.
+- Multi-result-set SQL scripts cannot be cleanly exported as a single CSV via `Invoke-RepoSql.ps1`. All canonical `sql/` scripts are single-result-set by design.
+- `output-files/` has no `.gitignore` protection — CSV files accumulate there and should not be committed.
+- `docs/catalog.md` is outdated and references old `categories/` paths. Ignore it; use the `sql/` folder tree directly.

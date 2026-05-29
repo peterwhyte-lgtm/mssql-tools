@@ -1,4 +1,4 @@
-﻿/*
+/*
 Script Name : Get-BackupCoverage
 Category    : backups-and-recovery
 Purpose     : Review recent backup coverage across user databases.
@@ -8,8 +8,6 @@ Impact      : Low
 Requires    : VIEW ANY DATABASE / msdb access for backup history
 */
 SET NOCOUNT ON;
--- SAFE:ReadOnly
--- IMPACT:Low
 
 WITH latest_backups AS (
     SELECT

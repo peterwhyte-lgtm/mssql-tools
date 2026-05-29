@@ -8,8 +8,6 @@ Impact      : Low
 Requires    : VIEW ANY DATABASE, db_datareader on msdb
 */
 SET NOCOUNT ON;
--- SAFE:ReadOnly
--- IMPACT:Low
 
 WITH latest_backups AS (
     SELECT
