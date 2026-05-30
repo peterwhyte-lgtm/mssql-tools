@@ -214,6 +214,19 @@ tr:hover td{background:#161b22}
 .info-card{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:12px 14px}
 .info-label{font-size:.72rem;color:#8b949e;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
 .info-val{font-size:.88rem;color:#e6edf3;font-weight:500;word-break:break-word}
+.view-toolbar{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:14px;flex-wrap:wrap}
+.view-toolbar-left{flex:1;min-width:0}
+.run-bar{display:flex;align-items:center;gap:8px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end}
+.run-bar label{font-size:.78rem;color:#8b949e;white-space:nowrap}
+.server-input{background:#0d1117;border:1px solid #30363d;color:#c9d1d9;border-radius:6px;padding:5px 10px;font-size:.82rem;width:180px}
+.server-input:focus{outline:none;border-color:#58a6ff}
+.run-btn{background:#1f6feb;border:1px solid #388bfd;color:#e6edf3;border-radius:6px;padding:5px 16px;font-size:.85rem;font-weight:600;cursor:pointer;white-space:nowrap;transition:background .15s}
+.run-btn:hover{background:#388bfd}.run-btn:disabled{opacity:.5;cursor:default}
+.run-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:200;align-items:center;justify-content:center;flex-direction:column;gap:14px}
+.run-spinner{width:44px;height:44px;border:3px solid #30363d;border-top-color:#58a6ff;border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.run-spinner-label{color:#c9d1d9;font-size:.9rem}
+.run-error{color:#f78166;font-size:.82rem;margin-top:6px;padding:8px 12px;background:#1a0e0e;border:1px solid #f78166;border-radius:6px}
 '@
 
 # ── page wrapper ───────────────────────────────────────────────────────────────
@@ -277,18 +290,85 @@ function Build-ViewPage([string]$relPath) {
     if (-not (Test-Path $fullPath)) {
         return Wrap-Page 'Not found' "<p class='empty'>File not found: $(Html-Escape $relPath)</p>"
     }
-    $content  = Get-Content $fullPath -Raw -Encoding UTF8
-    $name     = [IO.Path]::GetFileNameWithoutExtension($relPath)
-    $category = Split-Path (Split-Path $relPath -Parent) -Leaf
-    $purpose  = Get-ScriptPurpose $fullPath
-    $metaParts = @($category, ([IO.Path]::GetExtension($relPath).TrimStart('.').ToUpper()))
+    $content   = Get-Content $fullPath -Raw -Encoding UTF8
+    $name      = [IO.Path]::GetFileNameWithoutExtension($relPath)
+    $category  = Split-Path (Split-Path $relPath -Parent) -Leaf
+    $purpose   = Get-ScriptPurpose $fullPath
+    $ext       = [IO.Path]::GetExtension($relPath).ToLower()
+    $metaParts = @($category, $ext.TrimStart('.').ToUpper())
     if ($purpose) { $metaParts = @($purpose) + $metaParts }
 
+    # Determine if this script can be run through the web UI
+    $isRunnable = $false
+    if ($ext -eq '.sql' -and $relPath -match '[\\/]sql[\\/]') {
+        $isRunnable = $true
+    } elseif ($ext -eq '.ps1' -and $relPath -match '[\\/]powershell[\\/]') {
+        # Standard wrappers have both OutputFormat and OutputPath params
+        $isRunnable = ($content -match 'OutputFormat') -and ($content -match 'OutputPath')
+    }
+
+    $relEnc      = [Uri]::EscapeDataString($relPath)
+    $defaultSrv  = if ($env:DBASCRIPTS_SERVER) { Html-Escape $env:DBASCRIPTS_SERVER } else { '' }
+    $srvHint     = if ($env:DBASCRIPTS_SERVER) { $env:DBASCRIPTS_SERVER } else { 'local ( . )' }
+
+    $runControls = ''
+    if ($isRunnable) {
+        $runControls = @"
+  <div class='run-bar'>
+    <label>Server:</label>
+    <input id='srv' class='server-input' placeholder='$srvHint' value='$defaultSrv' autocomplete='off'>
+    <button id='run-btn' class='run-btn' onclick='runScript("$relEnc")'>Run &#9654;</button>
+  </div>
+"@
+    }
+
+    $overlayHtml = if ($isRunnable) { @"
+<div id='run-overlay' class='run-overlay'>
+  <div class='run-spinner'></div>
+  <div class='run-spinner-label' id='run-label'>Running $name…</div>
+</div>
+"@ } else { '' }
+
+    $runJs = if ($isRunnable) { @"
+<script>
+async function runScript(path) {
+  const srv = document.getElementById('srv').value.trim() || '.';
+  const btn = document.getElementById('run-btn');
+  const err = document.getElementById('run-err');
+  document.getElementById('run-overlay').style.display = 'flex';
+  btn.disabled = true;
+  err.style.display = 'none';
+  try {
+    const r = await fetch('/api/run?p=' + path + '&server=' + encodeURIComponent(srv));
+    const d = await r.json();
+    if (d.ok) { window.location.href = d.url; return; }
+    err.textContent = d.error || 'Unknown error';
+    err.style.display = '';
+  } catch(e) {
+    err.textContent = 'Request failed: ' + e.message;
+    err.style.display = '';
+  }
+  document.getElementById('run-overlay').style.display = 'none';
+  btn.disabled = false;
+}
+</script>
+"@ } else { '' }
+
+    $errDiv = if ($isRunnable) { "<div id='run-err' class='run-error' style='display:none'></div>" } else { '' }
+
     $body = @"
-<div class='back'><a href='/'>← all scripts</a></div>
-<div class='script-title'>$(Html-Escape $name)</div>
-<div class='script-meta'>$(Html-Escape ($metaParts -join ' · '))</div>
+<div class='back'><a href='/'>&#8592; all scripts</a></div>
+<div class='view-toolbar'>
+  <div class='view-toolbar-left'>
+    <div class='script-title'>$(Html-Escape $name)</div>
+    <div class='script-meta'>$(Html-Escape ($metaParts -join ' · '))</div>
+  </div>
+  $runControls
+</div>
+$errDiv
 <pre>$(Html-Escape $content)</pre>
+$overlayHtml
+$runJs
 "@
     Wrap-Page $name $body '' 'scripts'
 }
@@ -596,22 +676,30 @@ function Build-ReviewPage([string]$folder) {
         if ($row.is_auto_shrink_on -in @('True','1','YES'))     { Add-F 'WARNING'  'Auto-Shrink'    $row.database_name 'AUTO_SHRINK enabled — fragmentation and random I/O spikes' }
         if ($row.is_auto_close_on  -in @('True','1','YES'))     { Add-F 'WARNING'  'Auto-Close'     $row.database_name 'AUTO_CLOSE enabled — overhead on every new connection' }
     }
+    $h = 0.0; $lh = 0.0; $pct = 0.0
     foreach ($row in $backups) {
         $db = $row.database_name
         if (-not $row.last_full_backup -or $row.last_full_backup -eq '') { Add-F 'CRITICAL' 'Backup' $db 'No full backup on record' }
-        elseif ([double]::TryParse($row.full_backup_age_hours,[ref]($h=0.0))) {
-            if ($h -gt 25) { Add-F 'WARNING' 'Backup' $db "Full backup $([Math]::Round($h,1))h old (threshold 25h)" }
+        else {
+            $h = 0.0
+            if ([double]::TryParse($row.full_backup_age_hours,[ref]$h) -and $h -gt 25) {
+                Add-F 'WARNING' 'Backup' $db "Full backup $([Math]::Round($h,1))h old (threshold 25h)"
+            }
         }
         if ($row.recovery_model_desc -in @('FULL','BULK_LOGGED')) {
             if (-not $row.last_log_backup -or $row.last_log_backup -eq '') { Add-F 'WARNING' 'Backup' $db "$($row.recovery_model_desc) recovery but no log backup — log will grow unbounded" }
-            elseif ([double]::TryParse($row.log_backup_age_hours,[ref]($lh=0.0)) -and $lh -gt 4) {
-                Add-F 'WARNING' 'Backup' $db "Log backup $([Math]::Round($lh,1))h old (threshold 4h)"
+            else {
+                $lh = 0.0
+                if ([double]::TryParse($row.log_backup_age_hours,[ref]$lh) -and $lh -gt 4) {
+                    Add-F 'WARNING' 'Backup' $db "Log backup $([Math]::Round($lh,1))h old (threshold 4h)"
+                }
             }
         }
     }
     foreach ($row in $tlogs) {
         $pctCol = if ($row.PSObject.Properties['log_used_pct']) { $row.log_used_pct } else { $row.log_used_percent }
-        if ([double]::TryParse($pctCol,[ref]($pct=0.0)) -and $pct -gt 80) {
+        $pct = 0.0
+        if ([double]::TryParse($pctCol,[ref]$pct) -and $pct -gt 80) {
             Add-F 'WARNING' 'Transaction Log' $row.database_name "Log $pct% used ($($row.log_used_mb) MB of $($row.log_size_mb) MB)"
         }
     }
@@ -631,10 +719,14 @@ function Build-ReviewPage([string]$folder) {
     $openTxSess = @($sessions | Where-Object { $n=0; [int]::TryParse($_.open_transaction_count,[ref]$n) -and $n -gt 0 })
     if ($openTxSess.Count -gt 0) { Add-F 'INFO' 'Open Transactions' 'Active sessions' "$($openTxSess.Count) session(s) with open transactions" }
     if ($errors.Count -gt 0)     { Add-F 'INFO' 'Error Log' 'SQL Server error log' "$($errors.Count) non-routine entries in last 24h" }
+    $d = 0
     foreach ($row in $checkdb) {
         if (-not $row.last_good_checkdb -or $row.last_good_checkdb -eq '') { Add-F 'WARNING' 'DBCC CHECKDB' $row.database_name 'No CHECKDB on record' }
-        elseif ([int]::TryParse($row.days_since_checkdb,[ref]($d=0)) -and $d -gt 7) {
-            Add-F 'WARNING' 'DBCC CHECKDB' $row.database_name "Last good CHECKDB $d days ago (threshold 7)"
+        else {
+            $d = 0
+            if ([int]::TryParse($row.days_since_checkdb,[ref]$d) -and $d -gt 7) {
+                Add-F 'WARNING' 'DBCC CHECKDB' $row.database_name "Last good CHECKDB $d days ago (threshold 7)"
+            }
         }
     }
     $actSusp = @($suspects | Where-Object { $_.event_type -notmatch 'Restored|Repaired|Deallocated' })
@@ -654,18 +746,24 @@ function Build-ReviewPage([string]$folder) {
         Add-F $sev 'Security' $login.login_name "Risk flag: $($login.risk_flag)"
     }
     $cWaits = @{ PAGEIOLATCH_SH='Data read I/O bottleneck'; PAGEIOLATCH_EX='Data write I/O bottleneck'; WRITELOG='Log write bottleneck'; RESOURCE_SEMAPHORE='Memory grant pressure'; CXPACKET='Parallelism waits'; CXCONSUMER='Parallelism waits'; LCK_M_X='Exclusive lock waits'; ASYNC_NETWORK_IO='Client network waits' }
+    $pct = 0.0
     foreach ($row in $waits) {
-        if ($cWaits.ContainsKey($row.wait_type) -and [double]::TryParse($row.pct_total_wait,[ref]($pct=0.0)) -and $pct -gt 10) {
+        $pct = 0.0
+        if ($cWaits.ContainsKey($row.wait_type) -and [double]::TryParse($row.pct_total_wait,[ref]$pct) -and $pct -gt 10) {
             Add-F 'WARNING' 'Wait Statistics' $row.wait_type "$([Math]::Round($pct,1))% of wait time — $($cWaits[$row.wait_type])"
         }
     }
+    $mm = 0L
     foreach ($row in $memConfig) {
-        if ([long]::TryParse($row.max_server_memory_mb,[ref]($mm=0L)) -and $mm -ge 2147483647) {
+        $mm = 0L
+        if ([long]::TryParse($row.max_server_memory_mb,[ref]$mm) -and $mm -ge 2147483647) {
             Add-F 'WARNING' 'Memory Config' 'max server memory' 'Unconfigured (SQL Server default) — may consume all available RAM'
         }
     }
+    $fp = 0.0
     foreach ($row in $dbSizes) {
-        if ([double]::TryParse($row.data_free_pct,[ref]($fp=0.0)) -and $fp -lt 10) {
+        $fp = 0.0
+        if ([double]::TryParse($row.data_free_pct,[ref]$fp) -and $fp -lt 10) {
             Add-F 'WARNING' 'Disk Space' $row.database_name "Data files $fp% free ($($row.data_free_mb) MB free of $($row.data_size_mb) MB)"
         }
     }
@@ -989,6 +1087,52 @@ try {
                 $fp = Join-Path $repoRoot $p
                 if (Test-Path $fp) { ConvertTo-Json2 (Get-CsvJson $fp) }
                 else { '{"error":"not found"}' }
+            }
+            '/api/run' {
+                $contentType = 'application/json; charset=utf-8'
+                $p   = $qs['p']      ?? ''
+                $svr = ($qs['server'] ?? '').Trim()
+                if (-not $svr) { $svr = if ($env:DBASCRIPTS_SERVER) { $env:DBASCRIPTS_SERVER } else { '.' } }
+
+                $fullRunPath = Join-Path $repoRoot $p
+                if (-not (Test-Path -LiteralPath $fullRunPath)) {
+                    "{`"ok`":false,`"error`":`"Script not found: $(($p -replace '"','\"'))`"}"
+                    break
+                }
+
+                $sName  = [IO.Path]::GetFileNameWithoutExtension($fullRunPath)
+                $sExt   = [IO.Path]::GetExtension($fullRunPath).ToLower()
+                $cat    = if ($p -match '[\\/]sql[\\/]([^\\/]+)[\\/]')        { $Matches[1] }
+                          elseif ($p -match '[\\/]powershell[\\/]([^\\/]+)[\\/]') { $Matches[1] }
+                          else { 'general' }
+                $ts      = Get-Date -Format 'yyyyMMdd-HHmmss'
+                $csvPath = Join-Path $repoRoot "output-files\reviews\$cat\$sName-$ts.csv"
+                $csvDir  = Split-Path $csvPath -Parent
+                if (-not (Test-Path $csvDir)) { New-Item -ItemType Directory -Path $csvDir -Force | Out-Null }
+
+                $env:DBASCRIPTS_BATCH = '1'
+                try {
+                    if ($sExt -eq '.sql') {
+                        $runner = Join-Path $repoRoot 'helpers\local-sql\Invoke-RepoSql.ps1'
+                        & $runner -ScriptPath $fullRunPath -ServerInstance $svr -Database 'master' `
+                                  -OutputFormat 'Csv' -OutputPath $csvPath -ErrorAction Stop
+                    } else {
+                        & $fullRunPath -ServerInstance $svr -OutputFormat 'Csv' -OutputPath $csvPath -ErrorAction Stop
+                    }
+
+                    if (Test-Path -LiteralPath $csvPath) {
+                        $relCsv = $csvPath.Replace($repoRoot.ToString(), '').TrimStart('\')
+                        $enc    = [Uri]::EscapeDataString($relCsv)
+                        "{`"ok`":true,`"url`":`"/csv?p=$enc`"}"
+                    } else {
+                        '{"ok":false,"error":"Script completed but produced no output file."}'
+                    }
+                } catch {
+                    $errMsg = ($_.Exception.Message -replace '"','\"' -replace '\r?\n',' ')
+                    "{`"ok`":false,`"error`":`"$errMsg`"}"
+                } finally {
+                    $env:DBASCRIPTS_BATCH = $null
+                }
             }
             '/api/save-png' {
                 $contentType = 'application/json; charset=utf-8'
