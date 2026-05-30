@@ -844,13 +844,44 @@ function Build-ReviewPage([string]$folder) {
         }
     }
 
-    $folderEnc = Html-Escape ($folder ?? '')
+    $folderEnc  = Html-Escape ($folder ?? '')
+    $defaultSrv = if ($env:DBASCRIPTS_SERVER) { Html-Escape $env:DBASCRIPTS_SERVER } else { '' }
+    $srvHint    = if ($env:DBASCRIPTS_SERVER) { $env:DBASCRIPTS_SERVER } else { 'local ( . )' }
     $html = @"
-<form class='folder-row' method='get' action='/review'>
-  <label>Healthcheck folder:</label>
-  <input class='folder-input' name='folder' value='$folderEnc' placeholder='Leave blank for most recent…'>
-  <button type='submit' class='folder-btn'>Load</button>
-</form>
+<div style='display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px'>
+  <form class='folder-row' style='margin:0;flex:1;min-width:0' method='get' action='/review'>
+    <label>Folder:</label>
+    <input class='folder-input' name='folder' value='$folderEnc' placeholder='Leave blank for most recent…'>
+    <button type='submit' class='folder-btn'>Load</button>
+  </form>
+  <div class='run-bar' style='flex-shrink:0'>
+    <label>Server:</label>
+    <input id='hc-srv' class='server-input' placeholder='$srvHint' value='$defaultSrv' autocomplete='off'>
+    <button id='hc-run-btn' class='run-btn' onclick='runHealthcheck("review")'>Run Health Check &#9654;</button>
+  </div>
+</div>
+<div id='hc-run-err' class='run-error' style='display:none;margin-bottom:10px'></div>
+<div id='hc-overlay' class='run-overlay'>
+  <div class='run-spinner'></div>
+  <div class='run-spinner-label'>Running health check — collecting 19 scripts, please wait…</div>
+</div>
+<script>
+async function runHealthcheck(page){
+  const srv=document.getElementById('hc-srv').value.trim()||'.';
+  const btn=document.getElementById('hc-run-btn');
+  const err=document.getElementById('hc-run-err');
+  document.getElementById('hc-overlay').style.display='flex';
+  btn.disabled=true;err.style.display='none';
+  try{
+    const r=await fetch('/api/run-healthcheck?server='+encodeURIComponent(srv)+'&page='+page);
+    const d=await r.json();
+    if(d.ok){window.location.href=d.url;return;}
+    err.textContent=d.error||'Unknown error';err.style.display='';
+  }catch(e){err.textContent='Request failed: '+e.message;err.style.display='';}
+  document.getElementById('hc-overlay').style.display='none';
+  btn.disabled=false;
+}
+</script>
 "@
 
     if (-not $folder -or -not (Test-Path -LiteralPath $folder)) {
@@ -1007,6 +1038,37 @@ function Build-ReviewPage([string]$folder) {
     $html += "<span><strong>Reviewed</strong> $(Get-Date -Format 'yyyy-MM-dd HH:mm')</span>"
     $html += "</div>"
 
+    # ── instance & OS ───────────────────────────────────────────────────────────
+    if ($svrInfo.Count -gt 0 -or $osHw.Count -gt 0) {
+        $html += "<h2>Instance</h2><div class='info-card-grid'>"
+        if ($svrInfo.Count -gt 0) {
+            $sqlNames = @{ '8'='SQL Server 2000';'9'='SQL Server 2005';'10'='SQL Server 2008';
+                           '11'='SQL Server 2012';'12'='SQL Server 2014';'13'='SQL Server 2016';
+                           '14'='SQL Server 2017';'15'='SQL Server 2019';'16'='SQL Server 2022';
+                           '17'='SQL Server 2025' }
+            $pv      = $svrInfo[0].product_version
+            $pl      = $svrInfo[0].product_level
+            $major   = ($pv -split '\.')[0]
+            $relName = if ($sqlNames.ContainsKey($major)) { $sqlNames[$major] } else { "SQL Server (v$major)" }
+            $verParts = @($relName)
+            if ($pv) { $verParts += $pv }
+            if ($pl) { $verParts += $pl }
+            $ver = $verParts -join ' &nbsp;·&nbsp; '
+            $html += "<div class='info-card'><div class='info-label'>version</div><div class='info-val'>$ver</div></div>"
+        }
+        $instFields = @('edition','server_name','machine_name','is_clustered')
+        foreach ($fld in ($instFields | Where-Object { $svrInfo.Count -gt 0 -and $svrInfo[0].PSObject.Properties[$_] })) {
+            $html += "<div class='info-card'><div class='info-label'>$($fld -replace '_',' ')</div><div class='info-val'>$(Html-Escape $svrInfo[0].$fld)</div></div>"
+        }
+        $hwFields = @('os_version','cpu_count','physical_memory_mb','sqlserver_start_time')
+        foreach ($fld in ($hwFields | Where-Object { $osHw.Count -gt 0 -and $osHw[0].PSObject.Properties[$_] })) {
+            $raw  = $osHw[0].$fld
+            $disp = if ($fld -like '*_mb') { Fmt-Mb $raw } else { $raw -replace '\.\d{3,}$','' }
+            $html += "<div class='info-card'><div class='info-label'>$($fld -replace '_',' ')</div><div class='info-val'>$(Html-Escape $disp)</div></div>"
+        }
+        $html += "</div>"
+    }
+
     # ── vital signs bar ────────────────────────────────────────────────────────
     $vSessions = $sessions.Count
     $vBlocked  = $blkSess.Count
@@ -1063,22 +1125,6 @@ function Build-ReviewPage([string]$folder) {
     $html += "<div class='vital-card $diskCls'><div class='vital-label'>Disk (worst)</div><div class='vital-val'>$diskDisp</div><div class='vital-sub'>$diskSub</div></div>"
     $html += "<div class='vital-card $missCls'><div class='vital-label'>Missing Indexes</div><div class='vital-val'>$missDisp</div><div class='vital-sub'>$missSub</div></div>"
     $html += "</div>"
-
-    # ── instance & OS ───────────────────────────────────────────────────────────
-    if ($svrInfo.Count -gt 0 -or $osHw.Count -gt 0) {
-        $html += "<h2>Instance</h2><div class='info-card-grid'>"
-        $instFields = @('sql_version','edition','product_level','server_name','is_clustered','is_hadr_enabled')
-        foreach ($fld in ($instFields | Where-Object { $svrInfo.Count -gt 0 -and $svrInfo[0].PSObject.Properties[$_] })) {
-            $html += "<div class='info-card'><div class='info-label'>$($fld -replace '_',' ')</div><div class='info-val'>$(Html-Escape $svrInfo[0].$fld)</div></div>"
-        }
-        $hwFields = @('os_version','cpu_count','physical_memory_mb','sqlserver_start_time')
-        foreach ($fld in ($hwFields | Where-Object { $osHw.Count -gt 0 -and $osHw[0].PSObject.Properties[$_] })) {
-            $raw = $osHw[0].$fld
-            $disp = if ($fld -like '*_mb') { Fmt-Mb $raw } else { $raw -replace '\.\d{3,}$','' }
-            $html += "<div class='info-card'><div class='info-label'>$($fld -replace '_',' ')</div><div class='info-val'>$(Html-Escape $disp)</div></div>"
-        }
-        $html += "</div>"
-    }
 
     # severity summary chips
     $critN = @($findings | Where-Object Severity -eq 'CRITICAL').Count
@@ -1355,14 +1401,44 @@ function Build-DiskPage([string]$folder) {
         }
     }
 
-    $folderEnc = Html-Escape ($folder ?? '')
-
+    $folderEnc  = Html-Escape ($folder ?? '')
+    $defaultSrv = if ($env:DBASCRIPTS_SERVER) { Html-Escape $env:DBASCRIPTS_SERVER } else { '' }
+    $srvHint    = if ($env:DBASCRIPTS_SERVER) { $env:DBASCRIPTS_SERVER } else { 'local ( . )' }
     $html = @"
-<form class='folder-row' method='get' action='/disk'>
-  <label>Healthcheck folder:</label>
-  <input class='folder-input' name='folder' value='$folderEnc' placeholder='Leave blank for most recent…'>
-  <button type='submit' class='folder-btn'>Load</button>
-</form>
+<div style='display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px'>
+  <form class='folder-row' style='margin:0;flex:1;min-width:0' method='get' action='/disk'>
+    <label>Folder:</label>
+    <input class='folder-input' name='folder' value='$folderEnc' placeholder='Leave blank for most recent…'>
+    <button type='submit' class='folder-btn'>Load</button>
+  </form>
+  <div class='run-bar' style='flex-shrink:0'>
+    <label>Server:</label>
+    <input id='hc-srv' class='server-input' placeholder='$srvHint' value='$defaultSrv' autocomplete='off'>
+    <button id='hc-run-btn' class='run-btn' onclick='runHealthcheck("disk")'>Run Disk Check &#9654;</button>
+  </div>
+</div>
+<div id='hc-run-err' class='run-error' style='display:none;margin-bottom:10px'></div>
+<div id='hc-overlay' class='run-overlay'>
+  <div class='run-spinner'></div>
+  <div class='run-spinner-label'>Collecting disk and storage data…</div>
+</div>
+<script>
+async function runHealthcheck(page){
+  const srv=document.getElementById('hc-srv').value.trim()||'.';
+  const btn=document.getElementById('hc-run-btn');
+  const err=document.getElementById('hc-run-err');
+  document.getElementById('hc-overlay').style.display='flex';
+  btn.disabled=true;err.style.display='none';
+  try{
+    const r=await fetch('/api/run-healthcheck?server='+encodeURIComponent(srv)+'&page='+page);
+    const d=await r.json();
+    if(d.ok){window.location.href=d.url;return;}
+    err.textContent=d.error||'Unknown error';err.style.display='';
+  }catch(e){err.textContent='Request failed: '+e.message;err.style.display='';}
+  document.getElementById('hc-overlay').style.display='none';
+  btn.disabled=false;
+}
+</script>
 "@
 
     if (-not $folder -or -not (Test-Path -LiteralPath $folder)) {
@@ -1576,6 +1652,31 @@ try {
                 } finally {
                     $env:DBASCRIPTS_BATCH = $null
                     if ($tmpFile -and (Test-Path $tmpFile)) { Remove-Item $tmpFile -ErrorAction SilentlyContinue }
+                }
+            }
+            '/api/run-healthcheck' {
+                $contentType = 'application/json; charset=utf-8'
+                $svr  = ($qs['server'] ?? '').Trim()
+                $page = $qs['page']   ?? 'review'
+                if (-not $svr) { $svr = if ($env:DBASCRIPTS_SERVER) { $env:DBASCRIPTS_SERVER } else { '.' } }
+                $collScript = Join-Path $repoRoot 'powershell\reporting\Invoke-HealthCheckCollection.ps1'
+                if (-not (Test-Path $collScript)) {
+                    '{"ok":false,"error":"Invoke-HealthCheckCollection.ps1 not found"}'; break
+                }
+                try {
+                    & $collScript -ServerInstance $svr -ErrorAction Stop
+                    $hcRoot = Join-Path $repoRoot 'output-files\healthcheck'
+                    $latest = Get-ChildItem -LiteralPath $hcRoot -Directory -ErrorAction SilentlyContinue |
+                              Sort-Object LastWriteTime -Descending | Select-Object -First 1
+                    if ($latest) {
+                        $enc = [Uri]::EscapeDataString($latest.FullName)
+                        "{`"ok`":true,`"url`":`"/$page?folder=$enc`"}"
+                    } else {
+                        '{"ok":false,"error":"Collection finished but no output folder found."}'
+                    }
+                } catch {
+                    $errMsg = $_.Exception.Message -replace '"','\"' -replace '\r?\n',' '
+                    "{`"ok`":false,`"error`":`"$errMsg`"}"
                 }
             }
             '/api/clear-output' {
