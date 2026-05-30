@@ -64,6 +64,28 @@ function Get-ScriptPurpose([string]$path) {
     return ''
 }
 
+function Get-ScriptSafety([string]$path) {
+    try {
+        foreach ($line in (Get-Content $path -TotalCount 15)) {
+            if ($line -match '--\s*SAFE\s*:\s*(\S+)')  { return $Matches[1] }
+            if ($line -match '\bSafe\s*:\s*(.+)')       { return $Matches[1].Trim() }
+        }
+    } catch {}
+    return 'Unknown'
+}
+
+function Resolve-SafetyClass([string]$safety) {
+    if ($safety -match 'Read') { return 'safe-readonly' }
+    if ($safety -match 'Writ') { return 'safe-writes'   }
+    return 'safe-unknown'
+}
+
+function Resolve-SafetyLabel([string]$safety) {
+    if ($safety -match 'Read') { return 'Read-Only' }
+    if ($safety -match 'Writ') { return 'Writes'    }
+    return '?'
+}
+
 function Get-CsvJson([string]$fullPath) {
     $raw = @(Import-Csv $fullPath -ErrorAction SilentlyContinue)
     if (-not $raw) { return @{ headers=@(); rows=@(); labelCol=''; numericCols=@() } }
@@ -248,6 +270,14 @@ tr:hover td{background:#161b22}
 .server-input:focus{outline:none;border-color:#58a6ff}
 .run-btn{background:#1f6feb;border:1px solid #388bfd;color:#e6edf3;border-radius:6px;padding:5px 16px;font-size:.85rem;font-weight:600;cursor:pointer;white-space:nowrap;transition:background .15s}
 .run-btn:hover{background:#388bfd}.run-btn:disabled{opacity:.5;cursor:default}
+.safe-badge{display:inline-block;font-size:.7rem;padding:2px 9px;border-radius:10px;font-weight:600;vertical-align:middle}
+.safe-readonly{background:#1a3a2a;color:#3fb950}
+.safe-writes{background:#3a1f00;color:#ffa657}
+.safe-unknown{background:#21262d;color:#8b949e}
+.dryrun-wrap{display:flex;align-items:center;gap:5px;font-size:.78rem;color:#8b949e;white-space:nowrap;border:1px solid #30363d;border-radius:6px;padding:4px 10px;background:#0d1117}
+.dryrun-wrap input[type=checkbox]{accent-color:#ffa657;cursor:pointer}
+.dryrun-wrap label{cursor:pointer;user-select:none}
+.dryrun-banner{background:#1a0f00;border:1px solid #ffa657;border-radius:6px;padding:8px 14px;font-size:.82rem;color:#ffa657;margin-bottom:14px}
 .run-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:200;align-items:center;justify-content:center;flex-direction:column;gap:14px}
 .run-spinner{width:44px;height:44px;border:3px solid #30363d;border-top-color:#58a6ff;border-radius:50%;animation:spin 1s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -303,7 +333,9 @@ function Build-HomePage {
                 $purpose    = Get-ScriptPurpose $s.FullName
                 $purposeHtml = if ($purpose) { "<div class='purpose'>$(Html-Escape $purpose)</div>" } else { '' }
                 $relEnc     = [Uri]::EscapeDataString($s.RelPath)
-                $html += "<div class='card'><span class='badge $badgeClass'>$typeName</span><a href='/view?p=$relEnc'>$(Html-Escape $s.Name)</a>$purposeHtml</div>"
+                $safety     = Get-ScriptSafety $s.FullName
+                $sBadge     = "<span class='safe-badge $(Resolve-SafetyClass $safety)'>$(Resolve-SafetyLabel $safety)</span>"
+                $html += "<div class='card'><span class='badge $badgeClass'>$typeName</span>$sBadge<a href='/view?p=$relEnc'>$(Html-Escape $s.Name)</a>$purposeHtml</div>"
             }
             $html += '</div>'
         }
@@ -324,18 +356,25 @@ function Build-ViewPage([string]$relPath) {
     $metaParts = @($category, $ext.TrimStart('.').ToUpper())
     if ($purpose) { $metaParts = @($purpose) + $metaParts }
 
+    # Safety classification
+    $safety    = Get-ScriptSafety $fullPath
+    $isWrites  = $safety -match 'Writ'
+    $safeCls   = Resolve-SafetyClass $safety
+    $safeLabel = Resolve-SafetyLabel $safety
+    $safeBadgeHtml = "<span class='safe-badge $safeCls'>$safeLabel</span>"
+
     # Determine if this script can be run through the web UI
     $isRunnable = $false
     if ($ext -eq '.sql' -and $relPath -match '(^|[\\/])sql[\\/]') {
         $isRunnable = $true
     } elseif ($ext -eq '.ps1' -and $relPath -match '(^|[\\/])powershell[\\/]') {
-        # Standard wrappers have both OutputFormat and OutputPath params
         $isRunnable = ($content -match 'OutputFormat') -and ($content -match 'OutputPath')
     }
 
     $relEnc      = [Uri]::EscapeDataString($relPath)
     $defaultSrv  = if ($env:DBASCRIPTS_SERVER) { Html-Escape $env:DBASCRIPTS_SERVER } else { '' }
     $srvHint     = if ($env:DBASCRIPTS_SERVER) { $env:DBASCRIPTS_SERVER } else { 'local ( . )' }
+    $dryRunToggle = if ($isWrites -and $isRunnable) { "<div class='dryrun-wrap'><input type='checkbox' id='dryrun' checked><label for='dryrun'>Dry Run</label></div>" } else { '' }
 
     $runControls = ''
     if ($isRunnable) {
@@ -343,6 +382,7 @@ function Build-ViewPage([string]$relPath) {
   <div class='run-bar'>
     <label>Server:</label>
     <input id='srv' class='server-input' placeholder='$srvHint' value='$defaultSrv' autocomplete='off'>
+    $dryRunToggle
     <button id='run-btn' class='run-btn' onclick='runScript("$relEnc")'>Run &#9654;</button>
   </div>
 "@
@@ -355,17 +395,21 @@ function Build-ViewPage([string]$relPath) {
 </div>
 "@ } else { '' }
 
+    $isWritesJs = if ($isWrites) { 'true' } else { 'false' }
     $runJs = if ($isRunnable) { @"
 <script>
 async function runScript(path) {
   const srv = document.getElementById('srv').value.trim() || '.';
   const btn = document.getElementById('run-btn');
   const err = document.getElementById('run-err');
+  const isWrites = $isWritesJs;
+  const dryrunEl = document.getElementById('dryrun');
+  const dryrun = isWrites && dryrunEl && dryrunEl.checked ? '1' : '0';
   document.getElementById('run-overlay').style.display = 'flex';
   btn.disabled = true;
   err.style.display = 'none';
   try {
-    const r = await fetch('/api/run?p=' + path + '&server=' + encodeURIComponent(srv));
+    const r = await fetch('/api/run?p=' + path + '&server=' + encodeURIComponent(srv) + '&dryrun=' + dryrun);
     const d = await r.json();
     if (d.ok) { window.location.href = d.url; return; }
     err.textContent = d.error || 'Unknown error';
@@ -387,7 +431,7 @@ async function runScript(path) {
 <div class='view-toolbar'>
   <div class='view-toolbar-left'>
     <div class='script-title'>$(Html-Escape $name)</div>
-    <div class='script-meta'>$(Html-Escape ($metaParts -join ' · '))</div>
+    <div class='script-meta'>$(Html-Escape ($metaParts -join ' · ')) $safeBadgeHtml</div>
   </div>
   $runControls
 </div>
@@ -416,7 +460,9 @@ function Build-SearchPage([string]$q) {
         $purposeHtml = if ($purpose) { "<div class='purpose'>$(Html-Escape $purpose)</div>" } else { '' }
         $relEnc     = [Uri]::EscapeDataString($s.RelPath)
         $badgeClass  = if ($s.Type -eq 'SQL') { 'badge-sql' } else { 'badge-ps' }
-        $html += "<div class='card'><span class='badge $badgeClass'>$($s.Type)</span><a href='/view?p=$relEnc'>$(Html-Escape $s.Name)</a>$purposeHtml</div>"
+        $safety      = Get-ScriptSafety $s.FullName
+        $sBadge      = "<span class='safe-badge $(Resolve-SafetyClass $safety)'>$(Resolve-SafetyLabel $safety)</span>"
+        $html += "<div class='card'><span class='badge $badgeClass'>$($s.Type)</span>$sBadge<a href='/view?p=$relEnc'>$(Html-Escape $s.Name)</a>$purposeHtml</div>"
     }
     $html += '</div>'
     Wrap-Page "Search: $q" $html $q 'scripts'
@@ -504,7 +550,9 @@ async function rerunScript(path) {
 </script>
 "@ } else { '' }
 
-    $errDiv = if ($srcScriptRel) { "<div id='run-err' class='run-error' style='display:none;margin-bottom:8px'></div>" } else { '' }
+    $errDiv    = if ($srcScriptRel) { "<div id='run-err' class='run-error' style='display:none;margin-bottom:8px'></div>" } else { '' }
+    $isDryRun  = $relPath -replace '\\','/' -like '*/dry-runs/*'
+    $dryBanner = if ($isDryRun) { "<div class='dryrun-banner'>&#9888; Dry run result — this output was produced inside a transaction that was rolled back. No changes were committed to the database.</div>" } else { '' }
 
     $body = @"
 <div class='back'><a href='/csvs'>← output CSVs</a></div>
@@ -514,6 +562,7 @@ async function rerunScript(path) {
   </div>
   $rerunBar
 </div>
+$dryBanner
 $errDiv
 <div class='mode-badge' id='mode-badge'>Loading…</div>
 
@@ -1401,8 +1450,9 @@ try {
             }
             '/api/run' {
                 $contentType = 'application/json; charset=utf-8'
-                $p   = $qs['p']      ?? ''
-                $svr = ($qs['server'] ?? '').Trim()
+                $p      = $qs['p']      ?? ''
+                $svr    = ($qs['server'] ?? '').Trim()
+                $dryRun = $qs['dryrun'] -eq '1'
                 if (-not $svr) { $svr = if ($env:DBASCRIPTS_SERVER) { $env:DBASCRIPTS_SERVER } else { '.' } }
 
                 $fullRunPath = Join-Path $repoRoot $p
@@ -1413,36 +1463,48 @@ try {
 
                 $sName  = [IO.Path]::GetFileNameWithoutExtension($fullRunPath)
                 $sExt   = [IO.Path]::GetExtension($fullRunPath).ToLower()
-                $cat    = if ($p -match '(^|[\\/])sql[\\/]([^\\/]+)[\\/]')        { $Matches[2] }
+                $cat    = if ($p -match '(^|[\\/])sql[\\/]([^\\/]+)[\\/]')            { $Matches[2] }
                           elseif ($p -match '(^|[\\/])powershell[\\/]([^\\/]+)[\\/]') { $Matches[2] }
                           else { 'general' }
                 $ts      = Get-Date -Format 'yyyyMMdd-HHmmss'
-                $csvPath = Join-Path $repoRoot "output-files\reviews\$cat\$sName-$ts.csv"
-                $csvDir  = Split-Path $csvPath -Parent
+                $csvDir  = Join-Path $repoRoot "output-files\reviews\$cat$(if ($dryRun) {'\dry-runs'} else {''})"
+                $csvPath = Join-Path $csvDir "$sName-$ts.csv"
                 if (-not (Test-Path $csvDir)) { New-Item -ItemType Directory -Path $csvDir -Force | Out-Null }
 
+                $tmpFile = $null
                 $env:DBASCRIPTS_BATCH = '1'
                 try {
+                    $scriptToRun = $fullRunPath
+                    if ($dryRun -and $sExt -eq '.sql') {
+                        $origSql = Get-Content $fullRunPath -Raw -Encoding UTF8
+                        $wrapped = "-- ============================================================`r`n-- DRY RUN — wrapped in a transaction that will be rolled back`r`n-- No changes will be committed to the database`r`n-- ============================================================`r`nBEGIN TRANSACTION;`r`n`r`n$origSql`r`n`r`nROLLBACK TRANSACTION;`r`n"
+                        $tmpFile = [IO.Path]::Combine([IO.Path]::GetTempPath(), "$sName-dryrun-$ts.sql")
+                        [IO.File]::WriteAllText($tmpFile, $wrapped, [Text.Encoding]::UTF8)
+                        $scriptToRun = $tmpFile
+                    }
+
                     if ($sExt -eq '.sql') {
                         $runner = Join-Path $repoRoot 'helpers\local-sql\Invoke-RepoSql.ps1'
-                        & $runner -ScriptPath $fullRunPath -ServerInstance $svr -Database 'master' `
+                        & $runner -ScriptPath $scriptToRun -ServerInstance $svr -Database 'master' `
                                   -OutputFormat 'Csv' -OutputPath $csvPath -ErrorAction Stop
                     } else {
-                        & $fullRunPath -ServerInstance $svr -OutputFormat 'Csv' -OutputPath $csvPath -ErrorAction Stop
+                        & $scriptToRun -ServerInstance $svr -OutputFormat 'Csv' -OutputPath $csvPath -ErrorAction Stop
                     }
 
                     if (Test-Path -LiteralPath $csvPath) {
                         $relCsv = $csvPath.Replace($repoRoot.ToString(), '').TrimStart('\')
                         $enc    = [Uri]::EscapeDataString($relCsv)
-                        "{`"ok`":true,`"url`":`"/csv?p=$enc`"}"
+                        "{`"ok`":true,`"url`":`"/csv?p=$enc`",`"dryrun`":$(if ($dryRun){'true'}else{'false'})}"
                     } else {
-                        '{"ok":false,"error":"Script completed but produced no output file."}'
+                        $msg = if ($dryRun) { 'Dry run completed — no output rows (script may not SELECT data).' } else { 'Script completed but produced no output file.' }
+                        "{`"ok`":false,`"error`":`"$msg`"}"
                     }
                 } catch {
                     $errMsg = ($_.Exception.Message -replace '"','\"' -replace '\r?\n',' ')
                     "{`"ok`":false,`"error`":`"$errMsg`"}"
                 } finally {
                     $env:DBASCRIPTS_BATCH = $null
+                    if ($tmpFile -and (Test-Path $tmpFile)) { Remove-Item $tmpFile -ErrorAction SilentlyContinue }
                 }
             }
             '/api/save-png' {
