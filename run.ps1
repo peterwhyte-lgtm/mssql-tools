@@ -23,6 +23,8 @@ param(
 
 $repoRoot = Resolve-Path $PSScriptRoot
 
+& (Join-Path $repoRoot 'helpers\local-sql\Install-Prerequisites.ps1')
+
 if ($List -or -not $ScriptName) {
     Write-Host ''
     Write-Host 'DBA Scripts — available scripts' -ForegroundColor Cyan
@@ -82,6 +84,11 @@ if ($candidates.Count -eq 0) {
 }
 
 $unique = $candidates | Sort-Object FullName -Unique
+
+# Prefer exact match over fuzzy — prevents e.g. Get-IndexFragmentation being blocked by
+# Get-IndexFragmentationAcrossDatabases when the user typed the full name.
+$exact = $unique | Where-Object { $_.BaseName -eq $ScriptName }
+if ($exact.Count -eq 1) { $unique = $exact }
 if ($unique.Count -eq 0) {
     Write-Host "No script matched '$ScriptName'." -ForegroundColor Yellow
     Write-Host "  Try: .\helpers\triage\Find-UsefulScript.ps1 -Keyword $ScriptName" -ForegroundColor DarkGray

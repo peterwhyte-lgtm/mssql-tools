@@ -42,7 +42,9 @@ jobs:
             'PSUseBOMForUnicodeEncodedFile',
             'PSReviewUnusedParameter'
           )
-          $results = Invoke-ScriptAnalyzer -Path $paths -Recurse -Severity Warning,Error -ExcludeRule $exclude
+          $results = $paths | ForEach-Object {
+            Invoke-ScriptAnalyzer -Path $_ -Recurse -Severity Warning,Error -ExcludeRule $exclude
+          }
           $results | Format-Table
           if ($results | Where-Object { $_.Severity -in 'Error','Warning' }) { exit 1 }
         shell: pwsh

@@ -1,56 +1,53 @@
-﻿<#
+<#
 .SYNOPSIS
-Reports index fragmentation for a database.
+Reports top fragmented indexes across all user databases on the instance.
+
+.NOTES
+ScriptType   : hybrid
+TargetScope  : single server
+RiskLevel    : SAFE
+Purpose      : Identify indexes needing REBUILD or REORGANIZE across every user database.
+
+.DESCRIPTION
+Wrapper for sql\monitoring\Get-IndexFragmentation.sql. Scans all online user databases
+in one pass using LIMITED mode and returns a single ranked result set.
+
+Runtime is proportional to instance size — expect 30 seconds to several minutes on
+larger servers. The QueryTimeout is set to 30 minutes to allow for this. Run off-peak
+where possible.
+
+.PARAMETER ServerInstance
+SQL Server instance to query. Defaults to '.'.
+
+.PARAMETER OutputFormat
+Output mode: 'Table' (default) or 'Csv'.
+
+.PARAMETER OutputPath
+Optional file path to save the CSV output.
+
+.EXAMPLE
+.\run.ps1 Get-IndexFragmentation
+
+.EXAMPLE
+.\run.ps1 Get-IndexFragmentation -OutputFormat Csv
 #>
 
 param(
-    [string]$SqlInstance = '.',
-    [string]$DatabaseName = 'master'
+    [string]$ServerInstance = '.',
+    [ValidateSet('Table', 'Csv')]
+    [string]$OutputFormat = 'Table',
+    [string]$OutputPath
 )
+
 $ErrorActionPreference = 'Stop'
 
-$connectionString = "Server=$SqlInstance;Database=$DatabaseName;Integrated Security=True;TrustServerCertificate=True"
+$repoRoot  = Resolve-Path (Join-Path $PSScriptRoot '..\..')
+$sqlScript = Join-Path $repoRoot 'sql\monitoring\Get-IndexFragmentation.sql'
+$runner    = Join-Path $repoRoot 'helpers\local-sql\Invoke-RepoSql.ps1'
 
-$sql = @'
-SELECT
-    s.name AS SchemaName,
-    t.name AS TableName,
-    i.name AS IndexName,
-    ips.avg_fragmentation_in_percent,
-    ips.page_count,
-    ips.fragment_count,
-    ips.avg_fragment_size_in_pages
-FROM sys.dm_db_index_physical_stats(DB_ID(), NULL, NULL, NULL, 'LIMITED') ips
-JOIN sys.indexes i ON ips.object_id = i.object_id AND ips.index_id = i.index_id
-JOIN sys.tables t ON i.object_id = t.object_id
-JOIN sys.schemas s ON t.schema_id = s.schema_id
-WHERE i.name IS NOT NULL
-  AND ips.avg_fragmentation_in_percent >= 5
-ORDER BY ips.avg_fragmentation_in_percent DESC;
-'@
+if (-not (Test-Path -LiteralPath $sqlScript)) { throw "SQL script not found: $sqlScript" }
+if (-not (Test-Path -LiteralPath $runner))    { throw "Runner not found: $runner" }
 
-Add-Type -AssemblyName System.Data
-$connection = New-Object System.Data.SqlClient.SqlConnection($connectionString)
-$command = New-Object System.Data.SqlClient.SqlCommand($sql, $connection)
-$connection.Open()
-$reader = $command.ExecuteReader()
-$results = New-Object System.Collections.Generic.List[object]
-
-while ($reader.Read()) {
-    $results.Add([PSCustomObject]@{
-        SchemaName = [string]$reader['SchemaName']
-        TableName = [string]$reader['TableName']
-        IndexName = [string]$reader['IndexName']
-        AvgFragmentationPct = [decimal]$reader['avg_fragmentation_in_percent']
-        PageCount = [int]$reader['page_count']
-        FragmentCount = [int]$reader['fragment_count']
-        AvgFragmentSizeInPages = [int]$reader['avg_fragment_size_in_pages']
-    })
-}
-
-$connection.Close()
-
-$results | Format-Table -AutoSize
-
-
-
+Write-Host 'Scanning index fragmentation across all user databases (this may take a few minutes)...' -ForegroundColor Cyan
+& $runner -ScriptPath $sqlScript -ServerInstance $ServerInstance -Database master `
+          -OutputFormat $OutputFormat -OutputPath $OutputPath -QueryTimeout 1800

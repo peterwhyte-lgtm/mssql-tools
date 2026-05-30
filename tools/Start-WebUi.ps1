@@ -646,6 +646,30 @@ $errDiv
 
 <script src='https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js'></script>
 <script>
+const SCRIPT_NAME='$scriptBase';
+const CHART_HINTS={
+  // Horizontal bar — ranked performance lists (label on Y axis, value on X)
+  'Get-WaitStatistics':              {type:'bar',h:true,  prefer:['pct_total_wait','wait_time_ms','avg_wait_ms']},
+  'Get-IndexFragmentation':          {type:'bar',h:true,  prefer:['fragmentation_pct','page_count']},
+  'Get-IndexFragmentationAcrossDatabases':{type:'bar',h:true,prefer:['avg_fragmentation_percent','page_count']},
+  'Get-MissingIndexes':              {type:'bar',h:true,  prefer:['impact_score','user_seeks','avg_improvement_pct']},
+  'Get-TopCpuQueries':               {type:'bar',h:true,  prefer:['total_worker_time_ms','avg_worker_time_ms','execution_count']},
+  'Get-TopIoQueries':                {type:'bar',h:true,  prefer:['total_logical_reads','avg_logical_reads']},
+  'Get-SlowQueriesFromCache':        {type:'bar',h:true,  prefer:['avg_elapsed_ms','total_elapsed_ms','execution_count']},
+  'Get-BlockingSummary':             {type:'bar',h:true,  prefer:['blocked_session_count','max_wait_sec','total_wait_sec']},
+  'Get-LongRunningQueries':          {type:'bar',h:true,  prefer:['elapsed_sec','cpu_time','logical_reads']},
+  // Vertical bar — per-database comparisons
+  'Get-DatabaseSizesAndFreeSpace':   {type:'bar',h:false, prefer:['data_size_mb','log_size_mb','free_space_mb']},
+  'Get-DatabaseIoUsage':             {type:'bar',h:false, prefer:['reads_mb','writes_mb','read_latency_ms','write_latency_ms']},
+  'Get-TransactionLogSizeAndUsage':  {type:'bar',h:false, prefer:['log_size_mb','log_used_mb']},
+  'Get-BackupCoverage':              {type:'bar',h:false, prefer:['full_backup_age_hours','diff_backup_age_hours']},
+  'Get-LastDatabaseBackupTimes':     {type:'bar',h:false, prefer:['full_backup_age_hours','log_backup_age_hours']},
+  // Doughnut — proportional / used vs free
+  'Get-DiskSpace':                   {type:'doughnut',    prefer:['used_gb','free_gb']},
+  'Get-TempdbUsage':                 {type:'doughnut',    prefer:['used_mb','free_mb']},
+  'Get-MemoryConfigurationAndUsage': {type:'doughnut',    prefer:['sql_memory_mb','available_mb']},
+};
+
 const COLORS=['#58a6ff','#3fb950','#f78166','#d2a8ff','#ffa657','#79c0ff','#56d364','#ff7b72',
               '#e3b341','#a5d6ff','#7ee787','#ffa8a8'];
 const SV={
@@ -658,7 +682,7 @@ const SV={
   'read-only':'blue',writes:'blue'
 };
 
-let chart=null,data=null,type='bar',pieCol='';
+let chart=null,data=null,type='bar',pieCol='',horizontal=false;
 const active=new Set();
 let sortCol=null,sortDir=1,visRows=[];
 
@@ -686,11 +710,32 @@ async function init(){
     :data.rows.length+' rows · '+data.headers.length+' columns · table view';
   if(chartable){
     document.getElementById('chart-panel').style.display='';
-    pieCol=data.numericCols[0]||'';
-    data.numericCols.slice(0,4).forEach(c=>active.add(c));
+    applyHint();
     buildControls();renderChart();
   }
   renderTable();
+}
+
+function applyHint(){
+  const hint=CHART_HINTS[SCRIPT_NAME];
+  active.clear();
+  horizontal=false;
+  if(hint){
+    type=hint.type||'bar';
+    horizontal=hint.h||false;
+    const pref=(hint.prefer||[]).map(p=>
+      data.numericCols.find(c=>c.toLowerCase()===p.toLowerCase())
+    ).filter(Boolean);
+    const cols=pref.length>0?pref:data.numericCols.slice(0,4);
+    cols.slice(0,4).forEach(c=>active.add(c));
+    pieCol=(type==='pie'||type==='doughnut')?(cols[0]||data.numericCols[0]||''):(data.numericCols[0]||'');
+  } else {
+    pieCol=data.numericCols[0]||'';
+    data.numericCols.slice(0,4).forEach(c=>active.add(c));
+  }
+  document.querySelectorAll('.type-btns button').forEach(b=>b.classList.remove('active'));
+  const btn=document.getElementById('btn-'+type);
+  if(btn)btn.classList.add('active');
 }
 
 function buildControls(){
@@ -711,6 +756,7 @@ function setPieCol(col){pieCol=col;renderChart();}
 
 function setType(t){
   type=t;
+  horizontal=false;
   document.querySelectorAll('.type-btns button').forEach(b=>b.classList.remove('active'));
   document.getElementById('btn-'+t).classList.add('active');
   buildControls();renderChart();
@@ -733,10 +779,12 @@ function renderChart(){
       return{label:col,data:data.rows.map(r=>parseFloat(r[col])||0),
         backgroundColor:COLORS[i%COLORS.length]+'bb',borderColor:COLORS[i%COLORS.length],borderWidth:1};
     });
-    chart=new Chart(ctx,{type:type==='bar'?'bar':'line',data:{labels,datasets},options:{responsive:true,
+    const opts={responsive:true,
       plugins:{legend:{labels:{color:'#c9d1d9'}}},
-      scales:{x:{ticks:{color:'#8b949e',maxRotation:45},grid:{color:'#21262d'}},
-              y:{ticks:{color:'#8b949e'},grid:{color:'#21262d'}}}}});
+      scales:{x:{ticks:{color:'#8b949e',maxRotation:horizontal?0:45},grid:{color:'#21262d'}},
+              y:{ticks:{color:'#8b949e'},grid:{color:'#21262d'}}}};
+    if(horizontal)opts.indexAxis='y';
+    chart=new Chart(ctx,{type:type==='bar'?'bar':'line',data:{labels,datasets},options:opts});
   }
 }
 
@@ -1494,6 +1542,85 @@ async function runHealthcheck(page){
     if (-not $dbSizes) {
         $html += "<p class='no-data'>No <code>database-sizes.csv</code> in this folder.</p>"
     } else {
+        # Build chart data — top 12 by data size, remainder bucketed as "Other"
+        $MAX_SLICES = 12
+        $byDataSize = @($dbSizes | Sort-Object { [double]($_.data_size_mb -as [double]) } -Descending)
+        $chartRows  = if ($byDataSize.Count -le $MAX_SLICES) { $byDataSize } else {
+            $main  = @($byDataSize | Select-Object -First $MAX_SLICES)
+            $rest  = @($byDataSize | Select-Object -Skip  $MAX_SLICES)
+            $oData = [Math]::Round(($rest | Measure-Object { [double]($_.data_size_mb -as [double]) } -Sum).Sum, 1)
+            $oLog  = [Math]::Round(($rest | Measure-Object { [double]($_.log_size_mb  -as [double]) } -Sum).Sum, 1)
+            $oFree = [Math]::Round(($rest | Measure-Object { [double]($_.data_free_mb -as [double]) } -Sum).Sum, 1)
+            $oLFr  = [Math]::Round(($rest | Measure-Object { [double]($_.log_free_mb  -as [double]) } -Sum).Sum, 1)
+            @($main) + @([PSCustomObject]@{
+                database_name = '(Other '+$rest.Count+' DBs)'
+                data_size_mb  = $oData; log_size_mb  = $oLog
+                data_free_mb  = $oFree; log_free_mb  = $oLFr
+                data_free_pct = 0;      log_free_pct = 0
+            })
+        }
+        $cLabels    = ($chartRows | ForEach-Object { $_.database_name | ConvertTo-Json }) -join ','
+        $cDataMb    = ($chartRows | ForEach-Object { [Math]::Round(($_.data_size_mb -as [double]),1) }) -join ','
+        $cLogMb     = ($chartRows | ForEach-Object { [Math]::Round(($_.log_size_mb  -as [double]),1) }) -join ','
+        $cUsedMb    = ($chartRows | ForEach-Object {
+            [Math]::Round([Math]::Max(($_.data_size_mb -as [double]) - ($_.data_free_mb -as [double]), 0), 1)
+        }) -join ','
+        $cFreeMb    = ($chartRows | ForEach-Object { [Math]::Round(($_.data_free_mb -as [double]),1) }) -join ','
+        $cLogUsedMb = ($chartRows | ForEach-Object {
+            [Math]::Round([Math]::Max(($_.log_size_mb -as [double]) - ($_.log_free_mb -as [double]), 0), 1)
+        }) -join ','
+        $cLogFreeMb = ($chartRows | ForEach-Object { [Math]::Round(($_.log_free_mb -as [double]),1) }) -join ','
+
+        $html += @"
+<script src='https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js'></script>
+<script>
+(function(){
+const L=[$cLabels],DM=[$cDataMb],LM=[$cLogMb],UM=[$cUsedMb],FM=[$cFreeMb],LUM=[$cLogUsedMb],LFM=[$cLogFreeMb];
+const C=['#58a6ff','#3fb950','#f78166','#d2a8ff','#ffa657','#79c0ff','#56d364','#ff7b72','#e3b341','#a5d6ff','#7ee787','#ffa8a8','#ff9e64'];
+const dOpts={responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'right',
+  labels:{color:'#c9d1d9',boxWidth:11,padding:9,font:{size:11}}}}};
+const bOpts=(label1,label2,c1,c2)=>({responsive:true,indexAxis:'y',
+  plugins:{legend:{labels:{color:'#c9d1d9'}}},
+  scales:{x:{stacked:true,ticks:{color:'#8b949e'},grid:{color:'#21262d'}},
+          y:{stacked:true,ticks:{color:'#8b949e'},grid:{color:'#21262d'}}}});
+new Chart(document.getElementById('ch-data'),{type:'doughnut',
+  data:{labels:L,datasets:[{data:DM,backgroundColor:C.map(c=>c+'cc'),borderColor:C,borderWidth:1}]},options:dOpts});
+new Chart(document.getElementById('ch-log'),{type:'doughnut',
+  data:{labels:L,datasets:[{data:LM,backgroundColor:C.map(c=>c+'cc'),borderColor:C,borderWidth:1}]},options:dOpts});
+new Chart(document.getElementById('ch-bar-data'),{type:'bar',
+  data:{labels:L,datasets:[
+    {label:'Used (MB)',data:UM,backgroundColor:'#58a6ffbb',borderColor:'#58a6ff',borderWidth:1},
+    {label:'Free (MB)',data:FM,backgroundColor:'#3fb95055',borderColor:'#3fb950',borderWidth:1}]},
+  options:bOpts()});
+new Chart(document.getElementById('ch-bar-log'),{type:'bar',
+  data:{labels:L,datasets:[
+    {label:'Used (MB)',data:LUM,backgroundColor:'#d2a8ffbb',borderColor:'#d2a8ff',borderWidth:1},
+    {label:'Free (MB)',data:LFM,backgroundColor:'#3fb95055',borderColor:'#3fb950',borderWidth:1}]},
+  options:bOpts()});
+})();
+</script>
+<div style='display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px'>
+  <div class='chart-wrap'>
+    <div style='font-size:.75rem;color:#8b949e;font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px'>Data File Sizes (MB)</div>
+    <canvas id='ch-data' style='max-height:260px'></canvas>
+  </div>
+  <div class='chart-wrap'>
+    <div style='font-size:.75rem;color:#8b949e;font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px'>Log File Sizes (MB)</div>
+    <canvas id='ch-log' style='max-height:260px'></canvas>
+  </div>
+</div>
+<div style='display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px'>
+  <div class='chart-wrap'>
+    <div style='font-size:.75rem;color:#8b949e;font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px'>Data Files — Used vs Free (MB)</div>
+    <canvas id='ch-bar-data' style='max-height:280px'></canvas>
+  </div>
+  <div class='chart-wrap'>
+    <div style='font-size:.75rem;color:#8b949e;font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px'>Log Files — Used vs Free (MB)</div>
+    <canvas id='ch-bar-log' style='max-height:280px'></canvas>
+  </div>
+</div>
+"@
+
         $html += "<div class='table-wrap'><table><thead><tr><th>Database</th><th>Data (MB)</th><th>Data Free</th><th>Log (MB)</th><th>Log Free</th></tr></thead><tbody>"
         foreach ($db in $dbSizes) {
             $dfp = [double]($db.data_free_pct -as [double])
