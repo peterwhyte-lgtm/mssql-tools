@@ -759,8 +759,9 @@ function Build-ReviewPage([string]$folder) {
     $waits     = Read-RvwCsv 'wait-stats'
     $memConfig = Read-RvwCsv 'memory-config'
     $dbSizes   = Read-RvwCsv 'database-sizes'
-    $tempdb    = Read-RvwCsv 'tempdb-usage'
-    $diskSpc   = Read-RvwCsv 'disk-space'
+    $tempdb      = Read-RvwCsv 'tempdb-usage'
+    $diskSpc     = Read-RvwCsv 'disk-space'
+    $missingIdx  = Read-RvwCsv 'missing-indexes'
 
     # ── findings rules (mirrors Review-HealthCheckOutput.ps1) ──────────────────
     $findings = [System.Collections.Generic.List[PSObject]]::new()
@@ -864,6 +865,12 @@ function Build-ReviewPage([string]$folder) {
             Add-F 'WARNING' 'Disk Space' $row.database_name "Data files $(Fmt-Pct $fp)% free ($(Fmt-Mb $row.data_free_mb) MB free of $(Fmt-Mb $row.data_size_mb) MB)"
         }
     }
+    $highImpactIdx = @($missingIdx | Where-Object { ($_.impact_score -as [double]) -gt 100000 })
+    if ($highImpactIdx.Count -gt 0) {
+        Add-F 'WARNING' 'Missing Indexes' "$($highImpactIdx.Count) high-impact index(es)" "Top: $(Html-Escape $highImpactIdx[0].table_name) — $(Fmt-Pct ($highImpactIdx[0].avg_improvement_pct -as [double]))% estimated improvement"
+    } elseif ($missingIdx.Count -gt 0) {
+        Add-F 'INFO' 'Missing Indexes' "$($missingIdx.Count) candidate(s) identified" "Top impact score: $([Math]::Round(($missingIdx[0].impact_score -as [double]),0).ToString('N0'))"
+    }
 
     # ── header bar ─────────────────────────────────────────────────────────────
     $folderLeaf = Split-Path -Leaf $folder
@@ -924,10 +931,17 @@ function Build-ReviewPage([string]$folder) {
     $html += "<div class='vital-card $tlogCls'><div class='vital-label'>T-Log Pressure</div><div class='vital-val'>$tlogDisp</div><div class='vital-sub'>$tlogSub</div></div>"
     $html += "<div class='vital-card $tempCls'><div class='vital-label'>TempDB</div><div class='vital-val'>$tempDisp</div><div class='vital-sub'>worst file used %</div></div>"
     $html += "</div>"
+    $vMissingHigh = @($missingIdx | Where-Object { ($_.impact_score -as [double]) -gt 100000 }).Count
+    $vMissingAll  = $missingIdx.Count
+    $missCls  = if ($vMissingHigh -gt 5) { 'v-crit' } elseif ($vMissingHigh -gt 0) { 'v-warn' } elseif ($vMissingAll -gt 0) { 'v-blue' } else { 'v-ok' }
+    $missDisp = if ($vMissingAll -eq 0) { '—' } else { $vMissingAll }
+    $missSub  = if ($vMissingHigh -gt 0) { "$vMissingHigh high-impact" } elseif ($vMissingAll -gt 0) { 'low impact only' } else { 'none detected' }
+
     $html += "<p class='vital-row-label'>Keeping up</p><div class='vital-grid'>"
     $html += "<div class='vital-card $bkpCls'><div class='vital-label'>Oldest Backup</div><div class='vital-val'>$bkpDisp</div><div class='vital-sub'>worst full backup age</div></div>"
     $html += "<div class='vital-card $chkCls'><div class='vital-label'>DBCC CHECKDB</div><div class='vital-val'>$chkDisp</div><div class='vital-sub'>worst days since check</div></div>"
     $html += "<div class='vital-card $diskCls'><div class='vital-label'>Disk (worst)</div><div class='vital-val'>$diskDisp</div><div class='vital-sub'>$diskSub</div></div>"
+    $html += "<div class='vital-card $missCls'><div class='vital-label'>Missing Indexes</div><div class='vital-val'>$missDisp</div><div class='vital-sub'>$missSub</div></div>"
     $html += "</div>"
 
     # ── instance & OS ───────────────────────────────────────────────────────────
@@ -1132,6 +1146,21 @@ function Build-ReviewPage([string]$folder) {
             $rDisp = if ($rCls) { "<span class='$rCls'>$(Fmt-Pct $rStall)%</span>" } else { "$(Fmt-Pct $rStall)%" }
             $wDisp = if ($wCls) { "<span class='$wCls'>$(Fmt-Pct $wStall)%</span>" } else { "$(Fmt-Pct $wStall)%" }
             $html += "<tr><td>$(Html-Escape $io.database_name)</td><td>$(Fmt-Mb $io.total_mb_read)</td><td>$(Fmt-Mb $io.total_mb_written)</td><td>$(Fmt-Mb $io.total_read_stall_ms)</td><td>$rDisp</td><td>$(Fmt-Mb $io.total_write_stall_ms)</td><td>$wDisp</td></tr>"
+        }
+        $html += "</tbody></table></div>"
+    }
+
+    # ── missing indexes ────────────────────────────────────────────────────────
+    if ($missingIdx.Count -gt 0) {
+        $html += "<hr class='mini-sep'><h2>Missing Index Candidates ($($missingIdx.Count))</h2>"
+        $html += "<p class='no-data' style='margin-bottom:12px'>Impact scores reset on SQL Server restart. Review carefully — creating every suggestion causes index bloat and write overhead.</p>"
+        $html += "<div class='table-wrap'><table><thead><tr><th>Table</th><th>Impact Score</th><th>Improvement %</th><th>Seeks</th><th>Equality Cols</th><th>Inequality Cols</th><th>Include Cols</th><th>Suggested Statement</th></tr></thead><tbody>"
+        foreach ($ix in ($missingIdx | Sort-Object { [double]($_.impact_score -as [double]) } -Descending)) {
+            $imp  = [double]($ix.impact_score -as [double])
+            $impCls = if ($imp -gt 100000) { 'sv sv-orange' } else { '' }
+            $impDisp = if ($impCls) { "<span class='$impCls'>$([Math]::Round($imp,0).ToString('N0'))</span>" } else { [Math]::Round($imp,0).ToString('N0') }
+            $stmtShort = if ($ix.suggested_statement.Length -gt 80) { $ix.suggested_statement.Substring(0,80) + '…' } else { $ix.suggested_statement }
+            $html += "<tr><td>$(Html-Escape $ix.table_name)</td><td>$impDisp</td><td>$(Fmt-Pct ($ix.avg_improvement_pct -as [double]))%</td><td>$($ix.user_seeks)</td><td style='font-size:.75rem'>$(Html-Escape $ix.equality_columns)</td><td style='font-size:.75rem'>$(Html-Escape $ix.inequality_columns)</td><td style='font-size:.75rem'>$(Html-Escape $ix.included_columns)</td><td><code style='font-size:.7rem;color:#8b949e;word-break:break-all'>$(Html-Escape $stmtShort)</code></td></tr>"
         }
         $html += "</tbody></table></div>"
     }

@@ -36,6 +36,7 @@ Scripts collected:
   growth-risk           - databases flagged OK / NEAR_LIMIT / AT_LIMIT vs configured file limits
   security-surface-area - xp_cmdshell, CLR, Database Mail enabled state
   weak-logins           - SQL logins with policy/expiration off or sa enabled
+  missing-indexes       - top missing index candidates ranked by DMV impact score (resets on restart)
 
 .PARAMETER ServerInstance
 SQL Server instance to query. Defaults to '.'.
@@ -174,6 +175,10 @@ $scripts = @(
     [PSCustomObject]@{
         Label = 'weak-logins'
         Paths = @('sql\security\Get-WeakLoginSettings.sql')
+    }
+    [PSCustomObject]@{
+        Label = 'missing-indexes'
+        Paths = @('sql\performance\Get-MissingIndexes.sql')
     }
 )
 
