@@ -84,9 +84,10 @@ if ($candidates.Count -eq 0) {
 $unique = $candidates | Sort-Object FullName -Unique
 if ($unique.Count -eq 0) { throw "Script not found: $ScriptName" }
 if ($unique.Count -gt 1) {
-    Write-Host 'Multiple matches:' -ForegroundColor Yellow
+    Write-Host "Multiple matches for '$ScriptName' — be more specific:" -ForegroundColor Yellow
     $unique | ForEach-Object { Write-Host "  $([System.IO.Path]::GetRelativePath($repoRoot, $_.FullName))" -ForegroundColor DarkGray }
-    throw 'Pass a more specific name.'
+    Write-Host ''
+    return
 }
 
 $target = $unique[0].FullName
