@@ -168,6 +168,7 @@ Lightweight helpers that glue the repo together.
 - Use `helpers/triage/` for repo discovery
 - Use `helpers/local-sql/` for SQL connectivity and execution
 - Use `tools/` for repo maintenance
+- Read [`docs/script-index.md`](docs/script-index.md) for a full index of every script with one-line descriptions
 - Read `docs/structure.md` for the full repo map
 - Treat all scripts as production‑safe starting points and extend them for your environment
 
