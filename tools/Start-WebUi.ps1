@@ -43,6 +43,18 @@ function Html-Escape([string]$s) {
     $s.Replace('&','&amp;').Replace('<','&lt;').Replace('>','&gt;').Replace('"','&quot;')
 }
 
+function Fmt-Mb([object]$v) {
+    $n = $v -as [double]
+    if ($null -eq $n) { return $(if ($v) { $v } else { '—' }) }
+    [Math]::Round($n, 0)
+}
+
+function Fmt-Pct([object]$v) {
+    $n = $v -as [double]
+    if ($null -eq $n) { return $(if ($v) { $v } else { '—' }) }
+    [Math]::Round($n, 1)
+}
+
 function Get-ScriptPurpose([string]$path) {
     try {
         foreach ($line in (Get-Content $path -TotalCount 10)) {
@@ -125,7 +137,7 @@ nav a:hover,nav a.active{background:#21262d;color:#e6edf3;text-decoration:none}
 .search-bar input{background:#0d1117;border:1px solid #30363d;color:#c9d1d9;border-radius:6px;padding:6px 12px;width:240px;font-size:.85rem}
 .search-bar input:focus{outline:none;border-color:#58a6ff}
 main{max-width:1100px;margin:28px auto;padding:0 20px}
-h2{font-size:1rem;font-weight:600;color:#e6edf3;margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid #21262d}
+h2{font-size:1rem;font-weight:600;color:#e6edf3;margin:10px 0 14px;padding-bottom:6px;border-bottom:1px solid #21262d}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px;margin-bottom:28px}
 .card{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:14px 16px;transition:border-color .15s}
 .card:hover{border-color:#58a6ff}
@@ -156,7 +168,7 @@ th.sort-asc::after{content:' ↑';color:#58a6ff}
 th.sort-desc::after{content:' ↓';color:#58a6ff}
 td{padding:6px 10px;border-bottom:1px solid #21262d;color:#c9d1d9;max-width:400px}
 tr:hover td{background:#161b22}
-.table-wrap{overflow-x:auto;border:1px solid #30363d;border-radius:8px}
+.table-wrap{overflow-x:auto;border:1px solid #30363d;border-radius:8px;margin-bottom:6px}
 .table-toolbar{display:flex;align-items:center;gap:12px;margin-bottom:10px}
 .table-filter{background:#0d1117;border:1px solid #30363d;color:#c9d1d9;border-radius:6px;padding:6px 12px;font-size:.85rem;flex:1}
 .table-filter:focus{outline:none;border-color:#58a6ff}
@@ -201,6 +213,15 @@ tr:hover td{background:#161b22}
 .s-ok{background:#1a3a2a;color:#3fb950}.s-warn{background:#3a2a1a;color:#ffa657}.s-crit{background:#3a1a1a;color:#f78166}.s-gray{background:#21262d;color:#8b949e}
 .hc-meta{display:flex;gap:20px;font-size:.82rem;color:#8b949e;margin-bottom:16px;flex-wrap:wrap}
 .hc-meta strong{color:#c9d1d9}
+.section-sep{border:none;border-top:2px solid #30363d;margin:36px 0 0}
+.mini-sep{border:none;border-top:1px solid #21262d;margin:26px 0 0}
+.vital-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:24px}
+.vital-card{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:12px 14px;border-left:3px solid #30363d}
+.vital-card.v-ok{border-left-color:#3fb950}.vital-card.v-warn{border-left-color:#ffa657}.vital-card.v-crit{border-left-color:#f78166}.vital-card.v-blue{border-left-color:#58a6ff}
+.vital-row-label{font-size:.72rem;color:#8b949e;text-transform:uppercase;letter-spacing:.06em;font-weight:600;margin:14px 0 6px}
+.vital-label{font-size:.7rem;color:#8b949e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+.vital-val{font-size:1.1rem;font-weight:600;color:#e6edf3}
+.vital-sub{font-size:.72rem;color:#8b949e;margin-top:2px}
 .sev-strip{display:flex;gap:8px;margin-bottom:24px;flex-wrap:wrap;align-items:center}
 .sev-chip{display:inline-block;padding:5px 16px;border-radius:20px;font-size:.85rem;font-weight:600;border:1px solid}
 .sev-chip.s-crit{background:#3a1a1a;color:#f78166;border-color:#f78166}
@@ -633,15 +654,27 @@ function renderTable(){
     const cls='sortable'+(sortCol===col?(sortDir===1?' sort-asc':' sort-desc'):'');
     return '<th class="'+cls+'" onclick="sortBy(\''+col+'\')">'+col+'</th>';
   }).join('')+'</tr></thead><tbody>';
-  html+=visRows.map(r=>'<tr>'+h.map(col=>'<td>'+fmtCell(r[col]??'')+'</td>').join('')+'</tr>').join('');
+  html+=visRows.map(r=>'<tr>'+h.map(col=>'<td>'+fmtCell(r[col]??'',col)+'</td>').join('')+'</tr>').join('');
   document.getElementById('tbl').innerHTML=html+'</tbody>';
 }
 
-function fmtCell(val){
+function fmtCell(val,col){
   const s=String(val);
   if(s===''||s==='NULL')return '<span class="null-val">—</span>';
   const k=s.toLowerCase().trim();
   if(SV[k])return '<span class="sv sv-'+SV[k]+'">'+esc(s)+'</span>';
+  const c=(col||'').toLowerCase();
+  if(/^-?\d+(\.\d+)?$/.test(s.trim())){
+    const n=parseFloat(s);
+    if(/_mb$/.test(c)) return esc(String(Math.round(n)));
+    if(/_kb$/.test(c)) return esc(String(Math.round(n)));
+    if(/_gb$/.test(c)) return esc(n.toFixed(2));
+    if(/^pct_|_pct$|_pct_|_percent$/.test(c)) return esc(n.toFixed(1));
+    if(/_ms$/.test(c)) return esc(Math.round(n).toLocaleString());
+  }
+  // Strip trailing .000 from timestamps; keep non-zero ms
+  const ts=s.replace(/(\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2})\.0+(\s*)$/,'$1$2');
+  if(ts!==s)return esc(ts);
   if(s.length>120)return '<span class="cell-long" onclick="this.classList.toggle(\'expanded\')" title="Click to expand">'+esc(s)+'</span>';
   return esc(s);
 }
@@ -726,6 +759,8 @@ function Build-ReviewPage([string]$folder) {
     $waits     = Read-RvwCsv 'wait-stats'
     $memConfig = Read-RvwCsv 'memory-config'
     $dbSizes   = Read-RvwCsv 'database-sizes'
+    $tempdb    = Read-RvwCsv 'tempdb-usage'
+    $diskSpc   = Read-RvwCsv 'disk-space'
 
     # ── findings rules (mirrors Review-HealthCheckOutput.ps1) ──────────────────
     $findings = [System.Collections.Generic.List[PSObject]]::new()
@@ -762,7 +797,7 @@ function Build-ReviewPage([string]$folder) {
         $pctCol = if ($row.PSObject.Properties['log_used_pct']) { $row.log_used_pct } else { $row.log_used_percent }
         $pct = 0.0
         if ([double]::TryParse($pctCol,[ref]$pct) -and $pct -gt 80) {
-            Add-F 'WARNING' 'Transaction Log' $row.database_name "Log $pct% used ($($row.log_used_mb) MB of $($row.log_size_mb) MB)"
+            Add-F 'WARNING' 'Transaction Log' $row.database_name "Log $(Fmt-Pct $pct)% used ($(Fmt-Mb $row.log_used_mb) MB of $(Fmt-Mb $row.log_size_mb) MB)"
         }
     }
     foreach ($row in $dbFiles) {
@@ -826,7 +861,7 @@ function Build-ReviewPage([string]$folder) {
     foreach ($row in $dbSizes) {
         $fp = 0.0
         if ([double]::TryParse($row.data_free_pct,[ref]$fp) -and $fp -lt 10) {
-            Add-F 'WARNING' 'Disk Space' $row.database_name "Data files $fp% free ($($row.data_free_mb) MB free of $($row.data_size_mb) MB)"
+            Add-F 'WARNING' 'Disk Space' $row.database_name "Data files $(Fmt-Pct $fp)% free ($(Fmt-Mb $row.data_free_mb) MB free of $(Fmt-Mb $row.data_size_mb) MB)"
         }
     }
 
@@ -845,6 +880,72 @@ function Build-ReviewPage([string]$folder) {
     $html += "<span><strong>Reviewed</strong> $(Get-Date -Format 'yyyy-MM-dd HH:mm')</span>"
     $html += "</div>"
 
+    # ── vital signs bar ────────────────────────────────────────────────────────
+    $vSessions = $sessions.Count
+    $vBlocked  = $blkSess.Count
+    $vRunning  = @($sessions | Where-Object { $_.status -eq 'running' }).Count
+    $sessCls   = if ($vBlocked -gt 0) { 'v-crit' } elseif ($vRunning -gt 0) { 'v-ok' } else { 'v-blue' }
+    $sessSub   = "$vBlocked blocked · $vRunning running"
+
+    $topWaitRow = $waits | Sort-Object { [double]($_.pct_total_wait -as [double]) } -Descending | Select-Object -First 1
+    $vWaitPct  = [double]($topWaitRow.pct_total_wait -as [double])
+    $vWaitName = if ($topWaitRow) { $topWaitRow.wait_type } else { '—' }
+    $waitCls   = if ($topWaitRow -and $cWaits.ContainsKey($vWaitName) -and $vWaitPct -gt 10) { 'v-warn' } else { 'v-ok' }
+
+    $worstBkpHours = [double](($backups | Sort-Object { [double]($_.full_backup_age_hours -as [double]) } -Descending | Select-Object -First 1).full_backup_age_hours -as [double])
+    $bkpCls  = if ($worstBkpHours -gt 25) { 'v-crit' } elseif ($worstBkpHours -gt 12) { 'v-warn' } else { 'v-ok' }
+    $bkpDisp = if ($backups.Count -eq 0) { '—' } else { "$([Math]::Round($worstBkpHours,1))h" }
+
+    $worstCheckRow = $checkdb | Sort-Object { [int]($_.days_since_checkdb -as [int]) } -Descending | Select-Object -First 1
+    $worstCheckDays = $worstCheckRow.days_since_checkdb -as [int]
+    $chkCls  = if ($null -eq $worstCheckDays -or -not $worstCheckRow.last_good_checkdb) { 'v-crit' } elseif ($worstCheckDays -gt 7) { 'v-warn' } else { 'v-ok' }
+    $chkDisp = if ($checkdb.Count -eq 0) { '—' } elseif ($null -eq $worstCheckDays) { 'NEVER' } else { "${worstCheckDays}d" }
+
+    $worstTlogRow = $tlogs | Sort-Object { [double]($_.log_used_pct -as [double]) } -Descending | Select-Object -First 1
+    $worstTlogPct = [double]($worstTlogRow.log_used_pct -as [double])
+    $tlogCls = if ($worstTlogPct -gt 80) { 'v-crit' } elseif ($worstTlogPct -gt 50) { 'v-warn' } else { 'v-ok' }
+    $tlogDisp = if ($tlogs.Count -eq 0) { '—' } else { "$(Fmt-Pct $worstTlogPct)%" }
+    $tlogSub  = if ($worstTlogRow) { Html-Escape $worstTlogRow.database_name } else { '' }
+
+    $worstDiskRow = $diskSpc | Group-Object volume_mount_point | ForEach-Object { $_.Group[0] } | Sort-Object { [double]($_.free_pct -as [double]) } | Select-Object -First 1
+    $worstDiskPct = [double]($worstDiskRow.free_pct -as [double])
+    $diskCls  = if ($diskSpc.Count -eq 0) { 'v-blue' } elseif ($worstDiskPct -lt 10) { 'v-crit' } elseif ($worstDiskPct -lt 20) { 'v-warn' } else { 'v-ok' }
+    $diskDisp = if ($diskSpc.Count -eq 0) { '—' } else { "$(Fmt-Pct $worstDiskPct)% free" }
+    $diskSub  = if ($worstDiskRow) { Html-Escape $worstDiskRow.volume_mount_point } else { '' }
+
+    $worstTempRow = $tempdb | Sort-Object { [double]($_.pct_used -as [double]) } -Descending | Select-Object -First 1
+    $worstTempPct = [double]($worstTempRow.pct_used -as [double])
+    $tempCls  = if ($tempdb.Count -eq 0) { 'v-blue' } elseif ($worstTempPct -gt 80) { 'v-crit' } elseif ($worstTempPct -gt 60) { 'v-warn' } else { 'v-ok' }
+    $tempDisp = if ($tempdb.Count -eq 0) { '—' } else { "$(Fmt-Pct $worstTempPct)% used" }
+
+    $html += "<p class='vital-row-label'>Right now</p><div class='vital-grid'>"
+    $html += "<div class='vital-card $sessCls'><div class='vital-label'>Sessions</div><div class='vital-val'>$vSessions</div><div class='vital-sub'>$sessSub</div></div>"
+    $html += "<div class='vital-card $waitCls'><div class='vital-label'>Top Wait</div><div class='vital-val' style='font-size:.82rem'>$(Html-Escape $vWaitName)</div><div class='vital-sub'>$(Fmt-Pct $vWaitPct)% of waits</div></div>"
+    $html += "<div class='vital-card $tlogCls'><div class='vital-label'>T-Log Pressure</div><div class='vital-val'>$tlogDisp</div><div class='vital-sub'>$tlogSub</div></div>"
+    $html += "<div class='vital-card $tempCls'><div class='vital-label'>TempDB</div><div class='vital-val'>$tempDisp</div><div class='vital-sub'>worst file used %</div></div>"
+    $html += "</div>"
+    $html += "<p class='vital-row-label'>Keeping up</p><div class='vital-grid'>"
+    $html += "<div class='vital-card $bkpCls'><div class='vital-label'>Oldest Backup</div><div class='vital-val'>$bkpDisp</div><div class='vital-sub'>worst full backup age</div></div>"
+    $html += "<div class='vital-card $chkCls'><div class='vital-label'>DBCC CHECKDB</div><div class='vital-val'>$chkDisp</div><div class='vital-sub'>worst days since check</div></div>"
+    $html += "<div class='vital-card $diskCls'><div class='vital-label'>Disk (worst)</div><div class='vital-val'>$diskDisp</div><div class='vital-sub'>$diskSub</div></div>"
+    $html += "</div>"
+
+    # ── instance & OS ───────────────────────────────────────────────────────────
+    if ($svrInfo.Count -gt 0 -or $osHw.Count -gt 0) {
+        $html += "<h2>Instance</h2><div class='info-card-grid'>"
+        $instFields = @('sql_version','edition','product_level','server_name','is_clustered','is_hadr_enabled')
+        foreach ($fld in ($instFields | Where-Object { $svrInfo.Count -gt 0 -and $svrInfo[0].PSObject.Properties[$_] })) {
+            $html += "<div class='info-card'><div class='info-label'>$($fld -replace '_',' ')</div><div class='info-val'>$(Html-Escape $svrInfo[0].$fld)</div></div>"
+        }
+        $hwFields = @('os_version','cpu_count','physical_memory_mb','sqlserver_start_time')
+        foreach ($fld in ($hwFields | Where-Object { $osHw.Count -gt 0 -and $osHw[0].PSObject.Properties[$_] })) {
+            $raw = $osHw[0].$fld
+            $disp = if ($fld -like '*_mb') { Fmt-Mb $raw } else { $raw -replace '\.\d{3,}$','' }
+            $html += "<div class='info-card'><div class='info-label'>$($fld -replace '_',' ')</div><div class='info-val'>$(Html-Escape $disp)</div></div>"
+        }
+        $html += "</div>"
+    }
+
     # severity summary chips
     $critN = @($findings | Where-Object Severity -eq 'CRITICAL').Count
     $warnN = @($findings | Where-Object Severity -eq 'WARNING').Count
@@ -857,7 +958,7 @@ function Build-ReviewPage([string]$folder) {
     $html += "</div>"
 
     # ── findings list ───────────────────────────────────────────────────────────
-    $html += "<h2>Findings</h2>"
+    $html += "<hr class='section-sep'><h2>Findings</h2>"
     if ($findings.Count -eq 0) {
         $html += "<p class='no-data'>No findings — all checked thresholds look healthy.</p>"
     } else {
@@ -871,23 +972,9 @@ function Build-ReviewPage([string]$folder) {
         $html += "</div>"
     }
 
-    # ── instance & OS ───────────────────────────────────────────────────────────
-    if ($svrInfo.Count -gt 0 -or $osHw.Count -gt 0) {
-        $html += "<h2>Instance</h2><div class='info-card-grid'>"
-        $instFields = @('sql_version','edition','product_level','server_name','is_clustered','is_hadr_enabled')
-        foreach ($fld in ($instFields | Where-Object { $svrInfo.Count -gt 0 -and $svrInfo[0].PSObject.Properties[$_] })) {
-            $html += "<div class='info-card'><div class='info-label'>$($fld -replace '_',' ')</div><div class='info-val'>$(Html-Escape $svrInfo[0].$fld)</div></div>"
-        }
-        $hwFields = @('os_version','cpu_count','physical_memory_mb','sqlserver_start_time')
-        foreach ($fld in ($hwFields | Where-Object { $osHw.Count -gt 0 -and $osHw[0].PSObject.Properties[$_] })) {
-            $html += "<div class='info-card'><div class='info-label'>$($fld -replace '_',' ')</div><div class='info-val'>$(Html-Escape $osHw[0].$fld)</div></div>"
-        }
-        $html += "</div>"
-    }
-
     # ── databases ──────────────────────────────────────────────────────────────
     if ($dbHealth.Count -gt 0) {
-        $html += "<h2>Databases ($($dbHealth.Count))</h2><div class='table-wrap'><table>"
+        $html += "<hr class='section-sep'><h2>Databases ($($dbHealth.Count))</h2><div class='table-wrap'><table>"
         $html += "<thead><tr><th>Database</th><th>State</th><th>Recovery</th><th>Auto-Shrink</th><th>Auto-Close</th></tr></thead><tbody>"
         foreach ($db in ($dbHealth | Sort-Object database_name)) {
             $stCls  = if ($db.state_desc -ne 'ONLINE') { 'sv sv-red' } else { 'sv sv-green' }
@@ -902,7 +989,7 @@ function Build-ReviewPage([string]$folder) {
 
     # ── backup status ───────────────────────────────────────────────────────────
     if ($backups.Count -gt 0) {
-        $html += "<h2>Backup Status</h2><div class='table-wrap'><table>"
+        $html += "<hr class='mini-sep'><h2>Backup Status</h2><div class='table-wrap'><table>"
         $html += "<thead><tr><th>Database</th><th>Recovery</th><th>Last Full</th><th>Full Age (h)</th><th>Last Log</th><th>Log Age (h)</th></tr></thead><tbody>"
         foreach ($b in ($backups | Sort-Object database_name)) {
             $fh=0.0; [double]::TryParse($b.full_backup_age_hours,[ref]$fh) | Out-Null
@@ -921,17 +1008,29 @@ function Build-ReviewPage([string]$folder) {
         $html += "</tbody></table></div>"
     }
 
+    # ── transaction log usage ──────────────────────────────────────────────────
+    if ($tlogs.Count -gt 0) {
+        $html += "<hr class='mini-sep'><h2>Transaction Log Usage</h2><div class='table-wrap'><table>"
+        $html += "<thead><tr><th>Database</th><th>Recovery</th><th>Log Size (MB)</th><th>Used (MB)</th><th>Free (MB)</th><th>Used %</th></tr></thead><tbody>"
+        foreach ($t in ($tlogs | Sort-Object { [double]($_.log_used_pct -as [double]) } -Descending)) {
+            $lp = [double]($t.log_used_pct -as [double])
+            $lpCls = if ($lp -gt 80) { 'sv sv-red' } elseif ($lp -gt 50) { 'sv sv-orange' } else { 'sv sv-green' }
+            $html += "<tr><td>$(Html-Escape $t.database_name)</td><td>$($t.recovery_model_desc)</td><td>$(Fmt-Mb $t.log_size_mb)</td><td>$(Fmt-Mb $t.log_used_mb)</td><td>$(Fmt-Mb $t.log_free_mb)</td><td><span class='$lpCls'>$(Fmt-Pct $lp)%</span></td></tr>"
+        }
+        $html += "</tbody></table></div>"
+    }
+
     # ── wait statistics ─────────────────────────────────────────────────────────
     if ($waits.Count -gt 0) {
         $topWaits = @($waits | Sort-Object { [double]($_.pct_total_wait -as [double]) } -Descending | Select-Object -First 12)
-        $html += "<h2>Top Wait Types</h2><div class='table-wrap'><table>"
+        $html += "<hr class='section-sep'><h2>Top Wait Types</h2><div class='table-wrap'><table>"
         $html += "<thead><tr><th>Wait Type</th><th>Total Wait (ms)</th><th>Avg Wait (ms)</th><th>Count</th><th>% of Total</th></tr></thead><tbody>"
         foreach ($w in $topWaits) {
             $pct=0.0; [double]::TryParse($w.pct_total_wait,[ref]$pct) | Out-Null
             $concern = $cWaits.ContainsKey($w.wait_type)
             $wCls = if ($concern -and $pct -gt 10) { 'sv sv-orange' } elseif ($concern) { 'sv sv-blue' } else { '' }
             $wDisp = if ($wCls) { "<span class='$wCls'>$(Html-Escape $w.wait_type)</span>" } else { Html-Escape $w.wait_type }
-            $bar = "<span class='mini-bar-track'><span class='mini-bar-fill $(if ($pct -gt 10 -and $concern) { 'bar-warn' } elseif ($pct -gt 30) { 'bar-crit' } else { 'bar-ok' })' style='width:$([ Math]::Min($pct*2,100))%'></span></span>"
+            $bar = "<span class='mini-bar-track'><span class='mini-bar-fill $(if ($pct -gt 10 -and $concern) { 'bar-warn' } elseif ($pct -gt 30) { 'bar-crit' } else { 'bar-ok' })' style='width:$([Math]::Min($pct*2,100))%'></span></span>"
             $html += "<tr><td>$wDisp</td><td>$($w.total_wait_ms)</td><td>$($w.avg_wait_ms)</td><td>$($w.waiting_tasks_count)</td><td>$([Math]::Round($pct,1))% $bar</td></tr>"
         }
         $html += "</tbody></table></div>"
@@ -941,7 +1040,7 @@ function Build-ReviewPage([string]$folder) {
     if ($sessions.Count -gt 0) {
         $blkCount = $blkSess.Count
         $runCount = @($sessions | Where-Object { $_.status -eq 'running' }).Count
-        $html += "<h2>Active Sessions ($($sessions.Count))</h2>"
+        $html += "<hr class='mini-sep'><h2>Active Sessions ($($sessions.Count))</h2>"
         $html += "<div class='info-card-grid'>"
         $html += "<div class='info-card'><div class='info-label'>Total connected</div><div class='info-val'>$($sessions.Count)</div></div>"
         $html += "<div class='info-card'><div class='info-label'>Blocked</div><div class='info-val'>$(if ($blkCount -gt 0) { "<span class='sv sv-red'>$blkCount</span>" } else { "<span class='sv sv-green'>0</span>" })</div></div>"
@@ -969,6 +1068,126 @@ function Build-ReviewPage([string]$folder) {
             }
             $html += "</tbody></table></div>"
         }
+    }
+
+    # ── tempdb usage ───────────────────────────────────────────────────────────
+    if ($tempdb.Count -gt 0) {
+        $html += "<hr class='mini-sep'><h2>TempDB File Usage</h2><div class='table-wrap'><table>"
+        $html += "<thead><tr><th>File</th><th>Type</th><th>Size (MB)</th><th>Used (MB)</th><th>Free (MB)</th><th>User Obj (MB)</th><th>Version Store (MB)</th><th>Used %</th></tr></thead><tbody>"
+        foreach ($tf in ($tempdb | Sort-Object { [double]($_.pct_used -as [double]) } -Descending)) {
+            $tp = [double]($tf.pct_used -as [double])
+            $tpCls = if ($tp -gt 80) { 'sv sv-red' } elseif ($tp -gt 60) { 'sv sv-orange' } else { 'sv sv-green' }
+            $html += "<tr><td>$(Html-Escape $tf.logical_name)</td><td>$($tf.file_type)</td><td>$(Fmt-Mb $tf.size_mb)</td><td>$(Fmt-Mb $tf.used_mb)</td><td>$(Fmt-Mb $tf.free_mb)</td><td>$(Fmt-Mb $tf.user_objects_mb)</td><td>$(Fmt-Mb $tf.version_store_mb)</td><td><span class='$tpCls'>$(Fmt-Pct $tp)%</span></td></tr>"
+        }
+        $html += "</tbody></table></div>"
+    }
+
+    # ── job failures ───────────────────────────────────────────────────────────
+    if ($jobs.Count -gt 0) {
+        $html += "<hr class='section-sep'><h2>Job Failures — Last 7 Days ($($jobs.Count) rows)</h2><div class='table-wrap'><table>"
+        $html += "<thead><tr><th>Job</th><th>Step</th><th>Run Time</th><th>Duration</th><th>Message</th></tr></thead><tbody>"
+        foreach ($j in $jobs) {
+            $msgShort = if ($j.message.Length -gt 200) { $j.message.Substring(0,200) + '…' } else { $j.message }
+            $html += "<tr><td>$(Html-Escape $j.job_name)</td><td>$(Html-Escape $j.step_name)</td><td>$(($j.run_datetime -replace '\.\d+$',''))</td><td>$(Html-Escape $j.run_duration)</td><td style='font-size:.75rem;color:#8b949e'>$(Html-Escape $msgShort)</td></tr>"
+        }
+        $html += "</tbody></table></div>"
+    }
+
+    # ── DBCC CHECKDB ───────────────────────────────────────────────────────────
+    if ($checkdb.Count -gt 0) {
+        $html += "<hr class='mini-sep'><h2>DBCC CHECKDB</h2><div class='table-wrap'><table>"
+        $html += "<thead><tr><th>Database</th><th>Last Good CHECKDB</th><th>Days Ago</th><th>Status</th></tr></thead><tbody>"
+        foreach ($c in ($checkdb | Sort-Object { [int]($_.days_since_checkdb -as [int]) } -Descending)) {
+            $days = $c.days_since_checkdb -as [int]
+            $dayCls = if ($null -eq $days -or -not $c.last_good_checkdb -or $c.last_good_checkdb -eq '') { 'sv sv-red' } `
+                      elseif ($days -gt 7) { 'sv sv-orange' } else { 'sv sv-green' }
+            $daysDisp = if ($null -eq $days) { '—' } else { $days }
+            $lastDisp = if (-not $c.last_good_checkdb -or $c.last_good_checkdb -eq '') { '<span class="sv sv-red">NEVER</span>' } `
+                        else { Html-Escape ($c.last_good_checkdb -replace '\.\d+$','') }
+            $html += "<tr><td>$(Html-Escape $c.database_name)</td><td>$lastDisp</td><td><span class='$dayCls'>$daysDisp</span></td><td>$(Html-Escape $c.checkdb_status)</td></tr>"
+        }
+        $html += "</tbody></table></div>"
+    }
+
+    # ── suspect pages ──────────────────────────────────────────────────────────
+    if ($suspects.Count -gt 0) {
+        $html += "<hr class='mini-sep'><h2>Suspect Pages ($($suspects.Count))</h2><div class='table-wrap'><table>"
+        $html += "<thead><tr><th>Database</th><th>File</th><th>Page</th><th>Event Type</th><th>Error Count</th><th>Last Update</th></tr></thead><tbody>"
+        foreach ($sp in $suspects) {
+            $evCls = if ($sp.event_type -match 'Restored|Repaired|Deallocated') { 'sv sv-gray' } else { 'sv sv-red' }
+            $html += "<tr><td>$(Html-Escape $sp.database_name)</td><td>$($sp.file_id)</td><td>$($sp.page_id)</td><td><span class='$evCls'>$(Html-Escape $sp.event_type)</span></td><td>$($sp.error_count)</td><td>$(($sp.last_update_date -replace '\.\d+$',''))</td></tr>"
+        }
+        $html += "</tbody></table></div>"
+    }
+
+    # ── I/O stats ──────────────────────────────────────────────────────────────
+    if ($ioStats.Count -gt 0) {
+        $html += "<hr class='mini-sep'><h2>I/O Usage (since SQL Server restart)</h2><div class='table-wrap'><table>"
+        $html += "<thead><tr><th>Database</th><th>MB Read</th><th>MB Written</th><th>Read Stall (ms)</th><th>Read Stall %</th><th>Write Stall (ms)</th><th>Write Stall %</th></tr></thead><tbody>"
+        foreach ($io in ($ioStats | Sort-Object { [double]($_.pct_total_write_stall -as [double]) } -Descending)) {
+            $rStall = [double]($io.pct_total_read_stall  -as [double])
+            $wStall = [double]($io.pct_total_write_stall -as [double])
+            $rCls = if ($rStall -gt 20) { 'sv sv-orange' } else { '' }
+            $wCls = if ($wStall -gt 20) { 'sv sv-orange' } else { '' }
+            $rDisp = if ($rCls) { "<span class='$rCls'>$(Fmt-Pct $rStall)%</span>" } else { "$(Fmt-Pct $rStall)%" }
+            $wDisp = if ($wCls) { "<span class='$wCls'>$(Fmt-Pct $wStall)%</span>" } else { "$(Fmt-Pct $wStall)%" }
+            $html += "<tr><td>$(Html-Escape $io.database_name)</td><td>$(Fmt-Mb $io.total_mb_read)</td><td>$(Fmt-Mb $io.total_mb_written)</td><td>$(Fmt-Mb $io.total_read_stall_ms)</td><td>$rDisp</td><td>$(Fmt-Mb $io.total_write_stall_ms)</td><td>$wDisp</td></tr>"
+        }
+        $html += "</tbody></table></div>"
+    }
+
+    # ── security — weak logins ──────────────────────────────────────────────────
+    if ($logins.Count -gt 0) {
+        $html += "<hr class='section-sep'><h2>Login Security</h2><div class='table-wrap'><table>"
+        $html += "<thead><tr><th>Login</th><th>Risk</th><th>Locked</th><th>Must Change Pwd</th><th>Password Last Set</th></tr></thead><tbody>"
+        foreach ($l in ($logins | Sort-Object risk_flag, login_name)) {
+            $rCls = switch ($l.risk_flag) {
+                'SA_ENABLED'   { 'sv sv-red'    }
+                'OK'           { 'sv sv-green'  }
+                default        { 'sv sv-orange' }
+            }
+            $lkCls = if ($l.is_locked   -in @('1','True','true')) { 'sv sv-orange' } else { 'sv sv-green' }
+            $mcCls = if ($l.must_change_password -in @('1','True','true')) { 'sv sv-orange' } else { 'sv sv-green' }
+            $pwdDisp = if ($l.password_last_set -and $l.password_last_set -ne '') { $l.password_last_set -replace '\.\d+$','' } else { '—' }
+            $html += "<tr><td>$(Html-Escape $l.login_name)</td><td><span class='$rCls'>$(Html-Escape $l.risk_flag)</span></td><td><span class='$lkCls'>$($l.is_locked)</span></td><td><span class='$mcCls'>$($l.must_change_password)</span></td><td>$pwdDisp</td></tr>"
+        }
+        $html += "</tbody></table></div>"
+    }
+
+    # ── memory config ──────────────────────────────────────────────────────────
+    if ($memConfig.Count -gt 0) {
+        $mc = $memConfig[0]
+        $html += "<hr class='mini-sep'><h2>Memory Configuration</h2><div class='info-card-grid'>"
+        $mcFields = @(
+            @{ f='min_server_memory_mb';   l='Min Server Memory (MB)' }
+            @{ f='max_server_memory_mb';   l='Max Server Memory (MB)' }
+            @{ f='server_physical_memory_gb'; l='Physical RAM (GB)' }
+            @{ f='sql_memory_in_use_mb';   l='SQL Memory In Use (MB)' }
+            @{ f='sql_committed_mb';       l='SQL Committed (MB)' }
+        )
+        foreach ($mf in $mcFields) {
+            if ($mc.PSObject.Properties[$mf.f]) {
+                $v = $mc.($mf.f)
+                $disp = if ($mf.f -like '*_mb') { Fmt-Mb $v } else { [Math]::Round(($v -as [double]),2) }
+                $html += "<div class='info-card'><div class='info-label'>$($mf.l)</div><div class='info-val'>$(Html-Escape $disp)</div></div>"
+            }
+        }
+        $maxMb = 0L; [long]::TryParse($mc.max_server_memory_mb,[ref]$maxMb) | Out-Null
+        if ($maxMb -ge 2147483647) {
+            $html += "<div class='info-card' style='border-color:#ffa657'><div class='info-label'>Warning</div><div class='info-val' style='color:#ffa657'>Max memory unconfigured</div></div>"
+        }
+        $html += "</div>"
+    }
+
+    # ── error log ──────────────────────────────────────────────────────────────
+    if ($errors.Count -gt 0) {
+        $html += "<hr class='mini-sep'><h2>Error Log — Last 24h ($($errors.Count) entries)</h2><div class='table-wrap'><table>"
+        $html += "<thead><tr><th>Time</th><th>Source</th><th>Message</th></tr></thead><tbody>"
+        foreach ($e in $errors) {
+            $msgShort = if ($e.log_text.Length -gt 300) { $e.log_text.Substring(0,300) + '…' } else { $e.log_text }
+            $html += "<tr><td style='white-space:nowrap'>$(($e.log_date -replace '\.\d+$',''))</td><td>$(Html-Escape $e.process_info)</td><td style='font-size:.75rem'>$(Html-Escape $msgShort)</td></tr>"
+        }
+        $html += "</tbody></table></div>"
     }
 
     Wrap-Page 'Health Check' $html '' 'review'
@@ -1035,9 +1254,9 @@ function Build-DiskPage([string]$folder) {
   <div class='disk-vol'>$volName</div>
   <div class='bar-track'><div class='bar-fill $barCls' style='width:${usedPct}%'></div></div>
   <div class='disk-stats'>
-    <span><strong>$($d.total_gb) GB</strong> total</span>
-    <span><strong>$($d.used_gb) GB</strong> used ($usedPct%)</span>
-    <span><strong>$($d.free_gb) GB</strong> free ($freePct%)</span>
+    <span><strong>$([Math]::Round(($d.total_gb -as [double]),2)) GB</strong> total</span>
+    <span><strong>$([Math]::Round(($d.used_gb  -as [double]),2)) GB</strong> used ($(Fmt-Pct $usedPct)%)</span>
+    <span><strong>$([Math]::Round(($d.free_gb  -as [double]),2)) GB</strong> free ($(Fmt-Pct $freePct)%)</span>
   </div>
 </div>
 "@
@@ -1046,7 +1265,7 @@ function Build-DiskPage([string]$folder) {
     }
 
     # ── Database file space ───────────────────────────────────────────────────
-    $html += "<h2>Database File Space</h2>"
+    $html += "<hr class='mini-sep'><h2>Database File Space</h2>"
     if (-not $dbSizes) {
         $html += "<p class='no-data'>No <code>database-sizes.csv</code> in this folder.</p>"
     } else {
@@ -1056,15 +1275,15 @@ function Build-DiskPage([string]$folder) {
             $lfp = [double]($db.log_free_pct  -as [double])
             $dbc = if ($dfp -lt 10) { 'bar-crit' } elseif ($dfp -lt 20) { 'bar-warn' } else { 'bar-ok' }
             $lbc = if ($lfp -lt 10) { 'bar-crit' } elseif ($lfp -lt 20) { 'bar-warn' } else { 'bar-ok' }
-            $dfCell = "$($db.data_free_mb) MB ($dfp%)<span class='mini-bar-track'><span class='mini-bar-fill $dbc' style='width:${dfp}%'></span></span>"
-            $lfCell = "$($db.log_free_mb) MB ($lfp%)<span class='mini-bar-track'><span class='mini-bar-fill $lbc' style='width:${lfp}%'></span></span>"
-            $html += "<tr><td>$(Html-Escape $db.database_name)</td><td>$($db.data_size_mb)</td><td>$dfCell</td><td>$($db.log_size_mb)</td><td>$lfCell</td></tr>"
+            $dfCell = "$(Fmt-Mb $db.data_free_mb) MB ($(Fmt-Pct $dfp)%)<span class='mini-bar-track'><span class='mini-bar-fill $dbc' style='width:${dfp}%'></span></span>"
+            $lfCell = "$(Fmt-Mb $db.log_free_mb) MB ($(Fmt-Pct $lfp)%)<span class='mini-bar-track'><span class='mini-bar-fill $lbc' style='width:${lfp}%'></span></span>"
+            $html += "<tr><td>$(Html-Escape $db.database_name)</td><td>$(Fmt-Mb $db.data_size_mb)</td><td>$dfCell</td><td>$(Fmt-Mb $db.log_size_mb)</td><td>$lfCell</td></tr>"
         }
         $html += "</tbody></table></div>"
     }
 
     # ── Transaction log usage ─────────────────────────────────────────────────
-    $html += "<h2>Transaction Log Usage</h2>"
+    $html += "<hr class='mini-sep'><h2>Transaction Log Usage</h2>"
     if (-not $tlogs) {
         $html += "<p class='no-data'>No <code>tlog-usage.csv</code> in this folder.</p>"
     } else {
@@ -1073,13 +1292,13 @@ function Build-DiskPage([string]$folder) {
         foreach ($t in $sorted) {
             $pct = [double]($t.log_used_pct -as [double])
             $svCls = if ($pct -gt 80) { 'sv-red' } elseif ($pct -gt 50) { 'sv-orange' } else { 'sv-green' }
-            $html += "<tr><td>$(Html-Escape $t.database_name)</td><td>$($t.recovery_model_desc)</td><td>$($t.log_size_mb)</td><td>$($t.log_used_mb)</td><td>$($t.log_free_mb)</td><td><span class='sv $svCls'>$pct%</span></td></tr>"
+            $html += "<tr><td>$(Html-Escape $t.database_name)</td><td>$($t.recovery_model_desc)</td><td>$(Fmt-Mb $t.log_size_mb)</td><td>$(Fmt-Mb $t.log_used_mb)</td><td>$(Fmt-Mb $t.log_free_mb)</td><td><span class='sv $svCls'>$(Fmt-Pct $pct)%</span></td></tr>"
         }
         $html += "</tbody></table></div>"
     }
 
     # ── File growth risk ──────────────────────────────────────────────────────
-    $html += "<h2>File Growth Risk</h2>"
+    $html += "<hr class='mini-sep'><h2>File Growth Risk</h2>"
     if (-not $growthRisk) {
         $html += "<p class='no-data'>No <code>growth-risk.csv</code> here — re-run healthcheck with the updated collection script.</p>"
     } else {
@@ -1091,8 +1310,8 @@ function Build-DiskPage([string]$folder) {
                 'UNLIMITED'  { 's-gray' }
                 default      { 's-ok'   }
             }
-            $limitCell = if ([double]($g.growth_limit_mb -as [double]) -eq 0) { '<span class="null-val">—</span>' } else { $g.growth_limit_mb }
-            $html += "<tr><td>$(Html-Escape $g.database_name)</td><td>$($g.data_mb)</td><td>$($g.log_mb)</td><td>$($g.total_mb)</td><td>$limitCell</td><td><span class='status-badge $sCls'>$(Html-Escape $g.growth_status)</span></td></tr>"
+            $limitCell = if ([double]($g.growth_limit_mb -as [double]) -eq 0) { '<span class="null-val">—</span>' } else { Fmt-Mb $g.growth_limit_mb }
+            $html += "<tr><td>$(Html-Escape $g.database_name)</td><td>$(Fmt-Mb $g.data_mb)</td><td>$(Fmt-Mb $g.log_mb)</td><td>$(Fmt-Mb $g.total_mb)</td><td>$limitCell</td><td><span class='status-badge $sCls'>$(Html-Escape $g.growth_status)</span></td></tr>"
         }
         $html += "</tbody></table></div>"
     }
@@ -1101,13 +1320,13 @@ function Build-DiskPage([string]$folder) {
     if ($dbFiles) {
         $byDrive = $dbFiles | Group-Object drive_letter | Sort-Object Name
         if ($byDrive) {
-            $html += "<h2>Files by Drive</h2>"
+            $html += "<hr class='mini-sep'><h2>Files by Drive</h2>"
             $html += "<div class='table-wrap'><table><thead><tr><th>Drive</th><th>Database</th><th>Type</th><th>Size (MB)</th><th>Max (MB)</th><th>Autogrowth</th><th>Path</th></tr></thead><tbody>"
             foreach ($dg in $byDrive) {
                 foreach ($f in ($dg.Group | Sort-Object database_name, file_type)) {
-                    $maxCell = if ($f.max_size_mb -and $f.max_size_mb -ne '') { $f.max_size_mb } else { '<span class="null-val">unlimited</span>' }
+                    $maxCell = if ($f.max_size_mb -and $f.max_size_mb -ne '') { Fmt-Mb $f.max_size_mb } else { '<span class="null-val">unlimited</span>' }
                     $growthWarn = if ($f.growth_is_percent -in @('True','1','true','YES')) { " <span class='sv sv-orange'>%</span>" } else { '' }
-                    $html += "<tr><td>$(Html-Escape $f.drive_letter)</td><td>$(Html-Escape $f.database_name)</td><td>$($f.file_type)</td><td>$($f.current_size_mb)</td><td>$maxCell</td><td>$(Html-Escape $f.auto_growth)$growthWarn</td><td title='$(Html-Escape $f.physical_path)'>$(Html-Escape ([System.IO.Path]::GetFileName($f.physical_path)))</td></tr>"
+                    $html += "<tr><td>$(Html-Escape $f.drive_letter)</td><td>$(Html-Escape $f.database_name)</td><td>$($f.file_type)</td><td>$(Fmt-Mb $f.current_size_mb)</td><td>$maxCell</td><td>$(Html-Escape $f.auto_growth)$growthWarn</td><td title='$(Html-Escape $f.physical_path)'>$(Html-Escape ([System.IO.Path]::GetFileName($f.physical_path)))</td></tr>"
                 }
             }
             $html += "</tbody></table></div>"
@@ -1135,7 +1354,8 @@ try {
         $qs   = [System.Web.HttpUtility]::ParseQueryString($req.Url.Query)
 
         $contentType = 'text/html; charset=utf-8'
-        $body = switch ($url) {
+        $statusCode  = 200
+        $body = try { switch ($url) {
             '/'         { Build-HomePage }
             '/search'   { Build-SearchPage ($qs['q'] ?? '') }
             '/view'     { Build-ViewPage   ($qs['p'] ?? '') }
@@ -1212,13 +1432,17 @@ try {
                     "{`"ok`":false,`"error`":`"$($_.Exception.Message)`"}"
                 }
             }
-            default     { Wrap-Page '404' "<p class='empty'>Not found.</p>" }
+            default     { $statusCode = 404; Wrap-Page '404' "<p class='empty'>Page not found: $(Html-Escape $url)</p>" }
+        } } catch {
+            $statusCode  = 500
+            $contentType = 'text/html; charset=utf-8'
+            Wrap-Page 'Error' "<h2>Error</h2><pre style='color:#f78166'>$(Html-Escape $_.Exception.Message)`n$(Html-Escape $_.ScriptStackTrace)</pre>"
         }
 
         $bytes = [System.Text.Encoding]::UTF8.GetBytes($body)
         $res.ContentType     = $contentType
         $res.ContentLength64 = $bytes.Length
-        $res.StatusCode      = 200
+        $res.StatusCode      = $statusCode
         $res.OutputStream.Write($bytes, 0, $bytes.Length)
         $res.OutputStream.Close()
     }
