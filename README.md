@@ -1,40 +1,80 @@
 # DBA Scripts
+A production‑ready SQL Server DBA toolkit for diagnostics, automation, and operational review.
 
-A production-ready DBA toolkit for SQL Server operations, troubleshooting, and operational review.
-It combines SQL analysis, PowerShell automation, and lightweight hybrid helpers so the repo behaves like a real enterprise support library rather than a loose script dump.
+![banner](banner.png)
 
-The repo is organized into three practical layers:
-- SQL layer for DMVs, diagnostics, and read-only investigations
-- PowerShell layer for automation, orchestration, and local execution
-- Hybrid layer for repo runners, CSV output, and repeatable DBA workflows
+This repository provides a structured, enterprise‑grade library of SQL and PowerShell tools designed for real‑world DBA work. It focuses on fast troubleshooting, safe investigation, repeatable workflows, and operational consistency across SQL Server environments.
 
-This repository is designed to support the DBA Scripts section of the site and to give production SQL Server DBAs a fast, copy/paste-friendly toolkit for daily troubleshooting and operational checks.
+## 🚀 Start Here
 
-## What is included
+If you're new to the repo, begin with this quick path:
 
-- Production-safe diagnostics and monitoring scripts for day-to-day DBA work
-- Migration-ready inventory scripts under sql/migration/ for databases, logins, jobs, and linked servers
-- SSMS-first SQL queries with practical comments, safety tags, and evidence-oriented output
-- PowerShell helpers for local ops, cleanup, orchestration, and quick triage
-- A clear separation between investigation scripts, automation helpers, and repo-wide utilities
-- A canonical top-level layout under sql/, powershell/, hybrid/, and examples/ that is now the real working model for the repo
-- Lab/test scripts for environment setup and database generation
-- A legacy compatibility map under categories/ for older references and migration paths
-- A dedicated sql-templates/ operations layer for repeatable DBA runbooks and operational templates
-- Top-level helpers/ and tools/ folders for reusable utilities and repo maintenance
-- A small helper layer in helpers/ for quick repo checks, script discovery, and task routing during AI-assisted work
-- Production standards and operational guidance in docs/standards.md for SQL and PowerShell script classification, safety, and scope
+Get a full repo overview:
 
-## Start here
+```powershell
+.\helpers\triage\Show-RepoOverview.ps1
+```
 
-If you want the fastest path into the repo, use this order:
-1. Run `helpers/triage/Show-RepoOverview.ps1` to get the repo inventory.
-2. Start with the matching script in `sql/` or `powershell/` for the task you are working on.
-3. Use `helpers/local-sql/Test-SqlConnectivity.ps1` and `helpers/local-sql/Invoke-SqlFile.ps1` for local SQL validation and execution.
-4. Use `sql-templates/operations` when you need a production-style runbook or change-order template.
-5. Save any outputs you want to reuse under `output-files/`.
+Pick the script that matches your task:
 
-### Example commands
+- Use `sql/` for SSMS‑ready diagnostics and investigations
+- Use `powershell/` for automation, orchestration, and local execution
+
+Validate SQL connectivity (recommended):
+
+```powershell
+.\helpers\local-sql\Test-SqlConnectivity.ps1 -ServerInstance . -Database master
+```
+
+Use `sql-templates/operations/` for production‑style runbooks and change‑order templates.
+
+Save outputs you want to reuse under `output-files/`.
+
+## ⭐ Most Useful Scripts
+
+These are the core scripts most DBAs start with:
+
+- **Get-WaitStatistics** — performance bottleneck analysis
+- **Get-LongRunningQueries** — top resource consumers
+- **Permission Audit** — login, role, and access review
+- **Server Inventory Pack** — instance‑level metadata and configuration
+- **Test-SqlConnectivity** — quick connectivity validation
+
+## 📦 Repository Structure
+
+The repo is organized into three practical layers that mirror real DBA workflows:
+
+### SQL Layer
+
+For DMVs, diagnostics, and read‑only investigations.
+
+- `sql/performance` — waits, blocking, long‑running queries, missing indexes, I/O
+- `sql/backups` — backup coverage, restore prep, DR readiness
+- `sql/monitoring` — health, memory, MAXDOP, jobs, AG, snapshots
+- `sql/security` — permissions and access reviews
+- `sql/migration` — logins, jobs, linked servers, inventory
+- `sql-templates/operations` — production runbook templates
+
+### PowerShell Layer
+
+For automation, orchestration, and local execution.
+
+- `powershell/inventory` — storage, growth, instance inventory
+- `powershell/backup-automation` — backup/restore helpers
+- `powershell/reporting` — waits, blocking, index reporting
+- `powershell/health-checks` — DB health and TempDB checks
+
+### Hybrid Layer
+
+Lightweight helpers that glue the repo together.
+
+- `helpers/triage` — repo inventory and script discovery
+- `helpers/local-sql` — connectivity tests and SQL execution
+- `helpers/maintenance` — cleanup and repo hygiene
+- `tools` — repo maintenance utilities
+- `examples` — sample workflows
+
+## 🧪 Example Commands
 
 ```powershell
 .\run.ps1 Get-WaitStatistics
@@ -43,41 +83,45 @@ If you want the fastest path into the repo, use this order:
 .\helpers\local-sql\Test-SqlConnectivity.ps1 -ServerInstance . -Database master
 ```
 
-## What we are optimizing for
+## 🎯 What This Repo Optimizes For
 
 - Fast copy/paste into SSMS or Azure Data Studio
-- Clear category grouping by real DBA task
+- Clear category grouping by real DBA tasks
 - Easy handoff to other production DBAs
-- A solid foundation for future blog posts and runbooks
+- Repeatable workflows and operational consistency
+- A solid foundation for blog posts, runbooks, and automation
 
-## Category map at a glance
+## 🗺 Category Map (At a Glance)
 
-Use the canonical top-level layout:
+- `sql/performance` — waits, blocking, long‑running queries, missing indexes, I/O
+- `sql/backups` — backup coverage, restore prep, DR readiness
+- `sql/monitoring` — health, memory, MAXDOP, jobs, AG
+- `sql/security` — permissions and access reviews
+- `powershell/inventory` — storage, growth, instance inventory
+- `powershell/backup-automation` — backup/restore helpers
+- `powershell/reporting` — waits, blocking, index reporting
+- `powershell/health-checks` — DB health and TempDB
 
-- sql/performance — waits, blocking, long-running queries, missing indexes, and I/O analysis
-- sql/backups — backup coverage, restore prep, backup history, and DR readiness
-- sql/monitoring — health, memory, MAXDOP, jobs, AG, and environment snapshots
-- sql/security — permission and access reviews
-- powershell/inventory — storage, growth, instance inventory, and disk analysis
-- powershell/backup-automation — backup, restore, and recovery automation helpers
-- powershell/reporting — wait, blocking, and index reporting wrappers
-- powershell/health-checks — database health and TempDB operational checks
+## 🛠 How to Use This Repo
 
-Use sql-templates/operations for the production-style runbook templates that complement the category scripts.
+- Start in `sql/` for SSMS‑ready analysis scripts
+- Use `powershell/` for automation and local troubleshooting
+- Use `sql-templates/operations/` for production runbooks
+- Use `helpers/triage/` for repo discovery
+- Use `helpers/local-sql/` for SQL connectivity and execution
+- Use `tools/` for repo maintenance
+- Read `docs/structure.md` for the full repo map
+- Treat all scripts as production‑safe starting points and extend them for your environment
 
-## How to use this repo
+## 📝 Notes
 
-1. Start in sql/ for the SSMS-ready analysis scripts.
-2. Use powershell/ for automation and local troubleshooting helpers.
-3. Use sql-templates/operations for runbook-style SQL templates such as statistics maintenance, CDC, TDE, and upgrade readiness.
-4. Use helpers/triage/ for repo inventory and discovery, helpers/maintenance/ for cleanup, and helpers/local-sql/ for local connectivity checks and repo SQL execution.
-5. Use tools/ for repo maintenance and catalog tasks.
-6. Read docs/structure.md for the high-level and low-level repo map.
-7. Treat the scripts as production-safe starting points and extend them for your environment.
+- Folder names are lowercase for consistency
+- Scripts are grouped by real production DBA use cases
+- Lab/test scripts are intentionally separate
+- `docs/` contains runbooks, templates, and operational notes
 
-## Notes
+## 📥 Clone the Repository
 
-- Folder names are lowercase for consistency.
-- Scripts are grouped by real production DBA use case.
-- The DBA Lab Scripts area is intentionally separate for test and simulation work.
-- Use docs/ for runbooks, templates, and operational notes.
+```bash
+git clone https://github.com/peterwhyte-lgtm/dba-scripts
+```
