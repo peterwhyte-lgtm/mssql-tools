@@ -82,14 +82,14 @@ Preview the setup.exe command without executing it.
 # Unattended
 .\sql-operations\installation\Install-SqlServer.ps1 `
     -SetupPath D:\SQL2022\setup.exe `
-    -SAPassword (ConvertTo-SecureString 'MyStr0ng!Pass' -AsPlainText -Force)
+    -SAPassword (ConvertTo-SecureString '<sa-password>' -AsPlainText -Force)
 
 .EXAMPLE
 # Answer-file mode
 .\sql-operations\installation\Install-SqlServer.ps1 `
     -SetupPath D:\SQL2022\setup.exe `
     -AnswerFile .\sql-operations\installation\templates\sql-server-install-default.ini `
-    -SAPassword (ConvertTo-SecureString 'MyStr0ng!Pass' -AsPlainText -Force)
+    -SAPassword (ConvertTo-SecureString '<sa-password>' -AsPlainText -Force)
 #>
 param(
     [string]$SetupPath,

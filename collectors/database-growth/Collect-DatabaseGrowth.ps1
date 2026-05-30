@@ -82,10 +82,10 @@ if (-not $rows -or $rows.Count -eq 0) {
 $atLimit   = @($rows | Where-Object { $_.growth_status -eq 'AT_LIMIT' })
 $nearLimit = @($rows | Where-Object { $_.growth_status -eq 'NEAR_LIMIT' })
 if ($atLimit.Count -gt 0) {
-    Write-Log "AT_LIMIT: $($atLimit | ForEach-Object {"$($_.database_name)/$($_.logical_name)"} | Join-String ', ')" 'ERROR'
+    Write-Log "AT_LIMIT: $(($atLimit | ForEach-Object {"$($_.database_name)/$($_.logical_name)"}) -join ', ')" 'ERROR'
 }
 if ($nearLimit.Count -gt 0) {
-    Write-Log "NEAR_LIMIT: $($nearLimit | ForEach-Object {"$($_.database_name)/$($_.logical_name)"} | Join-String ', ')" 'WARN'
+    Write-Log "NEAR_LIMIT: $(($nearLimit | ForEach-Object {"$($_.database_name)/$($_.logical_name)"}) -join ', ')" 'WARN'
 }
 
 $fileExists = Test-Path $csvPath

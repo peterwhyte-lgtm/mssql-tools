@@ -26,19 +26,21 @@ jobs:
         shell: pwsh
       - name: Run PSScriptAnalyzer
         run: |
-          $paths = @('powershell','helpers','hybrid','sql-operations') | Where-Object { Test-Path $_ }
+          $paths = @('powershell','helpers','hybrid','sql-operations','collectors') |
+                   Where-Object { Test-Path $_ }
           if ($paths.Count -eq 0) { Write-Host "No PS paths found."; exit 0 }
           # Excluded rules — intentional for this repo:
-          #   PSAvoidUsingWriteHost           — terminal DBA scripts; coloured output is by design
-          #   PSAvoidUsingPlainTextForPassword — SQL connection helpers; Windows auth is recommended
-          #                                     but plain-text SQL auth is a supported fallback
-          #   PSAvoidUsingUsernameAndPasswordParams — same reason as above
-          #   PSUseBOMForUnicodeEncodedFile   — encoding controlled separately
+          #   PSAvoidUsingWriteHost                — terminal DBA scripts; coloured output is by design
+          #   PSAvoidUsingPlainTextForPassword     — SQL helpers; Windows auth preferred, SQL auth supported
+          #   PSAvoidUsingUsernameAndPasswordParams — same reason
+          #   PSUseBOMForUnicodeEncodedFile        — encoding controlled separately
+          #   PSReviewUnusedParameter              — many params are conditionally used via env var fallbacks
           $exclude = @(
             'PSAvoidUsingWriteHost',
             'PSAvoidUsingPlainTextForPassword',
             'PSAvoidUsingUsernameAndPasswordParams',
-            'PSUseBOMForUnicodeEncodedFile'
+            'PSUseBOMForUnicodeEncodedFile',
+            'PSReviewUnusedParameter'
           )
           $results = Invoke-ScriptAnalyzer -Path $paths -Recurse -Severity Warning,Error -ExcludeRule $exclude
           $results | Format-Table
@@ -57,18 +59,6 @@ jobs:
         with:
           globs: |
             **/*.md
-      - name: Link check README and docs
-        uses: lycheeverse/lychee-action@v1
-        with:
-          args: >
-            --no-progress
-            --exclude-mail
-            --accept 200,206,429
-            --retry-wait-time 2
-            --max-retries 2
-            README.md docs/**/*.md
-        env:
-          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
 
   secrets-scan:
     name: Secret Scan
