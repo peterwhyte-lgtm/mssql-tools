@@ -230,6 +230,9 @@ tr:hover td{background:#161b22}
 .save-png-btn{background:#1a3a2a;border:1px solid #3fb950;color:#3fb950;border-radius:6px;padding:5px 14px;font-size:.82rem;cursor:pointer;transition:background .15s}
 .save-png-btn:hover{background:#1f4a30}
 .save-png-btn:disabled{opacity:.4;cursor:default}
+.clear-btn{background:#1a0e0e;border:1px solid #f78166;color:#f78166;border-radius:6px;padding:5px 16px;font-size:.82rem;font-weight:600;cursor:pointer;transition:background .15s,border-color .15s}
+.clear-btn:hover{background:#2d1515;border-color:#ff9b8e}
+.clear-btn:disabled{opacity:.4;cursor:default}
 .save-confirm{font-size:.78rem;color:#3fb950;margin-left:8px;opacity:0;transition:opacity .4s}
 .save-confirm.show{opacity:1}
 .pie-select{background:#0d1117;border:1px solid #30363d;color:#c9d1d9;border-radius:6px;padding:5px 10px;font-size:.82rem}
@@ -509,12 +512,28 @@ function Build-CsvListPage {
         Where-Object { $_.Name -notlike '*.tmp.csv' } |
         Sort-Object LastWriteTime -Descending)
 
+    $clearBtn = "<button class='clear-btn' id='clear-btn' onclick='clearOutput()'>Clear All Output</button>
+<script>
+async function clearOutput(){
+  if(!confirm('Delete all files in output-files/?\\n\\nThis removes all CSVs, logs, and generated scripts. Cannot be undone.'))return;
+  const btn=document.getElementById('clear-btn');
+  btn.disabled=true;btn.textContent='Clearing…';
+  try{
+    const r=await fetch('/api/clear-output',{method:'POST'});
+    const d=await r.json();
+    if(d.ok){btn.textContent=d.deleted+' file(s) deleted';setTimeout(()=>location.reload(),800);}
+    else{alert('Error: '+(d.error||'Unknown error'));btn.disabled=false;btn.textContent='Clear All Output';}
+  }catch(e){alert('Request failed: '+e.message);btn.disabled=false;btn.textContent='Clear All Output';}
+}
+</script>"
+
     if (-not $csvs) {
-        return Wrap-Page 'Output CSVs' "<h2>Output CSVs</h2><p class='empty'>No CSV files in output-files/ yet. Run a script first.</p>" '' 'csvs'
+        $body = "<div style='display:flex;align-items:center;justify-content:space-between;margin-bottom:4px'><h2 style='margin:0;border:none;padding:0'>Output CSVs</h2>$clearBtn</div><p class='empty'>No CSV files in output-files/ yet. Run a script first.</p>"
+        return Wrap-Page 'Output CSVs' $body '' 'csvs'
     }
 
     $grouped = $csvs | Group-Object { $_.Directory.FullName.Replace($repoRoot,'').TrimStart('\') }
-    $html    = "<h2>Output CSVs ($($csvs.Count) files)</h2>"
+    $html    = "<div style='display:flex;align-items:center;justify-content:space-between;margin-bottom:4px'><h2 style='margin:0;border:none;padding:0'>Output CSVs ($($csvs.Count) files)</h2>$clearBtn</div>"
 
     foreach ($g in ($grouped | Sort-Object Name)) {
         $html += "<div class='cat-label'>$(Html-Escape $g.Name)</div><div class='grid'>"
@@ -1557,6 +1576,29 @@ try {
                 } finally {
                     $env:DBASCRIPTS_BATCH = $null
                     if ($tmpFile -and (Test-Path $tmpFile)) { Remove-Item $tmpFile -ErrorAction SilentlyContinue }
+                }
+            }
+            '/api/clear-output' {
+                $contentType = 'application/json; charset=utf-8'
+                if ($req.HttpMethod -ne 'POST') { '{"ok":false,"error":"POST required"}'; break }
+                try {
+                    $outDir  = Join-Path $repoRoot 'output-files'
+                    $deleted = 0
+                    if (Test-Path $outDir) {
+                        $files = Get-ChildItem -Path $outDir -Recurse -File -ErrorAction SilentlyContinue |
+                                 Where-Object { $_.Name -ne '.gitkeep' }
+                        $deleted = $files.Count
+                        $files | Remove-Item -Force -ErrorAction SilentlyContinue
+                        # Remove empty subdirectories deepest-first
+                        Get-ChildItem -Path $outDir -Recurse -Directory -ErrorAction SilentlyContinue |
+                            Sort-Object FullName -Descending |
+                            Where-Object { @(Get-ChildItem $_.FullName -ErrorAction SilentlyContinue).Count -eq 0 } |
+                            Remove-Item -Force -ErrorAction SilentlyContinue
+                    }
+                    "{`"ok`":true,`"deleted`":$deleted}"
+                } catch {
+                    $errMsg = $_.Exception.Message -replace '"','\"' -replace '\r?\n',' '
+                    "{`"ok`":false,`"error`":`"$errMsg`"}"
                 }
             }
             '/api/save-png' {
