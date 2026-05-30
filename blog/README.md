@@ -2,7 +2,7 @@
 
 This folder contains draft blog posts for [sqldba.blog](https://sqldba.blog). Each post has its own folder containing `index.md` (the post) and `images/` (screenshots and demo output used in the post).
 
-**Repo:** https://github.com/peterwhyte-lgtm/dba-scripts
+**Repo:** <https://github.com/peterwhyte-lgtm/dba-scripts>
 
 ## Post index
 

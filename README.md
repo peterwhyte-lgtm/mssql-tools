@@ -1,4 +1,5 @@
 # DBA Scripts
+
 A production‑ready SQL Server DBA toolkit for diagnostics, automation, and operational review.
 
 ![banner](banner.png)
@@ -184,4 +185,3 @@ Lightweight helpers that glue the repo together.
 ```bash
 git clone https://github.com/peterwhyte-lgtm/dba-scripts
 ```
-

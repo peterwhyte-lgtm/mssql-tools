@@ -73,4 +73,4 @@ SQL-level runbook templates for common DBA change operations. Copy, review, and 
 ```
 
 Download SQL Server CU patches from:
-https://support.microsoft.com/en-us/help/321185
+<https://support.microsoft.com/en-us/help/321185>

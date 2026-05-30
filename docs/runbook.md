@@ -67,6 +67,7 @@ Fragmentation thresholds (`recommended_action` column): `REBUILD` >= 30%, `REORG
 ## Incident triage
 
 ### High CPU
+
 ```powershell
 .\run.ps1 Get-WaitStatistics          # look for signal_wait_time_ms (CPU queue)
 .\run.ps1 Get-TopCpuQueries -OutputFormat Csv
@@ -75,6 +76,7 @@ Fragmentation thresholds (`recommended_action` column): `REBUILD` >= 30%, `REORG
 ```
 
 ### Blocking
+
 ```powershell
 .\run.ps1 Get-BlockingSummary         # head blockers + affected session counts
 .\run.ps1 Get-BlockingSessions        # full chain — who is blocked by whom
@@ -83,6 +85,7 @@ Fragmentation thresholds (`recommended_action` column): `REBUILD` >= 30%, `REORG
 ```
 
 ### I/O pressure
+
 ```powershell
 .\run.ps1 Get-WaitStatistics          # look for PAGEIOLATCH_SH / PAGEIOLATCH_EX
 .\run.ps1 Get-DatabaseIoUsage         # read/write latency per database
@@ -91,18 +94,21 @@ Fragmentation thresholds (`recommended_action` column): `REBUILD` >= 30%, `REORG
 Latency concern thresholds: > 20ms read or > 10ms write on data files.
 
 ### TempDB pressure
+
 ```powershell
 .\run.ps1 Get-TempdbUsage             # file sizes and free space per file
 .\run.ps1 Get-TempdbHotspots          # sessions consuming TempDB right now
 ```
 
 ### Memory pressure
+
 ```powershell
 .\run.ps1 Get-MemoryConfigurationAndUsage
 .\run.ps1 Get-WaitStatistics          # look for RESOURCE_SEMAPHORE (memory grant waits)
 ```
 
 ### Backup / restore incident
+
 ```powershell
 .\run.ps1 Get-BackupCoverage          # backup_status flag per database
 .\run.ps1 Get-LastDatabaseBackupTimes
@@ -112,6 +118,7 @@ Latency concern thresholds: > 20ms read or > 10ms write on data files.
 ```
 
 ### Integrity concern
+
 ```powershell
 .\run.ps1 Get-SuspectPages            # any entries = CRITICAL — run CHECKDB immediately
 .\run.ps1 Get-LastDbccCheckdb         # last successful CHECKDB per database
