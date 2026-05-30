@@ -12,6 +12,15 @@ Env vars used:
   $env:DBASCRIPTS_USER    — SQL login username (empty = Windows auth)
   $env:DBASCRIPTS_PASS    — SQL login password (cleared when session ends)
 
+SECURITY NOTE:
+  Windows (integrated) auth is always preferred. It uses Kerberos/NTLM — no password
+  is stored anywhere by this script. Use SQL auth only when Windows auth is not possible.
+
+  When SQL auth is used, the password is stored in $env:DBASCRIPTS_PASS as plain text
+  for the lifetime of the session. Plain-text env vars are visible to other processes
+  running as the same Windows user. The variable is cleared automatically when the
+  PowerShell session ends. Never use SQL auth on shared or multi-user machines.
+
 .PARAMETER ServerInstance
 SQL Server instance to target. Accepts any sqlcmd-style format:
   SERVERNAME, SERVERNAME\INSTANCE, SERVERNAME,PORT, 192.168.1.10\INST,1433
@@ -99,6 +108,7 @@ elseif ($Username) {
     $env:DBASCRIPTS_PASS = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto(
         [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($secure))
     Write-Host "Auth set to: SQL auth ($Username)" -ForegroundColor Green
+    Write-Host "  NOTE: password stored as plain text in session env var — use Windows auth when possible." -ForegroundColor DarkYellow
 }
 
 Show-Connection

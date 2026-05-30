@@ -1,69 +1,109 @@
 <#
 .SYNOPSIS
-Tests local SQL connectivity and prints the server details that matter for DBA work.
+Test SQL Server connectivity and print server details.
 
 .DESCRIPTION
-This helper verifies that the configured SQL Server instance is reachable and reports the
-server name, edition, product version, and current database context.
-#>
+Verifies the target instance is reachable using the same Invoke-Sqlcmd / sqlcmd.exe
+execution path as the rest of the repo. No ADO.NET dependency.
 
+.PARAMETER ServerInstance
+SQL Server instance. Defaults to '.' or $env:DBASCRIPTS_SERVER if set.
+
+.PARAMETER Database
+Initial database. Defaults to 'master'.
+
+.PARAMETER Username
+SQL login username. Omit for Windows (integrated) auth.
+
+.PARAMETER Password
+SQL login password. Omit for Windows auth.
+
+.EXAMPLE
+.\helpers\local-sql\Test-SqlConnectivity.ps1
+.\helpers\local-sql\Test-SqlConnectivity.ps1 -ServerInstance PROD01\SQL2019
+.\helpers\local-sql\Test-SqlConnectivity.ps1 -ServerInstance PROD01 -Username sa -Password 'P@ss'
+#>
 param(
     [string]$ServerInstance = '.',
-    [string]$Database = 'master',
+    [string]$Database       = 'master',
     [string]$Username,
     [string]$Password
 )
 
 $ErrorActionPreference = 'Stop'
 
-function Get-ConnectionString {
-    param([string]$Server,[string]$DatabaseName,[string]$User,[string]$Pass)
+if ($ServerInstance -eq '.' -and $env:DBASCRIPTS_SERVER) { $ServerInstance = $env:DBASCRIPTS_SERVER }
+if (-not $Username -and $env:DBASCRIPTS_USER)            { $Username = $env:DBASCRIPTS_USER }
+if (-not $Password -and $env:DBASCRIPTS_PASS)            { $Password = $env:DBASCRIPTS_PASS }
 
-    if ($User -and $Pass) {
-        return "Server=$Server;Database=$DatabaseName;User Id=$User;Password=$Pass;Encrypt=False;TrustServerCertificate=True;"
-    }
+$authLabel = if ($Username) { "SQL ($Username)" } else { 'Windows (integrated)' }
 
-    return "Server=$Server;Database=$DatabaseName;Integrated Security=True;Encrypt=False;TrustServerCertificate=True;"
-}
+Write-Host ''
+Write-Host "[connectivity] Server   : $ServerInstance" -ForegroundColor Cyan
+Write-Host "[connectivity] Database : $Database" -ForegroundColor Cyan
+Write-Host "[connectivity] Auth     : $authLabel" -ForegroundColor Cyan
 
-$connectionString = Get-ConnectionString -Server $ServerInstance -DatabaseName $Database -User $Username -Pass $Password
-$authMode = if ($Username -and $Password) { 'SQL Authentication' } else { 'Windows Authentication' }
-
-Write-Host "[sql-connect] ServerInstance: $ServerInstance" -ForegroundColor Cyan
-Write-Host "[sql-connect] Database: $Database" -ForegroundColor Cyan
-Write-Host "[sql-connect] Auth: $authMode" -ForegroundColor Cyan
-
-$conn = New-Object System.Data.SqlClient.SqlConnection($connectionString)
-try {
-    $conn.Open()
-
-    $cmd = $conn.CreateCommand()
-    $cmd.CommandText = @'
+$query = @"
 SELECT
-    @@SERVERNAME AS ServerName,
-    SERVERPROPERTY('MachineName') AS MachineName,
-    SERVERPROPERTY('InstanceName') AS InstanceName,
-    SERVERPROPERTY('Edition') AS Edition,
-    SERVERPROPERTY('ProductVersion') AS ProductVersion,
-    DB_NAME() AS CurrentDatabase;
-'@
+    @@SERVERNAME                            AS server_name,
+    SERVERPROPERTY('Edition')               AS edition,
+    SERVERPROPERTY('ProductVersion')        AS product_version,
+    SERVERPROPERTY('ProductLevel')          AS product_level,
+    DB_NAME()                               AS current_database,
+    GETDATE()                               AS server_time;
+"@
 
-    $reader = $cmd.ExecuteReader()
-    $table = New-Object System.Data.DataTable
-    $table.Load($reader)
-    $row = $table.Rows[0]
+$row = $null
 
-    Write-Host "[sql-connect] ServerName: $($row['ServerName'])" -ForegroundColor Green
-    Write-Host "[sql-connect] MachineName: $($row['MachineName'])" -ForegroundColor Green
-    Write-Host "[sql-connect] Edition: $($row['Edition'])" -ForegroundColor Green
-    Write-Host "[sql-connect] ProductVersion: $($row['ProductVersion'])" -ForegroundColor Green
-    Write-Host "[sql-connect] CurrentDatabase: $($row['CurrentDatabase'])" -ForegroundColor Green
-    Write-Host "[sql-connect] Status: OK" -ForegroundColor Green
+$invokeSqlcmd = Get-Command Invoke-Sqlcmd -ErrorAction SilentlyContinue
+if ($invokeSqlcmd) {
+    $params = @{
+        ServerInstance         = $ServerInstance
+        Database               = $Database
+        Query                  = $query
+        QueryTimeout           = 15
+        TrustServerCertificate = $true
+        ErrorAction            = 'Stop'
+    }
+    if ($Username -and $Password) { $params['Username'] = $Username; $params['Password'] = $Password }
+    try   { $row = Invoke-Sqlcmd @params }
+    catch { Write-Host "[connectivity] FAILED: $($_.Exception.Message)" -ForegroundColor Red; exit 1 }
+} else {
+    $sqlcmdExe = Get-Command sqlcmd.exe -ErrorAction SilentlyContinue
+    if (-not $sqlcmdExe) {
+        Write-Host "[connectivity] ERROR: Neither Invoke-Sqlcmd nor sqlcmd.exe is available." -ForegroundColor Red
+        exit 1
+    }
+    $tmpSql = [IO.Path]::Combine([IO.Path]::GetTempPath(), "test-conn-$(Get-Date -Format 'yyyyMMddHHmmss').sql")
+    try {
+        [IO.File]::WriteAllText($tmpSql, $query, [Text.Encoding]::UTF8)
+        $sqlArgs = @('-S', $ServerInstance, '-d', $Database, '-i', $tmpSql, '-y', '0', '-b', '-C')
+        if ($Username -and $Password) { $sqlArgs += @('-U', $Username, '-P', $Password) } else { $sqlArgs += '-E' }
+        $lines = & $sqlcmdExe.Source @sqlArgs
+        if ($LASTEXITCODE -ne 0) { Write-Host "[connectivity] FAILED: sqlcmd.exe exit $LASTEXITCODE" -ForegroundColor Red; exit 1 }
+        if ($lines) {
+            $row = [PSCustomObject]@{
+                server_name      = $lines[0]; edition          = $lines[1]
+                product_version  = $lines[2]; product_level    = $lines[3]
+                current_database = $lines[4]; server_time      = $lines[5]
+            }
+        }
+    } finally {
+        if (Test-Path $tmpSql) { Remove-Item $tmpSql -Force -ErrorAction SilentlyContinue }
+    }
 }
-catch {
-    Write-Error "Connection failed: $($_.Exception.Message)"
+
+if ($row) {
+    Write-Host ''
+    Write-Host "[connectivity] Server name : $($row.server_name)"    -ForegroundColor Green
+    Write-Host "[connectivity] Edition     : $($row.edition)"         -ForegroundColor Green
+    Write-Host "[connectivity] Version     : $($row.product_version) · $($row.product_level)" -ForegroundColor Green
+    Write-Host "[connectivity] Database    : $($row.current_database)" -ForegroundColor Green
+    Write-Host "[connectivity] Server time : $($row.server_time)"     -ForegroundColor Green
+    Write-Host ''
+    Write-Host "[connectivity] Status      : OK" -ForegroundColor Green
+    Write-Host ''
+} else {
+    Write-Host "[connectivity] No data returned — check parameters." -ForegroundColor Yellow
     exit 1
-}
-finally {
-    if ($conn.State -eq 'Open') { $conn.Close() }
 }

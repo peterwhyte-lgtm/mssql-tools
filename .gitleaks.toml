@@ -1,0 +1,28 @@
+title = "dba-scripts gitleaks config"
+
+# ── Allow-list false positives specific to this repo ─────────────────────────
+[allowlist]
+  description = "Patterns and paths that are safe to skip for this DBA toolkit"
+
+  regexes = [
+    # Example passwords in .EXAMPLE comment blocks (clearly documentation)
+    '''ConvertTo-SecureString\s+['"][^'"]{3,}['"]\s+-AsPlainText''',
+    # SAPWD in INI answer file comment lines (not a real credential)
+    ''';\s*SAPWD''',
+    # SA password validation logic — not a real password, a regex pattern check
+    '''Validate-SAPassword|Confirm-SAPassword''',
+    # The env var name itself is not a secret
+    '''DBASCRIPTS_PASS\s*=\s*\$''',
+    # Placeholder strings used in documentation and examples
+    '''(?i)(MyStr0ng|P@ss|MyP@ss|placeholder|changeme|example|yoursecret)''',
+  ]
+
+  paths = [
+    # INI answer file templates — placeholders only, no real credentials
+    '''sql-operations/installation/templates/.*\.ini''',
+    # Documentation files — contain example values
+    '''docs/.*''',
+    '''blog/.*''',
+    '''README\.md''',
+    '''CLAUDE\.md''',
+  ]

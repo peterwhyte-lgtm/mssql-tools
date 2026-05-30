@@ -23,7 +23,7 @@ Use this repo as a practical desktop toolkit for day-to-day SQL Server operation
 2. Use `sql/` for SSMS-ready analysis and category-specific checks.
 3. Use `powershell/` for automation and local validation.
 4. Use `helpers/local-sql/Test-SqlConnectivity.ps1` as a preflight check before running repo scripts locally.
-5. Use `helpers/local-sql/Invoke-SqlFile.ps1` (or `helpers/local-sql/Invoke-RepoSql.ps1`) to execute a real SQL script from this repo.
+5. Use `helpers/local-sql/Invoke-RepoSql.ps1` to execute a SQL script from this repo.
 6. Use `sql-templates/operations` when you need a production-style runbook or change-order template.
 7. Use `helpers/maintenance/Clear-OutputFiles.ps1` when you want to reset `output-files/` before a fresh review run.
 
@@ -32,5 +32,5 @@ Use this repo as a practical desktop toolkit for day-to-day SQL Server operation
 ```powershell
 pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\helpers\triage\Show-RepoOverview.ps1
 pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\helpers\local-sql\Test-SqlConnectivity.ps1 -ServerInstance . -Database master
-pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\helpers\local-sql\Invoke-SqlFile.ps1 -ScriptPath .\sql\monitoring\Get-InstanceConfigurationSnapshot.sql -Database master
+pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\helpers\local-sql\Invoke-RepoSql.ps1 -ScriptPath .\sql\monitoring\Get-InstanceConfigurationSnapshot.sql -Database master
 ```

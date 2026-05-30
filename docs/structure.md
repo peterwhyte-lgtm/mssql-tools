@@ -47,5 +47,5 @@ This layout keeps the repo usable now while giving the toolkit a cleaner long-te
 
 ```powershell
 pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\helpers\triage\Show-RepoOverview.ps1
-pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\helpers\local-sql\Invoke-SqlFile.ps1 -ScriptPath .\sql\storage-capacity-management\Get-DatabaseSizesAndFreeSpace.sql
+pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\helpers\local-sql\Invoke-RepoSql.ps1 -ScriptPath .\sql\monitoring\Get-DatabaseSizesAndFreeSpace.sql
 ```

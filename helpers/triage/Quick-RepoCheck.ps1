@@ -36,9 +36,10 @@ $helperChecks = @(
   'helpers/triage/Show-RepoOverview.ps1',
   'helpers/maintenance/Clear-OutputFiles.ps1',
   'helpers/Run-Helper.ps1',
-  'helpers/local-sql/Invoke-SqlFile.ps1',
+  'helpers/local-sql/Invoke-RepoSql.ps1',
+  'helpers/local-sql/Invoke-LocalSql.ps1',
   'helpers/local-sql/Test-SqlConnectivity.ps1',
-  'helpers/local-sql/Invoke-RepoSql.ps1'
+  'helpers/local-sql/Set-SqlConnection.ps1'
 )
 
 foreach ($entry in $helperChecks) {

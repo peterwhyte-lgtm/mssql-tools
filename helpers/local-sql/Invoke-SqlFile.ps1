@@ -1,67 +1,59 @@
-﻿<#
+<#
 .SYNOPSIS
-Runs a SQL script file against the local SQL Server instance.
+Backward-compatibility stub — delegates directly to Invoke-RepoSql.ps1.
 
 .DESCRIPTION
-A practical helper for testing and validating DBA scripts from the repo.
-It uses Invoke-Sqlcmd when available and falls back to sqlcmd.exe.
+Invoke-RepoSql.ps1 is the canonical SQL execution path for this repo.
+This file exists only so existing callers do not break. Prefer calling
+Invoke-RepoSql.ps1 directly for all new work.
 
 .PARAMETER ScriptPath
 Path to the .sql file to run.
 
 .PARAMETER ServerInstance
-SQL Server instance to connect to. Defaults to '.'.
+SQL Server instance. Defaults to '.' or $env:DBASCRIPTS_SERVER if set.
 
 .PARAMETER Database
-Initial database for the session. Defaults to 'master'.
+Initial database. Defaults to 'master'.
 
 .PARAMETER Username
-Optional SQL login for SQL authentication.
+SQL login username. Omit for Windows auth.
 
 .PARAMETER Password
-Optional password for SQL authentication.
+SQL login password. Omit for Windows auth.
 
 .PARAMETER QueryTimeout
-Command timeout in seconds. Defaults to 600.
+Command timeout in seconds. Default: 600.
+
+.PARAMETER OutputFormat
+'Table' (default) or 'Csv'.
+
+.PARAMETER OutputPath
+Optional path to save CSV output.
 
 .EXAMPLE
-powershell -ExecutionPolicy Bypass -File .\helpers\Invoke-SqlFile.ps1 -ScriptPath .\sql\performance\Get-BlockingSessions.sql
-
-.EXAMPLE
-powershell -ExecutionPolicy Bypass -File .\helpers\Invoke-SqlFile.ps1 -ScriptPath .\sql\monitoring\Get-InstanceConfigurationSnapshot.sql -Database master
-
-.EXAMPLE
-powershell -ExecutionPolicy Bypass -File .\helpers\Invoke-SqlFile.ps1 -ScriptPath .\sql\monitoring\Get-DatabaseHealth.sql -ServerInstance . -Database master
+.\helpers\local-sql\Invoke-SqlFile.ps1 -ScriptPath .\sql\performance\Get-WaitStatistics.sql
 #>
-
 param(
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory)]
     [string]$ScriptPath,
 
     [string]$ServerInstance = '.',
-    [string]$Database = 'master',
+    [string]$Database       = 'master',
     [string]$Username,
     [string]$Password,
-    [int]$QueryTimeout = 600,
-    [ValidateSet('Table','Csv')]
-    [string]$OutputFormat = 'Table',
+    [int]$QueryTimeout      = 600,
+    [ValidateSet('Table', 'Csv')]
+    [string]$OutputFormat   = 'Table',
     [string]$OutputPath
 )
-$ErrorActionPreference = 'Stop'
 
-if (-not (Test-Path -LiteralPath $ScriptPath)) {
-    throw "SQL script not found: $ScriptPath"
-}
-
-Write-Host "Running SQL script: $ScriptPath" -ForegroundColor Cyan
-Write-Host "Server: $ServerInstance | Database: $Database" -ForegroundColor DarkCyan
-
-& (Join-Path $PSScriptRoot 'local-sql\Invoke-RepoSql.ps1') `
-    -ScriptPath $ScriptPath `
+& (Join-Path $PSScriptRoot 'Invoke-RepoSql.ps1') `
+    -ScriptPath     $ScriptPath `
     -ServerInstance $ServerInstance `
-    -Database $Database `
-    -Username $Username `
-    -Password $Password `
-    -QueryTimeout $QueryTimeout `
-    -OutputFormat $OutputFormat `
-    -OutputPath $OutputPath
+    -Database       $Database `
+    -Username       $Username `
+    -Password       $Password `
+    -QueryTimeout   $QueryTimeout `
+    -OutputFormat   $OutputFormat `
+    -OutputPath     $OutputPath

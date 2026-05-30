@@ -6,8 +6,8 @@ on:
   pull_request:
     branches: [ main ]
 
-permissions:
-  contents: read
+# Default: no permissions. Each job declares only what it needs.
+permissions: {}
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
@@ -16,6 +16,8 @@ jobs:
   ps-analyze:
     name: PowerShell Lint
     runs-on: windows-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -26,10 +28,12 @@ jobs:
         run: |
           $paths = @('powershell','helpers','hybrid','sql-operations') | Where-Object { Test-Path $_ }
           if ($paths.Count -eq 0) { Write-Host "No PS paths found."; exit 0 }
-          # Excluded rules are intentional for this repo:
+          # Excluded rules — intentional for this repo:
           #   PSAvoidUsingWriteHost           — terminal DBA scripts; coloured output is by design
-          #   PSAvoidUsingPlainTextForPassword — SQL connection helpers; plain-text auth is intentional
-          #   PSUseBOMForUnicodeEncodedFile   — file encoding is controlled separately
+          #   PSAvoidUsingPlainTextForPassword — SQL connection helpers; Windows auth is recommended
+          #                                     but plain-text SQL auth is a supported fallback
+          #   PSAvoidUsingUsernameAndPasswordParams — same reason as above
+          #   PSUseBOMForUnicodeEncodedFile   — encoding controlled separately
           $exclude = @(
             'PSAvoidUsingWriteHost',
             'PSAvoidUsingPlainTextForPassword',
@@ -44,6 +48,8 @@ jobs:
   markdown:
     name: Docs Checks
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
       - name: Markdown lint
@@ -63,3 +69,18 @@ jobs:
             README.md docs/**/*.md
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+
+  secrets-scan:
+    name: Secret Scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout (full history)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Run gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -2,6 +2,31 @@
 # Never commit runtime output; re-generate from scripts as needed
 output-files/
 
+# ── Credentials and secrets — never commit ───────────────────────────────────
+.env
+*.env
+.env.local
+.env.*.local
+secrets.json
+*.secret
+*.secrets
+*.credentials
+*.credential
+*.password
+*.key
+*.pem
+*.pfx
+*.p12
+config.local.*
+local.settings.json
+appsettings.local.json
+# SQL Server connection files that can embed credentials
+*.udl
+# Answer files with real credentials filled in (templates are committed, filled copies are not)
+*-filled.ini
+*-prod.ini
+*-live.ini
+
 # PowerShell artefacts
 *.ps1.bak
 
