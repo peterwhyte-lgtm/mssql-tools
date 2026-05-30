@@ -22,6 +22,9 @@ SET @ddl = @ddl
     + N'-- Run on TARGET server AFTER databases are restored.' + @crlf
     + N'-- SQL logins include hashed passwords and original SIDs to avoid' + @crlf
     + N'-- orphaned users after restore.' + @crlf
+    + N'-- NOTE: If a login''s DEFAULT_DATABASE does not exist on the target,' + @crlf
+    + N'-- the login will fail to connect. Fix with:' + @crlf
+    + N'--   ALTER LOGIN [name] WITH DEFAULT_DATABASE = [master]' + @crlf
     + N'-- ================================================================' + @crlf + @crlf;
 
 -- ── SQL logins ────────────────────────────────────────────────────────────────

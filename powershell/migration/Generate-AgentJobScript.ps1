@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Generates sp_add_job DDL to recreate all SQL Agent jobs on the target server.
 
@@ -109,14 +109,16 @@ if ($invokeSqlcmd) {
 } else {
     $sqlcmdExe = Get-Command sqlcmd.exe -ErrorAction SilentlyContinue
     if (-not $sqlcmdExe) { throw 'Neither Invoke-Sqlcmd nor sqlcmd.exe is available on PATH.' }
-    $sqlcmdArgs = @('-S', $ServerInstance, '-d', $Database, '-i', $sqlScript,
-                    '-h', '-1', '-y', '0', '-W', '-b', '-C')
+    # -y 0 = no truncation on nvarchar(max); -h -1 is mutually exclusive with -y so we skip
+    # the first two output lines (column header + separator) in PowerShell instead
+    $sqlcmdArgs = @('-S', $ServerInstance, '-d', $Database, '-i', $sqlScript, '-y', '0', '-b', '-C')
     if ($Username -and $Password) { $sqlcmdArgs += @('-U', $Username, '-P', $Password) }
     else                          { $sqlcmdArgs += '-E' }
     Write-Host '[generate] Using sqlcmd.exe' -ForegroundColor DarkGray
     $lines = & $sqlcmdExe.Source @sqlcmdArgs
     if ($LASTEXITCODE -ne 0) { throw "sqlcmd.exe failed with exit code $LASTEXITCODE" }
-    $ddlText = ($lines -join "`r`n").Trim()
+    # Skip header row ('ddl') and separator row ('---...') produced by sqlcmd without -h
+    $ddlText = (($lines | Select-Object -Skip 2) -join "`r`n").TrimEnd()
 }
 
 if (-not $ddlText -or $ddlText.Trim() -eq '') {
