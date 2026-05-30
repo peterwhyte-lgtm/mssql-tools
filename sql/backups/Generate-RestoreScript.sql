@@ -36,4 +36,4 @@ RESTORE DATABASE [' + d.name + N'] FROM DISK = ''' + @BackupPath + N'\' + d.name
 FROM sys.databases d
 WHERE d.database_id > 4;
 
-PRINT @cmd;
+SELECT @cmd AS script;

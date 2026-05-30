@@ -123,6 +123,21 @@ function Get-CsvJson([string]$fullPath) {
         })
     }
 
+    # Detect single-column DDL / script output and reassemble split rows
+    $ddlColNames = @('ddl','script','sql_script','sql','statement','definition','code','t_sql','tsql')
+    $isDdl = $headers.Count -eq 1 -and ($ddlColNames -contains $headers[0].ToLower().Trim())
+    if ($isDdl) {
+        $ddlText = ($data | ForEach-Object { $_.($headers[0]) }) -join "`n"
+        return @{
+            headers     = $headers
+            rows        = @()
+            labelCol    = ''
+            numericCols = @()
+            isDdl       = $true
+            ddlText     = $ddlText
+        }
+    }
+
     # Build rows as ordered hashtables (serialises to JSON object, not array)
     $rowsArray = @($data | ForEach-Object {
         $row  = $_
@@ -136,6 +151,8 @@ function Get-CsvJson([string]$fullPath) {
         rows        = $rowsArray
         labelCol    = $labelCol
         numericCols = $numericCols
+        isDdl       = $false
+        ddlText     = ''
     }
 }
 
@@ -630,6 +647,15 @@ const isPie=()=>type==='pie'||type==='doughnut';
 
 async function init(){
   data=await fetch('/api/csv?p=$relEnc').then(r=>r.json());
+
+  if(data.isDdl){
+    document.getElementById('mode-badge').textContent='Script / DDL output';
+    document.querySelector('.table-toolbar').style.display='none';
+    document.getElementById('tbl').closest('.table-wrap').outerHTML=
+      "<div class='code-wrap'><button id='ddl-copy' class='copy-btn' onclick='copyDdl()'>Copy</button><pre id='ddl-block' style='max-height:72vh;overflow:auto'>"+esc(data.ddlText)+"</pre></div>";
+    return;
+  }
+
   if(!data.rows||!data.rows.length){
     document.getElementById('mode-badge').textContent='No data rows in this file.';
     return;
@@ -747,6 +773,13 @@ function fmtCell(val,col){
   return esc(s);
 }
 function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+function copyDdl(){
+  const btn=document.getElementById('ddl-copy');
+  navigator.clipboard.writeText(document.getElementById('ddl-block').textContent)
+    .then(()=>{btn.textContent='Copied!';btn.classList.add('copied');setTimeout(()=>{btn.textContent='Copy';btn.classList.remove('copied');},2000);})
+    .catch(()=>{btn.textContent='Failed';setTimeout(()=>{btn.textContent='Copy';},1500);});
+}
 
 async function savePng(){
   if(!chart)return;

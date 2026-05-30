@@ -34,4 +34,4 @@ BACKUP DATABASE [' + d.name + N'] TO DISK = ''' + @BackupPath + N'\' + d.name + 
 FROM sys.databases d
 WHERE d.database_id > 4;
 
-PRINT @cmd;
+SELECT @cmd AS script;
