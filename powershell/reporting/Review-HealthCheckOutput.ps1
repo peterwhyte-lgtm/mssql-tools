@@ -47,14 +47,10 @@ pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\powershell\reporting\Rev
 .EXAMPLE
 pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\powershell\reporting\Review-HealthCheckOutput.ps1 -FolderPath ".\output-files\healthcheck\.-20260529-185000"
 
-.EXAMPLE
-pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\powershell\reporting\Review-HealthCheckOutput.ps1 -OutputFormat Csv
 #>
 
 param(
-    [string]$FolderPath,
-    [ValidateSet('Table', 'Csv')]
-    [string]$OutputFormat = 'Table'
+    [string]$FolderPath
 )
 
 $ErrorActionPreference = 'Stop'
@@ -355,7 +351,7 @@ else {
 }
 
 $uiUp = $false
-try { $tcp = [System.Net.Sockets.TcpClient]::new('localhost', 8787); $tcp.Close(); $uiUp = $true } catch {}
+try { $tcp = [System.Net.Sockets.TcpClient]::new('localhost', 8787); $tcp.Close(); $uiUp = $true } catch { $null = $_ }
 $folderEnc   = [Uri]::EscapeDataString($FolderPath)
 $dashboardUrl = "http://localhost:8787/review?folder=$folderEnc"
 

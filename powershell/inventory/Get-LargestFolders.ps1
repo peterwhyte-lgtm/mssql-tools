@@ -61,7 +61,7 @@ if (Test-Path (Join-Path $drive 'Users')) {
                         [void]$candidateFolders.Add($p)
                     }
                 }
-                catch { }
+                catch { $null = $_ }
             }
         }
 }

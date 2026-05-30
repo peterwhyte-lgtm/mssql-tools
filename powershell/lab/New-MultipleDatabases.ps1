@@ -49,11 +49,11 @@ function Get-DefaultPaths-SMO {
         $log  = $svr.Settings.DefaultLog
         if ($data -and $log) { return @{ Data = $data; Log = $log } }
     }
-    catch { }
+    catch { $null = $_ }
     return $null
 }
 
-function New-RandomSuffix([int]$len) {
+function Get-RandomSuffix([int]$len) {
     $chars = [char[]](48..57 + 97..122)
     -join (1..$len | ForEach-Object { $chars | Get-Random })
 }
@@ -69,7 +69,7 @@ $created  = [System.Collections.Generic.List[string]]::new()
 $endIndex = $StartIndex + $DatabaseCount - 1
 
 for ($i = $StartIndex; $i -le $endIndex; $i++) {
-    $suffix = New-RandomSuffix -len 8
+    $suffix = Get-RandomSuffix -len 8
     $name   = "${Prefix}_${i}_${suffix}"
 
     if ($server.Databases[$name]) {

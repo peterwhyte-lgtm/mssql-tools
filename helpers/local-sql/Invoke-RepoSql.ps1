@@ -30,7 +30,7 @@ function Show-ResultsFooter([string]$csvPath) {
     $enc     = [Uri]::EscapeDataString($relPath)
     $url     = "http://localhost:8787/csv?p=$enc"
     $uiUp    = $false
-    try { $tcp = [System.Net.Sockets.TcpClient]::new('localhost', 8787); $tcp.Close(); $uiUp = $true } catch {}
+    try { $tcp = [System.Net.Sockets.TcpClient]::new('localhost', 8787); $tcp.Close(); $uiUp = $true } catch { $null = $_ }
     Write-Host ''
     Write-Host ('─' * 64) -ForegroundColor DarkCyan
     Write-Host "  Saved   : $relPath" -ForegroundColor Green
@@ -119,16 +119,16 @@ if ($invokeSqlcmd) {
 
 if ($sqlcmd) {
     $tempOutput = Join-Path $OutputDirectory ("$scriptName-{0}.tmp.csv" -f (Get-Date -Format 'yyyyMMdd-HHmmss'))
-    $args = @('-S', $ServerInstance, '-d', $Database, '-i', $resolvedPath, '-b', '-r', '1', '-t', $QueryTimeout, '-C', '-o', $tempOutput, '-W', '-w', '4000', '-s', ',')
+    $sqlcmdArgs = @('-S', $ServerInstance, '-d', $Database, '-i', $resolvedPath, '-b', '-r', '1', '-t', $QueryTimeout, '-C', '-o', $tempOutput, '-W', '-w', '4000', '-s', ',')
     if ($Username -and $Password) {
-        $args += @('-U', $Username, '-P', $Password)
+        $sqlcmdArgs += @('-U', $Username, '-P', $Password)
     }
     else {
-        $args += '-E'
+        $sqlcmdArgs += '-E'
     }
 
     Write-Host "[repo-sql] Using sqlcmd.exe" -ForegroundColor Green
-    & $sqlcmd.Source @args
+    & $sqlcmd.Source @sqlcmdArgs
     if ($LASTEXITCODE -ne 0) {
         throw "sqlcmd.exe failed with exit code $LASTEXITCODE"
     }

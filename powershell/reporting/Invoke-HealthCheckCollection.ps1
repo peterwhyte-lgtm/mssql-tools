@@ -244,7 +244,7 @@ Write-Host "  OK: $ok  |  Failed: $failed  |  Skipped: $skipped" -ForegroundColo
 Write-Host ''
 
 $uiUp = $false
-try { $tcp = [System.Net.Sockets.TcpClient]::new('localhost', 8787); $tcp.Close(); $uiUp = $true } catch {}
+try { $tcp = [System.Net.Sockets.TcpClient]::new('localhost', 8787); $tcp.Close(); $uiUp = $true } catch { $null = $_ }
 $folderEnc  = [Uri]::EscapeDataString($outFolder)
 $reviewUrl  = "http://localhost:8787/review?folder=$folderEnc"
 

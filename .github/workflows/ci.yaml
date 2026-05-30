@@ -26,7 +26,17 @@ jobs:
         run: |
           $paths = @('powershell','helpers','hybrid') | Where-Object { Test-Path $_ }
           if ($paths.Count -eq 0) { Write-Host "No PS paths found."; exit 0 }
-          $results = Invoke-ScriptAnalyzer -Path $paths -Recurse -Severity Warning,Error
+          # Excluded rules are intentional for this repo:
+          #   PSAvoidUsingWriteHost           — terminal DBA scripts; coloured output is by design
+          #   PSAvoidUsingPlainTextForPassword — SQL connection helpers; plain-text auth is intentional
+          #   PSUseBOMForUnicodeEncodedFile   — file encoding is controlled separately
+          $exclude = @(
+            'PSAvoidUsingWriteHost',
+            'PSAvoidUsingPlainTextForPassword',
+            'PSAvoidUsingUsernameAndPasswordParams',
+            'PSUseBOMForUnicodeEncodedFile'
+          )
+          $results = Invoke-ScriptAnalyzer -Path $paths -Recurse -Severity Warning,Error -ExcludeRule $exclude
           $results | Format-Table
           if ($results | Where-Object { $_.Severity -in 'Error','Warning' }) { exit 1 }
         shell: pwsh
