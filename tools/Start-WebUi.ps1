@@ -9,7 +9,12 @@
     .\tools\Start-WebUi.ps1
     .\tools\Start-WebUi.ps1 -Port 9090
 #>
-param([int]$Port = 8787)
+param([int]$Port = 8787, [switch]$Inline)
+
+if (-not $Inline) {
+    Start-Process pwsh -ArgumentList "-NoExit", "-File", "`"$PSCommandPath`"", "-Port", $Port, "-Inline"
+    return
+}
 
 $ErrorActionPreference = 'Stop'
 $repoRoot = Split-Path $PSScriptRoot -Parent
@@ -861,7 +866,7 @@ function Build-ReviewPage([string]$folder) {
 
     # ── wait statistics ─────────────────────────────────────────────────────────
     if ($waits.Count -gt 0) {
-        $topWaits = @($waits | Sort-Object { [double]($_.pct_total_wait ?? 0) } -Descending | Select-Object -First 12)
+        $topWaits = @($waits | Sort-Object { [double]($_.pct_total_wait -as [double]) } -Descending | Select-Object -First 12)
         $html += "<h2>Top Wait Types</h2><div class='table-wrap'><table>"
         $html += "<thead><tr><th>Wait Type</th><th>Total Wait (ms)</th><th>Avg Wait (ms)</th><th>Count</th><th>% of Total</th></tr></thead><tbody>"
         foreach ($w in $topWaits) {
@@ -892,7 +897,7 @@ function Build-ReviewPage([string]$folder) {
             $html += "<div class='table-wrap'><table><thead><tr>"
             foreach ($c in $avail) { $html += "<th>$c</th>" }
             $html += "</tr></thead><tbody>"
-            foreach ($s in ($sessions | Sort-Object { [int]($_.session_id ?? 0) })) {
+            foreach ($s in ($sessions | Sort-Object { [int]($_.session_id -as [int]) })) {
                 $html += "<tr>"
                 foreach ($c in $avail) {
                     $v = $s.$c ?? ''
@@ -948,7 +953,7 @@ function Build-DiskPage([string]$folder) {
         else { @() }
     }
 
-    $drives     = Read-DiskCsv 'disk-space'
+    $drives     = @(Read-DiskCsv 'disk-space' | Group-Object volume_mount_point | ForEach-Object { $_.Group[0] })
     $dbSizes    = Read-DiskCsv 'database-sizes'
     $tlogs      = Read-DiskCsv 'tlog-usage'
     $growthRisk = Read-DiskCsv 'growth-risk'
@@ -960,8 +965,8 @@ function Build-DiskPage([string]$folder) {
         $html += "<p class='no-data'>No <code>disk-space.csv</code> here — re-run healthcheck with the updated collection script to include volume data.</p>"
     } else {
         $html += "<div class='disk-grid'>"
-        foreach ($d in ($drives | Sort-Object { [double]$_.free_pct })) {
-            $freePct = [double]($d.free_pct)
+        foreach ($d in ($drives | Sort-Object { [double]($_.free_pct -as [double]) })) {
+            $freePct = [double]($d.free_pct -as [double])
             $usedPct = [Math]::Round(100.0 - $freePct, 1)
             $cardCls = if ($freePct -lt 10) { 'crit' } elseif ($freePct -lt 20) { 'warn' } else { '' }
             $barCls  = if ($freePct -lt 10) { 'bar-crit' } elseif ($freePct -lt 20) { 'bar-warn' } else { 'bar-ok' }
@@ -990,8 +995,8 @@ function Build-DiskPage([string]$folder) {
     } else {
         $html += "<div class='table-wrap'><table><thead><tr><th>Database</th><th>Data (MB)</th><th>Data Free</th><th>Log (MB)</th><th>Log Free</th></tr></thead><tbody>"
         foreach ($db in $dbSizes) {
-            $dfp = [double]($db.data_free_pct)
-            $lfp = [double]($db.log_free_pct)
+            $dfp = [double]($db.data_free_pct -as [double])
+            $lfp = [double]($db.log_free_pct  -as [double])
             $dbc = if ($dfp -lt 10) { 'bar-crit' } elseif ($dfp -lt 20) { 'bar-warn' } else { 'bar-ok' }
             $lbc = if ($lfp -lt 10) { 'bar-crit' } elseif ($lfp -lt 20) { 'bar-warn' } else { 'bar-ok' }
             $dfCell = "$($db.data_free_mb) MB ($dfp%)<span class='mini-bar-track'><span class='mini-bar-fill $dbc' style='width:${dfp}%'></span></span>"
@@ -1006,10 +1011,10 @@ function Build-DiskPage([string]$folder) {
     if (-not $tlogs) {
         $html += "<p class='no-data'>No <code>tlog-usage.csv</code> in this folder.</p>"
     } else {
-        $sorted = @($tlogs | Sort-Object { [double]$_.log_used_pct } -Descending)
+        $sorted = @($tlogs | Sort-Object { [double]($_.log_used_pct -as [double]) } -Descending)
         $html += "<div class='table-wrap'><table><thead><tr><th>Database</th><th>Recovery</th><th>Log Size (MB)</th><th>Used (MB)</th><th>Free (MB)</th><th>Used %</th></tr></thead><tbody>"
         foreach ($t in $sorted) {
-            $pct = [double]($t.log_used_pct)
+            $pct = [double]($t.log_used_pct -as [double])
             $svCls = if ($pct -gt 80) { 'sv-red' } elseif ($pct -gt 50) { 'sv-orange' } else { 'sv-green' }
             $html += "<tr><td>$(Html-Escape $t.database_name)</td><td>$($t.recovery_model_desc)</td><td>$($t.log_size_mb)</td><td>$($t.log_used_mb)</td><td>$($t.log_free_mb)</td><td><span class='sv $svCls'>$pct%</span></td></tr>"
         }
@@ -1022,14 +1027,14 @@ function Build-DiskPage([string]$folder) {
         $html += "<p class='no-data'>No <code>growth-risk.csv</code> here — re-run healthcheck with the updated collection script.</p>"
     } else {
         $html += "<div class='table-wrap'><table><thead><tr><th>Database</th><th>Data (MB)</th><th>Log (MB)</th><th>Total (MB)</th><th>Limit (MB)</th><th>Status</th></tr></thead><tbody>"
-        foreach ($g in ($growthRisk | Sort-Object { [double]$_.total_mb } -Descending)) {
+        foreach ($g in ($growthRisk | Sort-Object { [double]($_.total_mb -as [double]) } -Descending)) {
             $sCls = switch ($g.growth_status) {
                 'AT_LIMIT'   { 's-crit' }
                 'NEAR_LIMIT' { 's-warn' }
                 'UNLIMITED'  { 's-gray' }
                 default      { 's-ok'   }
             }
-            $limitCell = if ([double]($g.growth_limit_mb) -eq 0) { '<span class="null-val">—</span>' } else { $g.growth_limit_mb }
+            $limitCell = if ([double]($g.growth_limit_mb -as [double]) -eq 0) { '<span class="null-val">—</span>' } else { $g.growth_limit_mb }
             $html += "<tr><td>$(Html-Escape $g.database_name)</td><td>$($g.data_mb)</td><td>$($g.log_mb)</td><td>$($g.total_mb)</td><td>$limitCell</td><td><span class='status-badge $sCls'>$(Html-Escape $g.growth_status)</span></td></tr>"
         }
         $html += "</tbody></table></div>"
