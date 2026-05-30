@@ -56,6 +56,8 @@ param(
     [string]$Database       = 'master',
     [string]$Username,
     [string]$Password,
+    [ValidateSet('Table','Csv')]
+    [string]$OutputFormat   = 'Table',
     [string]$OutputPath
 )
 
@@ -71,15 +73,19 @@ $sqlScript = Join-Path $repoRoot 'sql\migration\Generate-UserMappingScript.sql'
 
 if (-not (Test-Path -LiteralPath $sqlScript)) { throw "SQL script not found: $sqlScript" }
 
-if (-not $OutputPath) {
-    $safeName = ($ServerInstance -replace '[\\/:*?"<>|]', '-').Trim('-')
-    $ts = Get-Date -Format 'yyyyMMdd-HHmmss'
-    $outDir = Join-Path $repoRoot 'output-files\migration'
-    New-Item -ItemType Directory -Path $outDir -Force | Out-Null
-    $OutputPath = Join-Path $outDir "user-mapping-$safeName-$ts.sql"
+$safeName  = ($ServerInstance -replace '[\\/:*?"<>|]', '-').Trim('-')
+$ts        = Get-Date -Format 'yyyyMMdd-HHmmss'
+$sqlOutDir = Join-Path $repoRoot 'output-files\migration'
+New-Item -ItemType Directory -Path $sqlOutDir -Force | Out-Null
+
+$sqlOutPath = if ($OutputFormat -eq 'Csv') {
+    Join-Path $sqlOutDir "user-mapping-$safeName-$ts.sql"
+} elseif ($OutputPath) {
+    $d = Split-Path $OutputPath -Parent
+    if (-not (Test-Path $d)) { New-Item -ItemType Directory -Path $d -Force | Out-Null }
+    $OutputPath
 } else {
-    $outDir = Split-Path $OutputPath -Parent
-    if (-not (Test-Path $outDir)) { New-Item -ItemType Directory -Path $outDir -Force | Out-Null }
+    Join-Path $sqlOutDir "user-mapping-$safeName-$ts.sql"
 }
 
 $authLabel = if ($Username) { "SQL ($Username)" } else { 'Windows (integrated)' }
@@ -127,11 +133,19 @@ if (-not $ddlText -or $ddlText.Trim() -eq '') {
     return
 }
 
-[System.IO.File]::WriteAllText($OutputPath, $ddlText, [System.Text.Encoding]::UTF8)
+[System.IO.File]::WriteAllText($sqlOutPath, $ddlText, [System.Text.Encoding]::UTF8)
 
 $lineCount = ($ddlText -split "`n").Count
 Write-Host "[generate] Done — $lineCount lines, $($ddlText.Length) characters" -ForegroundColor Green
-Write-Host "[generate] File   : $OutputPath" -ForegroundColor Green
+Write-Host "[generate] .sql   : $sqlOutPath" -ForegroundColor Green
 Write-Host ''
 Write-Host 'Run on target AFTER databases are restored and logins are created.' -ForegroundColor Yellow
 Write-Host ''
+
+if ($OutputFormat -eq 'Csv' -and $OutputPath) {
+    $csvDir = Split-Path $OutputPath -Parent
+    if (-not (Test-Path $csvDir)) { New-Item -ItemType Directory -Path $csvDir -Force | Out-Null }
+    ($ddlText -split '\r?\n') |
+        ForEach-Object { [PSCustomObject]@{ script = $_ } } |
+        Export-Csv -Path $OutputPath -NoTypeInformation -Encoding UTF8
+}

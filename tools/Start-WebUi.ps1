@@ -821,10 +821,16 @@ function renderTable(){
 
 function fmtCell(val,col){
   const s=String(val);
-  if(s===''||s==='NULL')return '<span class="null-val">—</span>';
+  const c=(col||'').toLowerCase();
+  if(s===''||s==='NULL'){
+    // Columns where NULL means something critical never happened → flag red
+    const critical=/backup|checkdb|last_good|restore_date|last_sync/.test(c);
+    return critical
+      ? '<span class="sv sv-red">NONE</span>'
+      : '<span class="null-val">—</span>';
+  }
   const k=s.toLowerCase().trim();
   if(SV[k])return '<span class="sv sv-'+SV[k]+'">'+esc(s)+'</span>';
-  const c=(col||'').toLowerCase();
   if(/^-?\d+(\.\d+)?$/.test(s.trim())){
     const n=parseFloat(s);
     if(/_mb$/.test(c)) return esc(String(Math.round(n)));

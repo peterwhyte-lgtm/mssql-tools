@@ -105,7 +105,10 @@ $sqlOutPath = Join-Path $sqlOutDir "backup-script-$safeName-$ts.sql"
 if ($OutputPath) {
     $csvDir = Split-Path $OutputPath -Parent
     if (-not (Test-Path $csvDir)) { New-Item -ItemType Directory -Path $csvDir -Force | Out-Null }
-    [PSCustomObject]@{ script = $ddlText } | Export-Csv -Path $OutputPath -NoTypeInformation -Encoding UTF8
+    # Write one row per line — avoids multiline-cell CSV parsing issues across PS versions
+    ($ddlText -split '\r?\n') |
+        ForEach-Object { [PSCustomObject]@{ script = $_ } } |
+        Export-Csv -Path $OutputPath -NoTypeInformation -Encoding UTF8
 }
 
 $lineCount = ($ddlText -split "`n").Count
