@@ -170,6 +170,10 @@ h2{font-size:1rem;font-weight:600;color:#e6edf3;margin:10px 0 14px;padding-botto
 .badge-ps{background:#2d2a4a;color:#a78bfa}
 .cat-label{font-size:.75rem;color:#8b949e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;font-weight:600}
 pre{background:#0d1117;border:1px solid #21262d;border-radius:8px;padding:20px;overflow:auto;font-size:.82rem;color:#c9d1d9;tab-size:4;white-space:pre-wrap}
+.code-wrap{position:relative}
+.copy-btn{position:absolute;top:8px;right:8px;background:#21262d;border:1px solid #30363d;color:#8b949e;border-radius:6px;padding:4px 12px;font-size:.75rem;font-weight:600;cursor:pointer;transition:background .15s,color .15s,border-color .15s}
+.copy-btn:hover{background:#2d333b;color:#e6edf3}
+.copy-btn.copied{background:#1a3a2a;border-color:#3fb950;color:#3fb950}
 .back{margin-bottom:14px;font-size:.85rem}
 .script-title{font-size:1.2rem;font-weight:600;color:#e6edf3;margin-bottom:4px}
 .script-meta{font-size:.8rem;color:#8b949e;margin-bottom:16px}
@@ -436,7 +440,22 @@ async function runScript(path) {
   $runControls
 </div>
 $errDiv
-<pre>$(Html-Escape $content)</pre>
+<div class='code-wrap'>
+  <button id='copy-btn' class='copy-btn' onclick='copyCode()'>Copy</button>
+  <pre id='code-block'>$(Html-Escape $content)</pre>
+</div>
+<script>
+async function copyCode() {
+  const btn = document.getElementById('copy-btn');
+  try {
+    await navigator.clipboard.writeText(document.getElementById('code-block').textContent);
+    btn.textContent = 'Copied!'; btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+  } catch(e) {
+    btn.textContent = 'Failed'; setTimeout(() => { btn.textContent = 'Copy'; }, 1500);
+  }
+}
+</script>
 $overlayHtml
 $runJs
 "@
