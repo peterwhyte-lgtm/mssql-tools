@@ -11,7 +11,7 @@ We aim for compatibility with:
 
 ## Reporting a vulnerability
 
-Please email security disclosures to: peterwhyte.mail@gmail.com  
+Please email security disclosures to: <peterwhyte.mail@gmail.com>  
 Subject: `[dba-scripts] Security`
 
 Include: what you found, which file(s) are affected, and steps to reproduce. Response within 48 hours.

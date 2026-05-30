@@ -6,6 +6,7 @@ This note captures the first standards chunk for the repo.
 
 Use the following pattern in SQL scripts when you update them:
 
+```sql
 /*
 Script Name : <short script name>
 Category    : <category folder>
@@ -15,6 +16,7 @@ Safe        : Read-only / Writes data / Creates objects
 Impact      : Low / Medium / High
 Requires    : <permissions or prerequisites>
 */
+```
 
 ## Safety annotations
 

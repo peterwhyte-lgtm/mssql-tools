@@ -4,6 +4,7 @@ Use these as the standard format for new DBA scripts.
 
 ## SQL Script Template
 
+```sql
 -- Purpose: Describe what the script checks or fixes.
 -- Use: Copy into SSMS and run against the target instance or database.
 -- Prerequisites: Mention required permissions, database context, or connected instance.
@@ -11,6 +12,7 @@ Use these as the standard format for new DBA scripts.
 
 SELECT
     1 AS example_result;
+```
 
 ## Script Standards We Want to Keep
 
@@ -23,6 +25,7 @@ SELECT
 
 ## PowerShell Script Template
 
+```powershell
 <#
 .SYNOPSIS
 Short description of the helper.
@@ -36,3 +39,4 @@ param(
 )
 
 Write-Host 'Script ready to extend.' -ForegroundColor Cyan
+```
