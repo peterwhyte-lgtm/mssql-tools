@@ -900,6 +900,10 @@ $rerunJs
 
 function Build-ReviewPage([string]$folder) {
     $hcRoot = Join-Path $repoRoot 'output-files\healthcheck'
+    # Resolve bare folder name (e.g. ".-20260531-095824") to full path
+    if ($folder -and -not [System.IO.Path]::IsPathRooted($folder)) {
+        $folder = Join-Path $hcRoot $folder
+    }
     if (-not $folder) {
         if (Test-Path $hcRoot) {
             $latest = Get-ChildItem -LiteralPath $hcRoot -Directory |
@@ -1457,6 +1461,10 @@ async function runHealthcheck(page){
 function Build-DiskPage([string]$folder) {
     $hcRoot = Join-Path $repoRoot 'output-files\healthcheck'
 
+    # Resolve bare folder name (e.g. ".-20260531-095824") to full path
+    if ($folder -and -not [System.IO.Path]::IsPathRooted($folder)) {
+        $folder = Join-Path $hcRoot $folder
+    }
     if (-not $folder) {
         if (Test-Path $hcRoot) {
             $latest = Get-ChildItem -LiteralPath $hcRoot -Directory |
@@ -1812,8 +1820,10 @@ try {
                     $latest = Get-ChildItem -LiteralPath $hcRoot -Directory -ErrorAction SilentlyContinue |
                               Sort-Object LastWriteTime -Descending | Select-Object -First 1
                     if ($latest) {
-                        $enc = [Uri]::EscapeDataString($latest.FullName)
-                        "{`"ok`":true,`"url`":`"/$page?folder=$enc`"}"
+                        # Redirect to the page with no folder param — the page auto-picks the
+                        # most recent folder, which is exactly the one just collected.
+                        # Avoids all URL encoding / query-string parsing edge cases.
+                        "{`"ok`":true,`"url`":`"/$page`"}"
                     } else {
                         '{"ok":false,"error":"Collection finished but no output folder found."}'
                     }
