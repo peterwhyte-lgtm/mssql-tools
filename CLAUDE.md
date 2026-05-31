@@ -61,19 +61,28 @@ Preflight and discovery:
 
 ```text
 sql/
-  monitoring/    — health, memory, MAXDOP, jobs, AG, TempDB, DBCC, suspect pages
-  performance/   — waits, blocking, long queries, missing indexes, I/O, plan cache
-  backups/       — coverage, history, DR estimates, restore generation
-  security/      — roles, permissions, orphans, weak logins, surface area
-  migration/     — database/login/job/linked-server inventory for migrations
+  monitoring/         — health, memory, MAXDOP, jobs, TempDB, DBCC, suspect pages, instance config
+  performance/        — waits, blocking, long queries, missing indexes, I/O, plan cache, active requests
+  high-availability/  — AG replica state, AG latency (guards against non-AG instances)
+  backups/            — coverage, history, DR estimates, restore generation
+  security/           — roles, permissions, orphans, weak logins, surface area
+  migration/          — risk assessment, compat audit, login audit, deprecated features, DDL generators
 
 powershell/
   inventory/          — storage, growth, disk, instance snapshots
-  reporting/          — performance wrappers + Invoke-HealthCheckCollection + Review-HealthCheckOutput
+  reporting/          — performance wrappers, Invoke-HealthCheckCollection, Review-HealthCheckOutput,
+                        Invoke-AssessmentReport, Get-ActiveRequests, Get-BlockingChains (with -IncludePlan)
+  high-availability/  — AG replica state and latency wrappers
   health-checks/      — DBCC, suspect pages, TempDB hotspots, integrity pre-checks
   backup-automation/  — backup/restore execution and history wrappers
   security/           — wrappers for all sql/security/ scripts
   migration/          — wrappers for all sql/migration/ scripts
+
+collectors/
+  Each collector pairs a SQL file with a PS orchestrator for scheduled historical data collection.
+  Naming: lowercase-hyphenated (blocking.sql, wait-stats.sql) — these are recorders, not getters.
+  Output: appends timestamped rows to daily CSV files for trend analysis and post-incident review.
+  Collectors: ag-health, blocking, database-growth, deadlocks, perfmon, storage-io, tempdb, wait-stats
 
 helpers/
   local-sql/    — Invoke-RepoSql.ps1 (the core runner), Test-SqlConnectivity.ps1
@@ -81,9 +90,9 @@ helpers/
   scaffolding/  — Generate-NextPowerShell.ps1 (stub new wrappers quickly)
   maintenance/  — Clear-OutputFiles.ps1, update-powershell.ps1
 
-sql-templates/operations/   — production runbook templates (CDC, TDE, AG, statistics, etc.)
+sql-operations/             — change orders, checklists, rollback, change templates, installation, patches
 output-files/               — generated CSVs, healthcheck folders, reviews
-docs/                       — roadmap, standards, runbook, structure notes
+docs/                       — roadmap, quick-start, runbook
 blog/                       — draft blog posts for sqldba.blog (one post per script/workflow)
 ```
 
@@ -227,7 +236,7 @@ If there is no matching subcategory, add to `powershell/reporting/` for read/que
 
 ## Important caveats
 
-- AG scripts (`Get-AvailabilityGroupReplicaState.sql`, `Get-AvailabilityGroupLatency.sql`) guard against non-AG instances and return a status row instead of throwing.
+- AG scripts (`sql/high-availability/Get-AvailabilityGroupReplicaState.sql`, `Get-AvailabilityGroupLatency.sql`) guard against non-AG instances and return a status row instead of throwing.
 - Multi-result-set SQL scripts cannot be cleanly exported as a single CSV via `Invoke-RepoSql.ps1`. All canonical `sql/` scripts are single-result-set by design.
 - `output-files/` has no `.gitignore` protection — CSV files accumulate there and should not be committed.
 - `docs/catalog.md` is outdated and references old `categories/` paths. Ignore it; use the `sql/` folder tree directly.

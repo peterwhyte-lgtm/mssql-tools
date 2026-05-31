@@ -29,7 +29,7 @@ This layout keeps the repo usable now while giving the toolkit a cleaner long-te
 1. Start with helpers/triage/Show-RepoOverview.ps1 to see the current repo inventory.
 2. Pick the relevant script in sql/ or powershell/ for the task you are working on.
 3. Use the legacy categories/ tree only for compatibility references that still point to migrated work.
-4. Use sql-templates/operations for runbook-style DBA execution templates.
+4. Use sql-operations for runbook-style DBA execution templates.
 5. Use helpers/ for repo-wide convenience tasks.
 6. Use output-files/ for generated outputs and demos.
 

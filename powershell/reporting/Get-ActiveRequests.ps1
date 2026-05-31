@@ -11,8 +11,8 @@ Purpose      : Triage runaway queries, blocking chains, and TempDB consumers.
                for analysis in SSMS or Azure Data Studio.
 
 .DESCRIPTION
-Wrapper around sql\diagnostics\Get-ActiveRequests.sql. When -IncludePlan is set, runs
-sql\diagnostics\Get-ActiveRequestsWithPlan.sql and writes each session's query_plan
+Wrapper around sql\performance\Get-ActiveRequests.sql. When -IncludePlan is set, runs
+sql\performance\Get-ActiveRequestsWithPlan.sql and writes each session's query_plan
 XML to a separate plan-<session_id>-<yyyyMMdd-HHmmss>.xml file.
 
 An ISO 8601 collection_time column is prepended to every CSV row. Results are
@@ -36,13 +36,13 @@ Full path for the output CSV. Defaults to:
 Append rows to an existing CSV instead of overwriting.
 
 .EXAMPLE
-pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\powershell\diagnostics\Get-ActiveRequests.ps1
+pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\powershell\reporting\Get-ActiveRequests.ps1
 
 .EXAMPLE
-pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\powershell\diagnostics\Get-ActiveRequests.ps1 -ServerInstance PROD01\SQL2019 -IncludePlan
+pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\powershell\reporting\Get-ActiveRequests.ps1 -ServerInstance PROD01\SQL2019 -IncludePlan
 
 .EXAMPLE
-pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\powershell\diagnostics\Get-ActiveRequests.ps1 -ServerInstance . -Append -OutputPath .\output-files\diagnostics\active-requests\rolling.csv
+pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\powershell\reporting\Get-ActiveRequests.ps1 -ServerInstance . -Append -OutputPath .\output-files\diagnostics\active-requests\rolling.csv
 #>
 
 param(
@@ -59,7 +59,7 @@ $repoRoot  = Resolve-Path (Join-Path $PSScriptRoot '..\..')
 $runner    = Join-Path $repoRoot 'helpers\local-sql\Invoke-RepoSql.ps1'
 
 $sqlName   = if ($IncludePlan) { 'Get-ActiveRequestsWithPlan.sql' } else { 'Get-ActiveRequests.sql' }
-$sqlScript = Join-Path $repoRoot "sql\diagnostics\$sqlName"
+$sqlScript = Join-Path $repoRoot "sql\performance\$sqlName"
 
 if (-not (Test-Path -LiteralPath $sqlScript)) { throw "SQL script not found: $sqlScript" }
 if (-not (Test-Path -LiteralPath $runner))    { throw "Runner not found: $runner" }

@@ -11,8 +11,8 @@ Purpose      : Deep-dive blocking diagnostic. Shows every session in every activ
                Exits cleanly with a message when the server is not blocked.
 
 .DESCRIPTION
-Wrapper around sql\diagnostics\Get-BlockingChains.sql. When -IncludePlan is set,
-runs sql\diagnostics\Get-BlockingChainsWithPlan.sql and writes each session's
+Wrapper around sql\performance\Get-BlockingChains.sql. When -IncludePlan is set,
+runs sql\performance\Get-BlockingChainsWithPlan.sql and writes each session's
 query_plan XML to a separate plan-<session_id>-<yyyyMMdd-HHmmss>.xml file.
 
 Key output columns:
@@ -43,13 +43,13 @@ Full path for the output CSV. Defaults to:
 Append rows to an existing CSV instead of overwriting.
 
 .EXAMPLE
-pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\powershell\diagnostics\Get-BlockingChains.ps1
+pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\powershell\reporting\Get-BlockingChains.ps1
 
 .EXAMPLE
-pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\powershell\diagnostics\Get-BlockingChains.ps1 -ServerInstance PROD01\SQL2019 -IncludePlan
+pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\powershell\reporting\Get-BlockingChains.ps1 -ServerInstance PROD01\SQL2019 -IncludePlan
 
 .EXAMPLE
-pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\powershell\diagnostics\Get-BlockingChains.ps1 -ServerInstance . -Append -OutputPath .\output-files\diagnostics\blocking-chains\rolling.csv
+pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\powershell\reporting\Get-BlockingChains.ps1 -ServerInstance . -Append -OutputPath .\output-files\diagnostics\blocking-chains\rolling.csv
 #>
 
 param(
@@ -66,7 +66,7 @@ $repoRoot  = Resolve-Path (Join-Path $PSScriptRoot '..\..')
 $runner    = Join-Path $repoRoot 'helpers\local-sql\Invoke-RepoSql.ps1'
 
 $sqlName   = if ($IncludePlan) { 'Get-BlockingChainsWithPlan.sql' } else { 'Get-BlockingChains.sql' }
-$sqlScript = Join-Path $repoRoot "sql\diagnostics\$sqlName"
+$sqlScript = Join-Path $repoRoot "sql\performance\$sqlName"
 
 if (-not (Test-Path -LiteralPath $sqlScript)) { throw "SQL script not found: $sqlScript" }
 if (-not (Test-Path -LiteralPath $runner))    { throw "Runner not found: $runner" }

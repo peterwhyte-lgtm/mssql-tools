@@ -148,7 +148,7 @@ Latency concern thresholds: > 20ms read or > 10ms write on data files.
 .\run.ps1 Get-LoginInventory           -OutputFormat Csv
 .\run.ps1 Get-JobInventory             -OutputFormat Csv
 .\run.ps1 Get-LinkedServerInventory    -OutputFormat Csv
-.\run.ps1 Get-MigrationChecklist
+.\run.ps1 Get-MigrationRiskAssessment
 .\run.ps1 Get-LinkedServerAndJobInventory -OutputFormat Csv
 ```
 

@@ -78,7 +78,7 @@ The runner automatically finds the script, loads it, and executes it with safe d
 When you need a runbook or change‑order template:
 
 ```text
-sql-templates/operations/
+sql-operations/
 ```
 
 ### 5. Save outputs
@@ -112,7 +112,7 @@ For DMVs, diagnostics, and read‑only investigations.
 - `sql/monitoring` — health, memory, MAXDOP, jobs, AG, snapshots
 - `sql/security` — permissions and access reviews
 - `sql/migration` — logins, jobs, linked servers, inventory
-- `sql-templates/operations` — production runbook templates
+- `sql-operations` — production runbook templates
 
 ### PowerShell Layer
 
@@ -165,7 +165,7 @@ Lightweight helpers that glue the repo together.
 
 - Start in `sql/` for SSMS‑ready analysis scripts
 - Use `powershell/` for automation and local troubleshooting
-- Use `sql-templates/operations/` for production runbooks
+- Use `sql-operations/` for production runbooks
 - Use `helpers/triage/` for repo discovery
 - Use `helpers/local-sql/` for SQL connectivity and execution
 - Use `tools/` for repo maintenance

@@ -101,6 +101,6 @@ Write-Host ""
 Write-Host "  [5]  Browse the full structure" -ForegroundColor Green
 Write-Host "       sql/         — SSMS-ready diagnostic queries (run directly or via .\run.ps1)" -ForegroundColor White
 Write-Host "       powershell/  — wrappers, healthcheck collection, automation" -ForegroundColor White
-Write-Host "       sql-templates/operations/  — production runbook and change-order templates" -ForegroundColor White
+Write-Host "       sql-operations/  — production runbook and change-order templates" -ForegroundColor White
 Write-Host "       docs/        — structure notes, standards, roadmap" -ForegroundColor White
 Write-Host ""

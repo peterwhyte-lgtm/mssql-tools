@@ -1,16 +1,51 @@
 # sql-operations
 
-Production SQL Server operational scripts and automation — organised by lifecycle phase.
+Production SQL Server operational scripts, automation, and change management — organised by lifecycle phase.
 
 ## Structure
 
 ```text
 sql-operations/
-  change-templates/    — SQL operational runbook templates (CDC, TDE, AG, statistics, etc.)
-  installation/        — SQL Server installation automation
-    templates/         — INI answer files per environment/edition
-  patches/             — SQL Server CU updates and SSMS updates
+  change-orders/    — CAB-ready approval documents (complete before any change)
+  checklists/       — step-by-step execution checklists (use during the change window)
+  rollback/         — rollback decision criteria and procedures by migration type
+  change-templates/ — SQL-level runbook templates (CDC, TDE, AG, statistics, etc.)
+  installation/     — SQL Server installation automation
+    templates/      — INI answer files per environment/edition
+  patches/          — SQL Server CU updates and SSMS updates
 ```
+
+The change lifecycle for a migration:
+1. `change-orders/` — get approval before starting
+2. `checklists/` — execute step by step during the window
+3. `rollback/` — trigger criteria and procedure if things go wrong
+
+## change-orders
+
+CAB-ready change order templates. Complete all fields, attach `Invoke-PreMigrationAssessment.ps1` output as evidence, and get approval before the change window.
+
+| Template | Use for |
+|----------|---------|
+| `sql-server-upgrade-change-order.md` | SQL Server version upgrade (in-place or side-by-side) |
+| `server-migration-change-order.md` | Hardware or VM server replacement |
+| `alwayson-planned-failover-change-order.md` | AG planned failover or replica maintenance |
+
+## checklists
+
+Step-by-step execution checklists — work through these during the change window. Each pairs with a change order above.
+
+| Checklist | Use for |
+|-----------|---------|
+| `sql-version-upgrade.md` | SQL Server version upgrade — in-place or side-by-side |
+| `alwayson-migration.md` | AG planned failover, replica addition/removal, listener changes |
+| `server-replacement.md` | Physical or VM server replacement via backup/restore or log shipping |
+| `dr-failover.md` | DR failover (planned test or actual disaster) and failback |
+
+## rollback
+
+| Document | Purpose |
+|----------|---------|
+| `migration-rollback-playbook.md` | Binary trigger criteria, decision ownership, and step-by-step rollback for each migration type |
 
 ## change-templates
 
