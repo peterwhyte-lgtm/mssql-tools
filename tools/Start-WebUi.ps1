@@ -399,7 +399,8 @@ function Build-ViewPage([string]$relPath) {
 
     # Determine if this script can be run through the web UI
     $isRunnable = $false
-    if ($ext -eq '.sql' -and $relPath -match '(^|[\\/])sql[\\/]') {
+    $isLab = $relPath -match '(^|[\\/])sql[\\/]lab[\\/]'
+    if ($ext -eq '.sql' -and $relPath -match '(^|[\\/])sql[\\/]' -and -not $isLab) {
         $isRunnable = $true
     } elseif ($ext -eq '.ps1' -and $relPath -match '(^|[\\/])powershell[\\/]') {
         $isRunnable = ($content -match 'OutputFormat') -and ($content -match 'OutputPath')
@@ -409,6 +410,7 @@ function Build-ViewPage([string]$relPath) {
     $defaultSrv  = if ($env:DBASCRIPTS_SERVER) { Html-Escape $env:DBASCRIPTS_SERVER } else { '' }
     $srvHint     = if ($env:DBASCRIPTS_SERVER) { $env:DBASCRIPTS_SERVER } else { 'local ( . )' }
     $dryRunToggle = if ($isWrites -and $isRunnable) { "<div class='dryrun-wrap'><input type='checkbox' id='dryrun' checked><label for='dryrun'>Dry Run</label></div>" } else { '' }
+    $labBanner = if ($isLab) { "<div class='dryrun-banner'>&#9888;&nbsp; <strong>Run this script manually in SSMS</strong> — it is a multi-step lab demo that requires two open query windows and cannot be automated from the web UI. Copy the code and follow the instructions in the script header.</div>" } else { '' }
 
     $runControls = ''
     if ($isRunnable) {
@@ -470,6 +472,7 @@ async function runScript(path) {
   $runControls
 </div>
 $errDiv
+$labBanner
 <div class='code-wrap'>
   <button id='copy-btn' class='copy-btn' onclick='copyCode()'>Copy</button>
   <pre id='code-block'>$(Html-Escape $content)</pre>

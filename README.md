@@ -129,8 +129,11 @@ helpers/
 | `Get-BlockingChains` | Recursive blocking chain with head blocker, wait info, and optional query plans |
 | `Get-LongRunningQueries` | Active queries by elapsed time with database and login |
 | `Get-MissingIndexes` | DMV missing index candidates ranked by impact score |
+| `Get-StatisticsHealth` | Stale, low-sample, and never-updated statistics with UPDATE STATISTICS commands — run in the target database |
 | `Get-TopCpuQueries` | Top CPU consumers from plan cache |
 | `Get-TopIoQueries` | Top I/O consumers from plan cache |
+| `Get-QueryStoreTopQueries` | Top queries from Query Store by CPU, duration, executions, or plan regressions — run in the target database context |
+| `Get-ContentionAnalysis` | Unified contention overview: lock waits, latch waits, TempDB allocation pressure, spinlock hot spots |
 | `Get-DeadlockSummary` | Deadlock history from system health session |
 
 ### Monitoring
