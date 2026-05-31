@@ -46,14 +46,14 @@ New-Item -ItemType Directory -Path $logDir -Force | Out-Null
 $ts          = Get-Date -Format 'yyyyMMdd-HHmmss'
 $logFile     = Join-Path $logDir "ssms-update-$ts.log"
 
-function Write-Log {
+function Write-DbaLog {
     param([string]$Msg, [string]$Color = 'White')
     $line = "[$(Get-Date -Format 'HH:mm:ss')] $Msg"
     Write-Host $line -ForegroundColor $Color
     Add-Content -Path $logFile -Value $line
 }
 
-Write-Log "SSMS update log — $ts" 'Cyan'
+Write-DbaLog "SSMS update log — $ts" 'Cyan'
 
 # ── Detect current SSMS version ───────────────────────────────────────────────
 $ssmsVersion = $null
@@ -75,25 +75,25 @@ foreach ($path in $uninstallPaths) {
 }
 
 if ($ssmsVersion) {
-    Write-Log "Current SSMS : $ssmsName  v$ssmsVersion" 'White'
+    Write-DbaLog "Current SSMS : $ssmsName  v$ssmsVersion" 'White'
 } else {
-    Write-Log 'SSMS not detected — will perform a fresh install.' 'Yellow'
+    Write-DbaLog 'SSMS not detected — will perform a fresh install.' 'Yellow'
 }
 
 # ── winget method ─────────────────────────────────────────────────────────────
 if ($Method -eq 'winget') {
     $winget = Get-Command winget.exe -ErrorAction SilentlyContinue
     if (-not $winget) {
-        Write-Log 'winget not available — switching to download method.' 'Yellow'
+        Write-DbaLog 'winget not available — switching to download method.' 'Yellow'
         $Method = 'download'
     } else {
-        Write-Log 'Method: winget' 'Cyan'
+        Write-DbaLog 'Method: winget' 'Cyan'
         if ($WhatIf) {
-            Write-Log 'WhatIf: winget upgrade --id Microsoft.SQLServerManagementStudio --silent' 'Yellow'
+            Write-DbaLog 'WhatIf: winget upgrade --id Microsoft.SQLServerManagementStudio --silent' 'Yellow'
             return
         }
 
-        Write-Log 'Running: winget upgrade --id Microsoft.SQLServerManagementStudio ...' 'Cyan'
+        Write-DbaLog 'Running: winget upgrade --id Microsoft.SQLServerManagementStudio ...' 'Cyan'
         $wingetArgs = @(
             'upgrade',
             '--id', 'Microsoft.SQLServerManagementStudio',
@@ -105,18 +105,18 @@ if ($Method -eq 'winget') {
                     -Wait -PassThru -NoNewWindow
 
         if ($proc.ExitCode -eq 0) {
-            Write-Log 'winget upgrade completed.' 'Green'
+            Write-DbaLog 'winget upgrade completed.' 'Green'
         } elseif ($proc.ExitCode -eq -1978335212) {
-            Write-Log 'SSMS is already up to date (no upgrade available).' 'Green'
+            Write-DbaLog 'SSMS is already up to date (no upgrade available).' 'Green'
         } else {
-            Write-Log "winget exited with code $($proc.ExitCode) — check output above." 'Yellow'
+            Write-DbaLog "winget exited with code $($proc.ExitCode) — check output above." 'Yellow'
         }
     }
 }
 
 # ── Download method ───────────────────────────────────────────────────────────
 if ($Method -eq 'download') {
-    Write-Log 'Method: direct download from aka.ms/ssmsfullsetup' 'Cyan'
+    Write-DbaLog 'Method: direct download from aka.ms/ssmsfullsetup' 'Cyan'
 
     if (-not $DownloadDir) { $DownloadDir = $logDir }
     New-Item -ItemType Directory -Path $DownloadDir -Force | Out-Null
@@ -125,36 +125,36 @@ if ($Method -eq 'download') {
     $downloadUrl   = 'https://aka.ms/ssmsfullsetup'
 
     if ($WhatIf) {
-        Write-Log "WhatIf: Invoke-WebRequest '$downloadUrl' → '$installerPath'" 'Yellow'
-        Write-Log "WhatIf: Start-Process '$installerPath' /install /quiet /norestart" 'Yellow'
+        Write-DbaLog "WhatIf: Invoke-WebRequest '$downloadUrl' → '$installerPath'" 'Yellow'
+        Write-DbaLog "WhatIf: Start-Process '$installerPath' /install /quiet /norestart" 'Yellow'
         return
     }
 
-    Write-Log "Downloading SSMS installer..." 'Cyan'
+    Write-DbaLog "Downloading SSMS installer..." 'Cyan'
     try {
         Invoke-WebRequest -Uri $downloadUrl -OutFile $installerPath -UseBasicParsing
         $sizeMB = [math]::Round((Get-Item $installerPath).Length / 1MB, 1)
-        Write-Log "Downloaded: $installerPath ($sizeMB MB)" 'Green'
+        Write-DbaLog "Downloaded: $installerPath ($sizeMB MB)" 'Green'
     } catch {
-        Write-Log "ERROR: Download failed — $($_.Exception.Message)" 'Red'
+        Write-DbaLog "ERROR: Download failed — $($_.Exception.Message)" 'Red'
         exit 1
     }
 
-    Write-Log 'Installing SSMS (silent)...' 'Cyan'
+    Write-DbaLog 'Installing SSMS (silent)...' 'Cyan'
     $installArgs = @('/install', '/quiet', '/norestart')
     $proc = Start-Process -FilePath $installerPath -ArgumentList $installArgs -Wait -PassThru
 
     if ($proc.ExitCode -in @(0, 3010)) {
-        Write-Log 'SSMS install completed.' 'Green'
-        if ($proc.ExitCode -eq 3010) { Write-Log 'Reboot required to complete install.' 'Yellow' }
+        Write-DbaLog 'SSMS install completed.' 'Green'
+        if ($proc.ExitCode -eq 3010) { Write-DbaLog 'Reboot required to complete install.' 'Yellow' }
     } else {
-        Write-Log "Install exited with code $($proc.ExitCode)." 'Yellow'
+        Write-DbaLog "Install exited with code $($proc.ExitCode)." 'Yellow'
     }
 }
 
 # ── Verify new version ────────────────────────────────────────────────────────
-Write-Log ''
-Write-Log 'Checking installed SSMS version...' 'Cyan'
+Write-DbaLog ''
+Write-DbaLog 'Checking installed SSMS version...' 'Cyan'
 $newVersion = $null
 foreach ($path in $uninstallPaths) {
     $found = Get-ItemProperty $path -ErrorAction SilentlyContinue |
@@ -165,14 +165,14 @@ foreach ($path in $uninstallPaths) {
 
 if ($newVersion) {
     if ($ssmsVersion -and $newVersion -ne $ssmsVersion) {
-        Write-Log "SSMS updated: v$ssmsVersion  →  v$newVersion" 'Green'
+        Write-DbaLog "SSMS updated: v$ssmsVersion  →  v$newVersion" 'Green'
     } elseif ($newVersion) {
-        Write-Log "SSMS version: v$newVersion" 'Green'
+        Write-DbaLog "SSMS version: v$newVersion" 'Green'
     }
 } else {
-    Write-Log 'Could not read new SSMS version from registry — verify manually.' 'Yellow'
+    Write-DbaLog 'Could not read new SSMS version from registry — verify manually.' 'Yellow'
 }
 
-Write-Log ''
-Write-Log 'Done.' 'Green'
-Write-Log "Log: $logFile"
+Write-DbaLog ''
+Write-DbaLog 'Done.' 'Green'
+Write-DbaLog "Log: $logFile"

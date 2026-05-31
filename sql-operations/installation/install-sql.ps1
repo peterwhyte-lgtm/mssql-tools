@@ -132,7 +132,7 @@ New-Item -ItemType Directory -Path $logDir -Force | Out-Null
 $ts        = Get-Date -Format 'yyyyMMdd-HHmmss'
 $logFile   = Join-Path $logDir "install-$InstanceName-$ts.log"
 
-function Write-Log {
+function Write-DbaLog {
     param([string]$Msg, [string]$Color = 'White')
     $line = "[$(Get-Date -Format 'HH:mm:ss')] $Msg"
     Write-Host $line -ForegroundColor $Color
@@ -177,8 +177,8 @@ function Confirm-SAPassword {
     return $ok
 }
 
-Write-Log "SQL Server install log — $ts" 'Cyan'
-Write-Log "Log file: $logFile" 'DarkGray'
+Write-DbaLog "SQL Server install log — $ts" 'Cyan'
+Write-DbaLog "Log file: $logFile" 'DarkGray'
 
 # ── Interactive prompts for anything not supplied ─────────────────────────────
 if (-not $SetupPath) {
@@ -218,35 +218,35 @@ if ($MaxMemoryGB -eq 0) { $MaxMemoryGB  = [math]::Max(1, [math]::Floor($totalRAM
 if ($MaxDOP      -eq 0) { $MaxDOP       = [math]::Min($logicalCPUs, 8) }
 if ($TempDBFileCount -eq 0) { $TempDBFileCount = [math]::Min($logicalCPUs, 8) }
 
-Write-Log ''
-Write-Log 'Hardware-based recommendations:' 'Cyan'
-Write-Log "  Total RAM       : $totalRAMGB GB"
-Write-Log "  Logical CPUs    : $logicalCPUs"
-Write-Log "  Max Server Mem  : $MaxMemoryGB GB"
-Write-Log "  MaxDOP          : $MaxDOP"
-Write-Log "  TempDB files    : $TempDBFileCount"
+Write-DbaLog ''
+Write-DbaLog 'Hardware-based recommendations:' 'Cyan'
+Write-DbaLog "  Total RAM       : $totalRAMGB GB"
+Write-DbaLog "  Logical CPUs    : $logicalCPUs"
+Write-DbaLog "  Max Server Mem  : $MaxMemoryGB GB"
+Write-DbaLog "  MaxDOP          : $MaxDOP"
+Write-DbaLog "  TempDB files    : $TempDBFileCount"
 
 # ── Confirm ───────────────────────────────────────────────────────────────────
-Write-Log ''
-Write-Log 'Install configuration:' 'Cyan'
-Write-Log "  Setup       : $SetupPath"
-Write-Log "  Instance    : $InstanceName"
-Write-Log "  Features    : $Features"
-Write-Log "  Collation   : $Collation"
-Write-Log "  Install dir : $InstallDir"
-Write-Log "  System DBs  : $SystemDBDir"
-Write-Log "  System logs : $SystemLogDir"
-Write-Log "  User DBs    : $UserDBDir"
-Write-Log "  User logs   : $UserLogDir"
-Write-Log "  TempDB      : $TempDBDir  ($TempDBFileCount files)"
-Write-Log "  Sysadmins   : $SysAdminAccounts"
-if ($AnswerFile) { Write-Log "  Answer file : $AnswerFile" }
-Write-Log ''
+Write-DbaLog ''
+Write-DbaLog 'Install configuration:' 'Cyan'
+Write-DbaLog "  Setup       : $SetupPath"
+Write-DbaLog "  Instance    : $InstanceName"
+Write-DbaLog "  Features    : $Features"
+Write-DbaLog "  Collation   : $Collation"
+Write-DbaLog "  Install dir : $InstallDir"
+Write-DbaLog "  System DBs  : $SystemDBDir"
+Write-DbaLog "  System logs : $SystemLogDir"
+Write-DbaLog "  User DBs    : $UserDBDir"
+Write-DbaLog "  User logs   : $UserLogDir"
+Write-DbaLog "  TempDB      : $TempDBDir  ($TempDBFileCount files)"
+Write-DbaLog "  Sysadmins   : $SysAdminAccounts"
+if ($AnswerFile) { Write-DbaLog "  Answer file : $AnswerFile" }
+Write-DbaLog ''
 
 if (-not $WhatIf) {
     $go = Read-Host 'Start installation? (yes to continue)'
     if ($go -notmatch '^(yes|y|1)$') {
-        Write-Log 'Installation cancelled.' 'Yellow'; exit 0
+        Write-DbaLog 'Installation cancelled.' 'Yellow'; exit 0
     }
 }
 
@@ -299,34 +299,34 @@ if ($AnswerFile) {
     [Runtime.InteropServices.Marshal]::SecureStringToBSTR($SAPassword)) | Out-Null
 
 if ($WhatIf) {
-    Write-Log 'WhatIf — setup.exe command:' 'Yellow'
-    Write-Log "$SetupPath $($SetupArgs -join ' ')" 'DarkGray'
+    Write-DbaLog 'WhatIf — setup.exe command:' 'Yellow'
+    Write-DbaLog "$SetupPath $($SetupArgs -join ' ')" 'DarkGray'
     # Mask password in WhatIf output
     Write-Host ($SetupArgs -join ' ') -replace '/SAPWD="[^"]*"', '/SAPWD="****"'
     return
 }
 
 # ── Run setup.exe ─────────────────────────────────────────────────────────────
-Write-Log 'Running SQL Server setup.exe...' 'Cyan'
+Write-DbaLog 'Running SQL Server setup.exe...' 'Cyan'
 $proc = Start-Process -FilePath $SetupPath -ArgumentList $SetupArgs `
             -Wait -PassThru -RedirectStandardOutput "$logFile.stdout" `
             -RedirectStandardError "$logFile.stderr"
 
 $exitCode = $proc.ExitCode
-Write-Log "setup.exe exit code: $exitCode"
+Write-DbaLog "setup.exe exit code: $exitCode"
 
 switch ($exitCode) {
-    0    { Write-Log 'Installation succeeded.' 'Green' }
-    3010 { Write-Log 'Installation succeeded — reboot required.' 'Yellow' }
+    0    { Write-DbaLog 'Installation succeeded.' 'Green' }
+    3010 { Write-DbaLog 'Installation succeeded — reboot required.' 'Yellow' }
     default {
-        Write-Log "Installation failed (exit code $exitCode). Check: $logFile.stderr" 'Red'
+        Write-DbaLog "Installation failed (exit code $exitCode). Check: $logFile.stderr" 'Red'
         exit $exitCode
     }
 }
 
 # ── Post-install configuration ────────────────────────────────────────────────
 if (-not $SkipPostConfig) {
-    Write-Log 'Applying post-install configuration...' 'Cyan'
+    Write-DbaLog 'Applying post-install configuration...' 'Cyan'
 
     # Wait up to 60s for SQL to accept connections
     $srv = if ($InstanceName -eq 'MSSQLSERVER') { 'localhost' } else { "localhost\$InstanceName" }
@@ -340,7 +340,7 @@ if (-not $SkipPostConfig) {
     }
 
     if (-not $ready) {
-        Write-Log 'WARNING: SQL Server not reachable after 60s — skipping post-install config.' 'Yellow'
+        Write-DbaLog 'WARNING: SQL Server not reachable after 60s — skipping post-install config.' 'Yellow'
     } else {
         $postSql = @"
 EXEC sys.sp_configure 'show advanced options', 1;
@@ -352,15 +352,15 @@ RECONFIGURE WITH OVERRIDE;
 "@
         try {
             Invoke-Sqlcmd -ServerInstance $srv -Query $postSql -TrustServerCertificate -ErrorAction Stop
-            Write-Log "  Max memory   : $MaxMemoryGB GB ($($MaxMemoryGB * 1024) MB)" 'Green'
-            Write-Log "  MaxDOP       : $MaxDOP" 'Green'
-            Write-Log "  Cost threshold: 50" 'Green'
+            Write-DbaLog "  Max memory   : $MaxMemoryGB GB ($($MaxMemoryGB * 1024) MB)" 'Green'
+            Write-DbaLog "  MaxDOP       : $MaxDOP" 'Green'
+            Write-DbaLog "  Cost threshold: 50" 'Green'
         } catch {
-            Write-Log "WARNING: Post-install config failed — $($_.Exception.Message)" 'Yellow'
+            Write-DbaLog "WARNING: Post-install config failed — $($_.Exception.Message)" 'Yellow'
         }
     }
 }
 
-Write-Log ''
-Write-Log 'SQL Server installation complete.' 'Green'
-Write-Log "Log: $logFile"
+Write-DbaLog ''
+Write-DbaLog 'SQL Server installation complete.' 'Green'
+Write-DbaLog "Log: $logFile"

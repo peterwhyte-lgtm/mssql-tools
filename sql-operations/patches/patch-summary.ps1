@@ -153,10 +153,10 @@ if ($patchLogs) {
     Write-Host "  Recent patch activity (last 5 logs):" -ForegroundColor Cyan
     foreach ($log in $patchLogs) {
         $outcome = 'Unknown'
-        Get-Content $log.FullName -ErrorAction SilentlyContinue | ForEach-Object {
-            if ($_ -match 'succeeded|complete|Done') { $outcome = 'Success'   }
-            if ($_ -match 'FAILED|ERROR:')           { $outcome = 'Failed'    }
-            if ($_ -match 'cancelled')               { $outcome = 'Cancelled' }
+        foreach ($line in (Get-Content $log.FullName -ErrorAction SilentlyContinue)) {
+            if ($line -match 'succeeded|complete|Done') { $outcome = 'Success'   }
+            if ($line -match 'FAILED|ERROR:')           { $outcome = 'Failed'    }
+            if ($line -match 'cancelled')               { $outcome = 'Cancelled' }
         }
         $color = switch ($outcome) { 'Success'{'Green'} 'Failed'{'Red'} default{'Yellow'} }
         Write-Host ("  {0}  {1,-40} {2}" -f $log.LastWriteTime.ToString('yyyy-MM-dd HH:mm'), $log.Name, $outcome) -ForegroundColor $color

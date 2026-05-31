@@ -44,14 +44,14 @@ New-Item -ItemType Directory -Path $logDir -Force | Out-Null
 $ts       = Get-Date -Format 'yyyyMMdd-HHmmss'
 $logFile  = Join-Path $logDir "uninstall-$ts.log"
 
-function Write-Log {
+function Write-DbaLog {
     param([string]$Msg, [string]$Color = 'White')
     $line = "[$(Get-Date -Format 'HH:mm:ss')] $Msg"
     Write-Host $line -ForegroundColor $Color
     Add-Content -Path $logFile -Value $line
 }
 
-Write-Log "SQL Server uninstall log — $ts" 'Cyan'
+Write-DbaLog "SQL Server uninstall log — $ts" 'Cyan'
 
 # ── Detect installed instances ────────────────────────────────────────────────
 $regPath   = 'HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\Instance Names\SQL'
@@ -64,17 +64,17 @@ if (Test-Path $regPath) {
 }
 
 if ($instances.Count -eq 0) {
-    Write-Log 'No SQL Server instances found on this machine.' 'Yellow'; exit 0
+    Write-DbaLog 'No SQL Server instances found on this machine.' 'Yellow'; exit 0
 }
 
-Write-Log 'Installed instances:' 'Cyan'
-$instances | ForEach-Object { Write-Log "  $_" }
+Write-DbaLog 'Installed instances:' 'Cyan'
+$instances | ForEach-Object { Write-DbaLog "  $_" }
 
 if (-not $InstanceName) {
     $InstanceName = Read-Host "Instance to remove ($(($instances -join ', ')))"
 }
 if ($instances -notcontains $InstanceName) {
-    Write-Log "ERROR: Instance '$InstanceName' not found." 'Red'; exit 1
+    Write-DbaLog "ERROR: Instance '$InstanceName' not found." 'Red'; exit 1
 }
 
 # ── Setup path ────────────────────────────────────────────────────────────────
@@ -84,7 +84,7 @@ if (-not $SetupPath) {
     } until ($SetupPath -and (Test-Path $SetupPath))
 }
 if (-not (Test-Path $SetupPath)) {
-    Write-Log "ERROR: setup.exe not found at '$SetupPath'." 'Red'; exit 1
+    Write-DbaLog "ERROR: setup.exe not found at '$SetupPath'." 'Red'; exit 1
 }
 
 # ── Collect data dirs before uninstall ───────────────────────────────────────
@@ -104,68 +104,68 @@ if ($RemoveDataDirs) {
         $dataDirs = $dataDirs | Sort-Object -Unique
     }
     if ($dataDirs.Count -gt 0) {
-        Write-Log 'Data directories that will be deleted:' 'Yellow'
-        $dataDirs | ForEach-Object { Write-Log "  $_" 'Yellow' }
+        Write-DbaLog 'Data directories that will be deleted:' 'Yellow'
+        $dataDirs | ForEach-Object { Write-DbaLog "  $_" 'Yellow' }
     }
 }
 
 # ── Confirm ───────────────────────────────────────────────────────────────────
-Write-Log ''
-Write-Log "TARGET  : $InstanceName" 'Red'
-Write-Log "SETUP   : $SetupPath" 'Red'
+Write-DbaLog ''
+Write-DbaLog "TARGET  : $InstanceName" 'Red'
+Write-DbaLog "SETUP   : $SetupPath" 'Red'
 if ($RemoveDataDirs -and $dataDirs.Count -gt 0) {
-    Write-Log "DATA DIRS WILL BE DELETED AFTER UNINSTALL" 'Red'
+    Write-DbaLog "DATA DIRS WILL BE DELETED AFTER UNINSTALL" 'Red'
 }
-Write-Log ''
-Write-Log 'WARNING: This is IRREVERSIBLE. Ensure you have backups of all databases.' 'Red'
-Write-Log ''
+Write-DbaLog ''
+Write-DbaLog 'WARNING: This is IRREVERSIBLE. Ensure you have backups of all databases.' 'Red'
+Write-DbaLog ''
 
 if ($WhatIf) {
-    Write-Log 'WhatIf — no changes made.' 'Yellow'; return
+    Write-DbaLog 'WhatIf — no changes made.' 'Yellow'; return
 }
 
 $confirm = Read-Host "Type the instance name '$InstanceName' to confirm uninstall"
 if ($confirm -ne $InstanceName) {
-    Write-Log 'Confirmation did not match. Uninstall cancelled.' 'Yellow'; exit 0
+    Write-DbaLog 'Confirmation did not match. Uninstall cancelled.' 'Yellow'; exit 0
 }
 
 # ── Run uninstall ─────────────────────────────────────────────────────────────
 $uninstallArgs = @('/Q', '/ACTION=Uninstall', "/INSTANCENAME=$InstanceName", '/IACCEPTSQLSERVERLICENSETERMS')
 
-Write-Log 'Running SQL Server setup.exe /ACTION=Uninstall...' 'Cyan'
+Write-DbaLog 'Running SQL Server setup.exe /ACTION=Uninstall...' 'Cyan'
 $proc = Start-Process -FilePath $SetupPath -ArgumentList $uninstallArgs `
             -Wait -PassThru `
             -RedirectStandardOutput "$logFile.stdout" `
             -RedirectStandardError  "$logFile.stderr"
 
 $exitCode = $proc.ExitCode
-Write-Log "Exit code: $exitCode"
+Write-DbaLog "Exit code: $exitCode"
 
 switch ($exitCode) {
-    0    { Write-Log 'Uninstall succeeded.' 'Green' }
-    3010 { Write-Log 'Uninstall succeeded — reboot required.' 'Yellow' }
+    0    { Write-DbaLog 'Uninstall succeeded.' 'Green' }
+    3010 { Write-DbaLog 'Uninstall succeeded — reboot required.' 'Yellow' }
     default {
-        Write-Log "Uninstall may have failed (exit $exitCode). Review: $logFile.stderr" 'Red'
+        Write-DbaLog "Uninstall may have failed (exit $exitCode). Review: $logFile.stderr" 'Red'
         exit $exitCode
     }
 }
 
 # ── Optional data directory cleanup ──────────────────────────────────────────
 if ($RemoveDataDirs -and $dataDirs.Count -gt 0) {
-    Write-Log ''
-    Write-Log 'Removing data directories...' 'Yellow'
+    Write-DbaLog ''
+    Write-DbaLog 'Removing data directories...' 'Yellow'
     foreach ($dir in $dataDirs) {
         if (Test-Path $dir) {
             try {
                 Remove-Item -Path $dir -Recurse -Force
-                Write-Log "  Removed: $dir" 'Green'
+                Write-DbaLog "  Removed: $dir" 'Green'
             } catch {
-                Write-Log "  Failed to remove $dir — $($_.Exception.Message)" 'Red'
+                Write-DbaLog "  Failed to remove $dir — $($_.Exception.Message)" 'Red'
             }
         }
     }
 }
 
-Write-Log ''
-Write-Log 'Uninstall complete.' 'Green'
-Write-Log "Log: $logFile"
+Write-DbaLog ''
+Write-DbaLog 'Uninstall complete.' 'Green'
+Write-DbaLog "Log: $logFile"

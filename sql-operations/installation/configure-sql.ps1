@@ -63,7 +63,7 @@ New-Item -ItemType Directory -Path $logDir -Force | Out-Null
 $ts       = Get-Date -Format 'yyyyMMdd-HHmmss'
 $logFile  = Join-Path $logDir "configure-$($ServerInstance -replace '[\\/:*]','-')-$ts.log"
 
-function Write-Log {
+function Write-DbaLog {
     param([string]$Msg, [string]$Color = 'White')
     $line = "[$(Get-Date -Format 'HH:mm:ss')] $Msg"
     Write-Host $line -ForegroundColor $Color
@@ -88,8 +88,8 @@ $settings = [ordered]@{
     'remote admin connections'      = @{ Value = $RemoteAdminConnections; Label = "Remote admin connections / DAC ($(if ($RemoteAdminConnections) {'on'} else {'off'}))" }
 }
 
-Write-Log "SQL Server configuration — $ServerInstance" 'Cyan'
-Write-Log "Log: $logFile" 'DarkGray'
+Write-DbaLog "SQL Server configuration — $ServerInstance" 'Cyan'
+Write-DbaLog "Log: $logFile" 'DarkGray'
 
 # ── Read current settings ─────────────────────────────────────────────────────
 $currentSql = "SELECT name, value_in_use FROM sys.configurations WHERE name IN ($( ($settings.Keys | ForEach-Object {"'$_'"}) -join ',' ))"
@@ -97,17 +97,17 @@ try {
     $current = Invoke-Sqlcmd -ServerInstance $ServerInstance -Query $currentSql `
                    -TrustServerCertificate -ErrorAction Stop
 } catch {
-    Write-Log "ERROR: Cannot connect to $ServerInstance — $($_.Exception.Message)" 'Red'; exit 1
+    Write-DbaLog "ERROR: Cannot connect to $ServerInstance — $($_.Exception.Message)" 'Red'; exit 1
 }
 
 $currentMap = @{}
 foreach ($row in $current) { $currentMap[$row.name] = $row.value_in_use }
 
 # ── Show planned changes ──────────────────────────────────────────────────────
-Write-Log ''
-Write-Log 'Planned configuration changes:' 'Cyan'
-Write-Log ("{0,-42} {1,12}  →  {2}" -f 'Setting', 'Current', 'New') 'DarkGray'
-Write-Log ([string]::new('-', 72)) 'DarkGray'
+Write-DbaLog ''
+Write-DbaLog 'Planned configuration changes:' 'Cyan'
+Write-DbaLog ("{0,-42} {1,12}  →  {2}" -f 'Setting', 'Current', 'New') 'DarkGray'
+Write-DbaLog ([string]::new('-', 72)) 'DarkGray'
 
 $changed = @{}
 foreach ($key in $settings.Keys) {
@@ -116,25 +116,25 @@ foreach ($key in $settings.Keys) {
     $isSame  = "$current" -eq "$desired"
     $color   = if ($isSame) {'DarkGray'} else {'White'}
     $note    = if ($isSame) {'(no change)'} else {''}
-    Write-Log ("{0,-42} {1,12}  →  {2}  {3}" -f $key, $current, $desired, $note) $color
+    Write-DbaLog ("{0,-42} {1,12}  →  {2}  {3}" -f $key, $current, $desired, $note) $color
     if (-not $isSame) { $changed[$key] = $settings[$key].Value }
 }
 
 if ($changed.Count -eq 0) {
-    Write-Log ''
-    Write-Log 'All settings already at desired values. Nothing to apply.' 'Green'
+    Write-DbaLog ''
+    Write-DbaLog 'All settings already at desired values. Nothing to apply.' 'Green'
     return
 }
 
 if ($WhatIf) {
-    Write-Log ''
-    Write-Log "WhatIf: $($changed.Count) setting(s) would be applied." 'Yellow'
+    Write-DbaLog ''
+    Write-DbaLog "WhatIf: $($changed.Count) setting(s) would be applied." 'Yellow'
     return
 }
 
 # ── Apply ─────────────────────────────────────────────────────────────────────
-Write-Log ''
-Write-Log "Applying $($changed.Count) setting(s)..." 'Cyan'
+Write-DbaLog ''
+Write-DbaLog "Applying $($changed.Count) setting(s)..." 'Cyan'
 
 $sql = "EXEC sys.sp_configure 'show advanced options', 1; RECONFIGURE WITH OVERRIDE;`n"
 foreach ($key in $changed.Keys) {
@@ -145,9 +145,9 @@ $sql += "RECONFIGURE WITH OVERRIDE;"
 try {
     Invoke-Sqlcmd -ServerInstance $ServerInstance -Query $sql `
         -TrustServerCertificate -QueryTimeout 30 -ErrorAction Stop
-    Write-Log 'Settings applied successfully.' 'Green'
+    Write-DbaLog 'Settings applied successfully.' 'Green'
 } catch {
-    Write-Log "ERROR applying settings: $($_.Exception.Message)" 'Red'; exit 1
+    Write-DbaLog "ERROR applying settings: $($_.Exception.Message)" 'Red'; exit 1
 }
 
 # ── Verify ────────────────────────────────────────────────────────────────────
@@ -156,15 +156,15 @@ $verify = Invoke-Sqlcmd -ServerInstance $ServerInstance -Query $currentSql `
 $verifyMap = @{}
 foreach ($row in $verify) { $verifyMap[$row.name] = $row.value_in_use }
 
-Write-Log ''
-Write-Log 'Verification:' 'Cyan'
+Write-DbaLog ''
+Write-DbaLog 'Verification:' 'Cyan'
 foreach ($key in $changed.Keys) {
     $expected = $changed[$key]
     $actual   = $verifyMap[$key]
     $ok       = "$actual" -eq "$expected"
     $color    = if ($ok) {'Green'} else {'Red'}
-    Write-Log ("  {0,-42} {1}  {2}" -f $key, $actual, $(if ($ok) {'OK'} else {"MISMATCH (expected $expected)"})) $color
+    Write-DbaLog ("  {0,-42} {1}  {2}" -f $key, $actual, $(if ($ok) {'OK'} else {"MISMATCH (expected $expected)"})) $color
 }
 
-Write-Log ''
-Write-Log 'Configuration complete.' 'Green'
+Write-DbaLog ''
+Write-DbaLog 'Configuration complete.' 'Green'

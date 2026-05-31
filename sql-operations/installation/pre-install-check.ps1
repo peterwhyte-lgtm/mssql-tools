@@ -131,7 +131,10 @@ $port1433InUse = $false
 try {
     $tcpConn = Get-NetTCPConnection -LocalPort 1433 -State Listen -ErrorAction SilentlyContinue
     if ($tcpConn) { $port1433InUse = $true }
-} catch {}
+} catch {
+    Write-Error $_
+    throw
+}
 Add-Check 'Network' 'TCP port 1433' `
     $(if ($port1433InUse) {'WARN'} else {'PASS'}) `
     $(if ($port1433InUse) {'Already in use — check existing SQL instance'} else {'Available'})

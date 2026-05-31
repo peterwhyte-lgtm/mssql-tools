@@ -56,22 +56,22 @@ New-Item -ItemType Directory -Path $logDir -Force | Out-Null
 $ts       = Get-Date -Format 'yyyyMMdd-HHmmss'
 $logFile  = Join-Path $logDir "sql-patch-$ts.log"
 
-function Write-Log {
+function Write-DbaLog {
     param([string]$Msg, [string]$Color = 'White')
     $line = "[$(Get-Date -Format 'HH:mm:ss')] $Msg"
     Write-Host $line -ForegroundColor $Color
     Add-Content -Path $logFile -Value $line
 }
 
-Write-Log "SQL Server patch log — $ts" 'Cyan'
+Write-DbaLog "SQL Server patch log — $ts" 'Cyan'
 
 # ── Validate patch file ───────────────────────────────────────────────────────
 if (-not (Test-Path $PatchPath)) {
-    Write-Log "ERROR: Patch file not found: $PatchPath" 'Red'; exit 1
+    Write-DbaLog "ERROR: Patch file not found: $PatchPath" 'Red'; exit 1
 }
 $patchFile = Get-Item $PatchPath
-Write-Log "Patch file : $($patchFile.Name)"
-Write-Log "Size       : $([math]::Round($patchFile.Length / 1MB, 1)) MB"
+Write-DbaLog "Patch file : $($patchFile.Name)"
+Write-DbaLog "Size       : $([math]::Round($patchFile.Length / 1MB, 1)) MB"
 
 # ── Detect installed SQL Server instances ─────────────────────────────────────
 $regPath   = 'HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\Instance Names\SQL'
@@ -84,11 +84,11 @@ if (Test-Path $regPath) {
 }
 
 if ($instances.Count -eq 0) {
-    Write-Log 'ERROR: No SQL Server instances found on this machine.' 'Red'; exit 1
+    Write-DbaLog 'ERROR: No SQL Server instances found on this machine.' 'Red'; exit 1
 }
 
-Write-Log ''
-Write-Log 'Installed SQL Server instances:' 'Cyan'
+Write-DbaLog ''
+Write-DbaLog 'Installed SQL Server instances:' 'Cyan'
 
 $versionsBefore = @{}
 foreach ($inst in $instances) {
@@ -99,9 +99,9 @@ foreach ($inst in $instances) {
                    -QueryTimeout 10 -TrustServerCertificate -ErrorAction Stop
         $ver = $row.pv
         $versionsBefore[$inst] = $ver
-        Write-Log "  $inst : $ver" 'White'
+        Write-DbaLog "  $inst : $ver" 'White'
     } catch {
-        Write-Log "  $inst : (could not connect — $($_.Exception.Message))" 'Yellow'
+        Write-DbaLog "  $inst : (could not connect — $($_.Exception.Message))" 'Yellow'
         $versionsBefore[$inst] = 'unknown'
     }
 }
@@ -110,52 +110,52 @@ foreach ($inst in $instances) {
 $patchArgs = @('/quiet', '/IAcceptSQLServerLicenseTerms')
 if ($InstanceName) {
     $patchArgs += "/instancename=$InstanceName"
-    Write-Log ''
-    Write-Log "Target instance: $InstanceName" 'Cyan'
+    Write-DbaLog ''
+    Write-DbaLog "Target instance: $InstanceName" 'Cyan'
 } else {
     $patchArgs += '/allinstances'
-    Write-Log ''
-    Write-Log 'Target: all instances (/allinstances)' 'Cyan'
+    Write-DbaLog ''
+    Write-DbaLog 'Target: all instances (/allinstances)' 'Cyan'
 }
 
 if ($WhatIf) {
-    Write-Log 'WhatIf — patch command:' 'Yellow'
-    Write-Log "$PatchPath $($patchArgs -join ' ')" 'DarkGray'
+    Write-DbaLog 'WhatIf — patch command:' 'Yellow'
+    Write-DbaLog "$PatchPath $($patchArgs -join ' ')" 'DarkGray'
     return
 }
 
 # ── Warn about active connections ─────────────────────────────────────────────
-Write-Log ''
-Write-Log 'WARNING: The patch installer will restart SQL Server services.' 'Yellow'
-Write-Log 'Ensure no critical jobs or transactions are active.' 'Yellow'
-Write-Log ''
+Write-DbaLog ''
+Write-DbaLog 'WARNING: The patch installer will restart SQL Server services.' 'Yellow'
+Write-DbaLog 'Ensure no critical jobs or transactions are active.' 'Yellow'
+Write-DbaLog ''
 $go = Read-Host 'Apply patch now? (yes to continue)'
 if ($go -notmatch '^(yes|y|1)$') {
-    Write-Log 'Patch cancelled.' 'Yellow'; exit 0
+    Write-DbaLog 'Patch cancelled.' 'Yellow'; exit 0
 }
 
 # ── Apply patch ───────────────────────────────────────────────────────────────
-Write-Log 'Running patch installer...' 'Cyan'
+Write-DbaLog 'Running patch installer...' 'Cyan'
 $proc = Start-Process -FilePath $PatchPath -ArgumentList $patchArgs `
             -Wait -PassThru `
             -RedirectStandardOutput "$logFile.stdout" `
             -RedirectStandardError  "$logFile.stderr"
 
 $exitCode = $proc.ExitCode
-Write-Log "Installer exit code: $exitCode"
+Write-DbaLog "Installer exit code: $exitCode"
 
 switch ($exitCode) {
-    0    { Write-Log 'Patch applied successfully.' 'Green' }
-    3010 { Write-Log 'Patch applied — reboot required.' 'Yellow' }
+    0    { Write-DbaLog 'Patch applied successfully.' 'Green' }
+    3010 { Write-DbaLog 'Patch applied — reboot required.' 'Yellow' }
     default {
-        Write-Log "Patch FAILED (exit code $exitCode). Review: $logFile.stderr" 'Red'
+        Write-DbaLog "Patch FAILED (exit code $exitCode). Review: $logFile.stderr" 'Red'
         exit $exitCode
     }
 }
 
 # ── Verify new versions ───────────────────────────────────────────────────────
-Write-Log ''
-Write-Log 'Verifying versions after patch:' 'Cyan'
+Write-DbaLog ''
+Write-DbaLog 'Verifying versions after patch:' 'Cyan'
 Start-Sleep -Seconds 10
 
 foreach ($inst in $instances) {
@@ -172,15 +172,15 @@ foreach ($inst in $instances) {
             $changed  = $verAfter -ne $before
             $color    = if ($changed) { 'Green' } else { 'Yellow' }
             $note     = if ($changed) { 'updated' } else { 'unchanged' }
-            Write-Log "  $inst : $before  →  $verAfter  ($note)" $color
+            Write-DbaLog "  $inst : $before  →  $verAfter  ($note)" $color
             break
         } catch { Start-Sleep -Seconds 5 }
     }
     if (-not $ready) {
-        Write-Log "  $inst : could not reconnect after patch — check manually." 'Yellow'
+        Write-DbaLog "  $inst : could not reconnect after patch — check manually." 'Yellow'
     }
 }
 
-Write-Log ''
-Write-Log 'Patch complete.' 'Green'
-Write-Log "Log: $logFile"
+Write-DbaLog ''
+Write-DbaLog 'Patch complete.' 'Green'
+Write-DbaLog "Log: $logFile"

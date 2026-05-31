@@ -39,13 +39,13 @@ $csvPath  = Join-Path $OutputRoot "$safeName-$today.csv"
 $logPath  = Join-Path $OutputRoot "$safeName-collector.log"
 $ts       = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
 
-function Write-Log { param([string]$Msg, [string]$L='INFO')
+function Write-DbaLog { param([string]$Msg, [string]$L='INFO')
     $line = "[$ts] [$L] $Msg"
     Add-Content -Path $logPath -Value $line -EA SilentlyContinue
     if ($Host.Name -ne 'Default Host') { Write-Host $line }
 }
 
-Write-Log "Starting AG health collection — $ServerInstance"
+Write-DbaLog "Starting AG health collection — $ServerInstance"
 
 $rows = $null
 $invokeSqlcmd = Get-Command Invoke-Sqlcmd -ErrorAction SilentlyContinue
@@ -54,10 +54,10 @@ if ($invokeSqlcmd) {
             QueryTimeout=15; TrustServerCertificate=$true; ErrorAction='Stop' }
     if ($Username -and $Password) { $p['Username']=$Username; $p['Password']=$Password }
     try   { $rows = @(Invoke-Sqlcmd @p) }
-    catch { Write-Log "Invoke-Sqlcmd failed: $($_.Exception.Message)" 'ERROR'; exit 1 }
+    catch { Write-DbaLog "Invoke-Sqlcmd failed: $($_.Exception.Message)" 'ERROR'; exit 1 }
 } else {
     $sqlcmdExe = Get-Command sqlcmd.exe -EA SilentlyContinue
-    if (-not $sqlcmdExe) { Write-Log 'No SQL tool available.' 'ERROR'; exit 1 }
+    if (-not $sqlcmdExe) { Write-DbaLog 'No SQL tool available.' 'ERROR'; exit 1 }
     $tmp = [IO.Path]::Combine([IO.Path]::GetTempPath(), "ag-$(Get-Date -Format 'yyyyMMddHHmmss').tmp.csv")
     $a = @('-S',$ServerInstance,'-d',$Database,'-i',$sqlScript,'-b','-r','1','-t','15','-C','-o',$tmp,'-W','-w','4000','-s',',')
     if ($Username -and $Password) { $a += @('-U',$Username,'-P',$Password) } else { $a += '-E' }
@@ -68,18 +68,18 @@ if ($invokeSqlcmd) {
             $raw  = @(Import-Csv -LiteralPath $tmp -EA Stop)
             $rows = @($raw | Where-Object { $r=$_; -not ($r.PSObject.Properties.Name | Where-Object { $r.$_ -match '^-+$' }) })
         }
-    } catch { Write-Log "sqlcmd.exe failed: $($_.Exception.Message)" 'ERROR'; exit 1 }
+    } catch { Write-DbaLog "sqlcmd.exe failed: $($_.Exception.Message)" 'ERROR'; exit 1 }
     finally { if (Test-Path $tmp) { Remove-Item $tmp -Force -EA SilentlyContinue } }
 }
 
 # Skip NO_AG rows to keep CSV lean on standalone instances
 $agRows = @($rows | Where-Object { $_.ag_name -ne 'NO_AG' })
 if ($agRows.Count -eq 0) {
-    Write-Log 'No AG configured — skipping write.'
+    Write-DbaLog 'No AG configured — skipping write.'
     exit 0
 }
 
 $fileExists = Test-Path $csvPath
 $agRows | Export-Csv -LiteralPath $csvPath -NoTypeInformation -Append -Encoding UTF8
 $verb = if ($fileExists) { 'appended' } else { 'created' }
-Write-Log "OK — $($agRows.Count) row(s) $verb to $([IO.Path]::GetFileName($csvPath))"
+Write-DbaLog "OK — $($agRows.Count) row(s) $verb to $([IO.Path]::GetFileName($csvPath))"

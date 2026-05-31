@@ -40,7 +40,7 @@ $csvPath  = Join-Path $OutputRoot "$safeName-$today.csv"
 $logPath  = Join-Path $OutputRoot "$safeName-collector.log"
 $ts       = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
 
-function Write-Log { param([string]$Msg, [string]$L='INFO')
+function Write-DbaLog { param([string]$Msg, [string]$L='INFO')
     $line = "[$ts] [$L] $Msg"
     Add-Content -Path $logPath -Value $line -EA SilentlyContinue
     if ($Host.Name -ne 'Default Host') { Write-Host $line }
@@ -56,7 +56,10 @@ if (Test-Path $csvPath) {
             ForEach-Object { [datetime]$_ } |
             Sort-Object -Descending | Select-Object -First 1
         if ($existing) { $lastCaptured = $existing }
-    } catch {}
+    } catch {
+        Write-Error $_
+        throw
+    }
 }
 
 $rows = $null
@@ -66,10 +69,10 @@ if ($invokeSqlcmd) {
             QueryTimeout=30; TrustServerCertificate=$true; ErrorAction='Stop' }
     if ($Username -and $Password) { $p['Username']=$Username; $p['Password']=$Password }
     try   { $rows = @(Invoke-Sqlcmd @p) }
-    catch { Write-Log "Invoke-Sqlcmd failed: $($_.Exception.Message)" 'ERROR'; exit 1 }
+    catch { Write-DbaLog "Invoke-Sqlcmd failed: $($_.Exception.Message)" 'ERROR'; exit 1 }
 } else {
     $sqlcmdExe = Get-Command sqlcmd.exe -EA SilentlyContinue
-    if (-not $sqlcmdExe) { Write-Log 'No SQL tool available.' 'ERROR'; exit 1 }
+    if (-not $sqlcmdExe) { Write-DbaLog 'No SQL tool available.' 'ERROR'; exit 1 }
     $tmp = [IO.Path]::Combine([IO.Path]::GetTempPath(), "dl-$(Get-Date -Format 'yyyyMMddHHmmss').tmp.csv")
     $a = @('-S',$ServerInstance,'-d',$Database,'-i',$sqlScript,'-b','-r','1','-t','30','-C','-o',$tmp,'-W','-w','8000','-s',',')
     if ($Username -and $Password) { $a += @('-U',$Username,'-P',$Password) } else { $a += '-E' }
@@ -80,12 +83,12 @@ if ($invokeSqlcmd) {
             $raw  = @(Import-Csv -LiteralPath $tmp -EA Stop)
             $rows = @($raw | Where-Object { $r=$_; -not ($r.PSObject.Properties.Name | Where-Object { $r.$_ -match '^-+$' }) })
         }
-    } catch { Write-Log "sqlcmd.exe failed: $($_.Exception.Message)" 'ERROR'; exit 1 }
+    } catch { Write-DbaLog "sqlcmd.exe failed: $($_.Exception.Message)" 'ERROR'; exit 1 }
     finally { if (Test-Path $tmp) { Remove-Item $tmp -Force -EA SilentlyContinue } }
 }
 
 if (-not $rows -or $rows.Count -eq 0) {
-    Write-Log 'No deadlocks in ring buffer.'
+    Write-DbaLog 'No deadlocks in ring buffer.'
     exit 0
 }
 
@@ -95,11 +98,11 @@ $newRows = @($rows | Where-Object {
 })
 
 if ($newRows.Count -eq 0) {
-    Write-Log 'No new deadlocks since last capture.'
+    Write-DbaLog 'No new deadlocks since last capture.'
     exit 0
 }
 
 $fileExists = Test-Path $csvPath
 $newRows | Export-Csv -LiteralPath $csvPath -NoTypeInformation -Append -Encoding UTF8
 $verb = if ($fileExists) { 'appended' } else { 'created' }
-Write-Log "DEADLOCK — $($newRows.Count) new event(s) $verb to $([IO.Path]::GetFileName($csvPath))" 'WARN'
+Write-DbaLog "DEADLOCK — $($newRows.Count) new event(s) $verb to $([IO.Path]::GetFileName($csvPath))" 'WARN'
