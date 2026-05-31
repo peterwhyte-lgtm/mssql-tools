@@ -1,187 +1,245 @@
 # DBA Scripts
 
-A production‑ready SQL Server DBA toolkit for diagnostics, automation, and operational review.
+[![SQL Server](https://img.shields.io/badge/SQL%20Server-2016%2B-CC2927?logo=microsoftsqlserver&logoColor=white)](https://github.com/peterwhyte-lgtm/dba-scripts)
+[![License](https://img.shields.io/github/license/peterwhyte-lgtm/dba-scripts)](LICENSE)
+[![Last commit](https://img.shields.io/github/last-commit/peterwhyte-lgtm/dba-scripts)](https://github.com/peterwhyte-lgtm/dba-scripts/commits/main)
+[![Stars](https://img.shields.io/github/stars/peterwhyte-lgtm/dba-scripts?style=social)](https://github.com/peterwhyte-lgtm/dba-scripts)
 
-![banner](banner.png)
+A production-ready SQL Server DBA toolkit for diagnostics, monitoring, migration, and operational change management.
 
-This repository provides a structured, enterprise‑grade library of SQL and PowerShell tools designed for real‑world DBA work. It focuses on fast troubleshooting, safe investigation, repeatable workflows, and operational consistency across SQL Server environments.
+**Read the blog:** [sqldba.blog](https://sqldba.blog) — each script has a companion post with real-world context.
 
 ---
 
-## ⚙️ Configure Your Environment
+## What's in the box
 
-Before running scripts, ensure the following:
+- **Paste-and-run SQL** — DMV queries for waits, blocking, memory, storage, jobs, AG health, and more. All read-only, all safe for production.
+- **PowerShell orchestration** — run scripts at scale, export CSVs, schedule collection, and automate health checks.
+- **Health check workflow** — one command collects 22 scripts against any instance and surfaces CRITICAL/WARNING/INFO findings.
+- **Assessment report** — generates a scored markdown report suitable for a client handover or ownership review.
+- **Migration toolkit** — pre-migration risk assessment, baseline capture, checklists, CAB-ready change orders, and a rollback playbook.
+- **Operational templates** — change orders, execution checklists, and rollback procedures for version upgrades, AG failovers, and server replacements.
 
-### Requirements
+---
 
-- Windows PowerShell 5.1 or PowerShell 7+
-- SQL Server client tools installed (SSMS or ADS)
-- Local SQL instance or remote SQL instance you can connect to
-- Execution policy allowing local scripts:
+## Table of contents
+
+- [Quick start](#quick-start)
+- [Health check workflow](#health-check-workflow)
+- [Repository structure](#repository-structure)
+- [Key scripts](#key-scripts)
+- [Migration toolkit](#migration-toolkit)
+- [Requirements](#requirements)
+- [Contributing](#contributing)
+
+---
+
+## Quick start
 
 ```powershell
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-```
-
-### Optional (Recommended)
-
-- Git installed
-- A working directory where you can clone and run the repo
-- A SQL login with read‑only access to system DMVs
-
-Once ready, clone the repo:
-
-```bash
+# Clone
 git clone https://github.com/peterwhyte-lgtm/dba-scripts
-```
+cd dba-scripts
 
-## 🚀 Start Here
+# Test connectivity
+.\helpers\local-sql\Test-SqlConnectivity.ps1 -ServerInstance .
 
-If you're new to the repo, begin with this quick path:
-
-### 1. Get a full repo overview
-
-This shows you everything available and where to find it.
-
-```powershell
-.\helpers\triage\Show-RepoOverview.ps1
-```
-
-### 2. Run your first script using the runner
-
-The repo includes a universal runner so you don't need to remember full paths.
-
-Example:
-
-```powershell
+# Run any script by name — fuzzy match, no paths needed
 .\run.ps1 Get-WaitStatistics
+.\run.ps1 Get-WaitStatistics -ServerInstance PROD01\SQL2019 -OutputFormat Csv
 ```
 
-You can call any script by name:
+The runner resolves any script by name and passes all parameters through. No need to remember folder paths.
+
+---
+
+## Health check workflow
+
+Collect all monitoring data and review findings in two commands:
 
 ```powershell
-.\run.ps1 IndexFragmentation
-.\run.ps1 PermissionAudit
-.\run.ps1 ServerInventory
+# Collect 22 scripts — saves named CSVs to output-files\healthcheck\<server>-<timestamp>\
+.\powershell\reporting\Invoke-HealthCheckCollection.ps1 -ServerInstance .
+
+# Review findings — surfaces CRITICAL / WARNING / INFO from the collected CSVs
+.\powershell\reporting\Review-HealthCheckOutput.ps1
 ```
 
-The runner automatically finds the script, loads it, and executes it with safe defaults.
+What gets flagged: offline databases, missing backups, stale DBCC CHECKDB, suspect pages, sa login enabled, unconfigured max server memory, percent-based autogrowth, job failures, I/O latency, transaction log pressure, and more.
 
-### 3. Validate SQL connectivity (recommended)
+### Assessment report
+
+For a client handover or instance ownership review:
 
 ```powershell
-.\helpers\local-sql\Test-SqlConnectivity.ps1 -ServerInstance . -Database master
+# Runs the full collection + configuration scoring + findings, then writes a markdown report
+.\powershell\reporting\Invoke-AssessmentReport.ps1 -ServerInstance PROD01\SQL2019 -AssessedBy "Peter Whyte"
+# Output: output-files\assessment\<server>-<timestamp>.md
 ```
 
-### 4. Use production‑style templates
+The report includes an instance score (0–100), CRITICAL/WARNING/INFO findings, database inventory, storage, and prioritised recommendations.
 
-When you need a runbook or change‑order template:
+---
+
+## Repository structure
 
 ```text
+sql/
+  monitoring/         — health, memory, MAXDOP, jobs, TempDB, DBCC, instance config
+  performance/        — waits, blocking, long queries, missing indexes, I/O, active requests
+  high-availability/  — AG replica state, AG latency
+  backups/            — coverage, history, DR estimates, restore generation
+  security/           — roles, permissions, orphans, weak logins, surface area
+  migration/          — risk assessment, compat audit, login audit, deprecated features
+
+powershell/
+  reporting/          — wrappers, health check collection, assessment report
+  inventory/          — storage, growth, disk, instance snapshots
+  high-availability/  — AG state and latency wrappers
+  health-checks/      — DBCC, suspect pages, TempDB hotspots
+  backup-automation/  — backup and restore execution
+  security/           — security audit wrappers
+  migration/          — migration assessment, baseline capture, DDL generators
+
+collectors/           — scheduled collectors for historical trend data (blocking, waits, I/O, AG)
+
 sql-operations/
+  change-orders/      — CAB-ready change order templates
+  checklists/         — step-by-step execution checklists
+  rollback/           — rollback decision criteria and procedures
+  change-templates/   — SQL runbook templates (CDC, TDE, AG, statistics)
+  installation/       — SQL Server installation automation
+  patches/            — CU and SSMS update scripts
+
+helpers/
+  local-sql/          — Invoke-RepoSql.ps1, Set-SqlConnection.ps1, Test-SqlConnectivity.ps1
+  triage/             — Show-RepoOverview.ps1, Find-UsefulScript.ps1
+  scaffolding/        — Generate-NextPowerShell.ps1
 ```
 
-### 5. Save outputs
+---
 
-Any reusable output (CSV, JSON, text) can be stored under:
+## Key scripts
 
-```text
-output-files/
-```
+### Performance
 
-## ⭐ Most Useful Scripts
+| Script | Purpose |
+|--------|---------|
+| `Get-WaitStatistics` | Top wait types since last restart — benign waits filtered |
+| `Get-BlockingChains` | Recursive blocking chain with head blocker, wait info, and optional query plans |
+| `Get-LongRunningQueries` | Active queries by elapsed time with database and login |
+| `Get-MissingIndexes` | DMV missing index candidates ranked by impact score |
+| `Get-TopCpuQueries` | Top CPU consumers from plan cache |
+| `Get-TopIoQueries` | Top I/O consumers from plan cache |
+| `Get-DeadlockSummary` | Deadlock history from system health session |
 
-These are the core scripts most DBAs start with:
+### Monitoring
 
-- **Get-WaitStatistics** — performance bottleneck analysis
-- **Get-LongRunningQueries** — top resource consumers
-- **Permission Audit** — login, role, and access review
-- **Server Inventory Pack** — instance‑level metadata and configuration
-- **Test-SqlConnectivity** — quick connectivity validation
+| Script | Purpose |
+|--------|---------|
+| `Get-InstanceConfigurationScore` | Scores ~16 key configuration checks as PASS/WARN/FAIL with remediation |
+| `Get-DatabaseHealth` | State, recovery model, auto-shrink, page verify, compat level per database |
+| `Get-TempdbUsage` | TempDB file usage, version store, free space per file |
+| `Get-MemoryConfigurationAndUsage` | Max server memory vs current buffer pool and committed memory |
+| `Get-MaxdopConfiguration` | MAXDOP vs CPU topology with recommended value |
+| `Get-SqlAgentJobFailureSummary` | Job failures in the last 7 days |
 
-## 📦 Repository Structure
+### Backups
 
-The repo is organized into three practical layers that mirror real DBA workflows.
+| Script | Purpose |
+|--------|---------|
+| `Get-BackupCoverage` | Full/diff/log backup status per database with backup_status flag |
+| `Get-LastDatabaseBackupTimes` | Last backup time and age in hours per database |
+| `Get-BackupRestoreDurationEstimate` | Estimated restore duration from backup history |
 
-### SQL Layer
+### High Availability
 
-For DMVs, diagnostics, and read‑only investigations.
+| Script | Purpose |
+|--------|---------|
+| `Get-AvailabilityGroupReplicaState` | AG replica health, sync state, connection mode |
+| `Get-AvailabilityGroupLatency` | Log send/redo queue sizes and replication rates |
 
-- `sql/performance` — waits, blocking, long‑running queries, missing indexes, I/O
-- `sql/backups` — backup coverage, restore prep, DR readiness
-- `sql/monitoring` — health, memory, MAXDOP, jobs, AG, snapshots
-- `sql/security` — permissions and access reviews
-- `sql/migration` — logins, jobs, linked servers, inventory
-- `sql-operations` — production runbook templates
+### Security
 
-### PowerShell Layer
+| Script | Purpose |
+|--------|---------|
+| `Get-UserPermissionsAudit` | Explicit permissions per database user |
+| `Get-SysadminMembers` | sysadmin role members with login type |
+| `Get-WeakLoginSettings` | SQL logins with policy or expiration disabled, sa enabled |
 
-For automation, orchestration, and local execution.
+---
 
-- `powershell/inventory` — storage, growth, instance inventory
-- `powershell/backup-automation` — backup/restore helpers
-- `powershell/reporting` — waits, blocking, index reporting
-- `powershell/health-checks` — DB health and TempDB checks
+## Migration toolkit
 
-### Hybrid Layer
-
-Lightweight helpers that glue the repo together.
-
-- `helpers/triage` — repo inventory and script discovery
-- `helpers/local-sql` — connectivity tests and SQL execution
-- `helpers/maintenance` — cleanup and repo hygiene
-- `tools` — repo maintenance utilities
-- `examples` — sample workflows
-
-## 🧪 Example Commands
+Run against the source server before any migration:
 
 ```powershell
-.\run.ps1 Get-WaitStatistics
-.\run.ps1 Get-LongRunningQueries
-.\helpers\Run-Helper.ps1 -ScriptName Get-WaitStatistics
-.\helpers\local-sql\Test-SqlConnectivity.ps1 -ServerInstance . -Database master
+# Pre-migration risk assessment — saves 14 CSVs to output-files\migration\assessment\
+.\powershell\migration\Invoke-PreMigrationAssessment.ps1 -ServerInstance PROD01\SQL2019
+
+# Capture pre-migration performance baseline for post-migration comparison
+.\powershell\migration\Export-MigrationBaseline.ps1 -ServerInstance PROD01\SQL2019 -Label pre
+
+# After migration — capture post baseline and compare
+.\powershell\migration\Export-MigrationBaseline.ps1 -ServerInstance PROD02\SQL2022 -Label post
 ```
 
-## 🎯 What This Repo Optimizes For
+Key assessment scripts:
 
-- Fast copy/paste into SSMS or Azure Data Studio
-- Clear category grouping by real DBA tasks
-- Easy handoff to other production DBAs
-- Repeatable workflows and operational consistency
-- A solid foundation for blog posts, runbooks, and automation
+| Script | Purpose |
+|--------|---------|
+| `Get-MigrationRiskAssessment` | HIGH/MEDIUM/INFO findings: compat gaps, bad settings, linked servers, AG membership |
+| `Get-DeprecatedFeaturesInUse` | Deprecated features with active usage count since last restart |
+| `Get-CompatibilityLevelAudit` | All databases with compat level, mapped SQL version, and native compat delta |
+| `Get-MigrationLoginAudit` | All server principals with migration risk and per-type action guidance |
 
-## 🗺 Category Map (At a Glance)
+Change management templates in `sql-operations/`:
 
-- `sql/performance` — waits, blocking, long‑running queries, missing indexes, I/O
-- `sql/backups` — backup coverage, restore prep, DR readiness
-- `sql/monitoring` — health, memory, MAXDOP, jobs, AG
-- `sql/security` — permissions and access reviews
-- `powershell/inventory` — storage, growth, instance inventory
-- `powershell/backup-automation` — backup/restore helpers
-- `powershell/reporting` — waits, blocking, index reporting
-- `powershell/health-checks` — DB health and TempDB
+- `change-orders/` — CAB-ready approval documents for version upgrades, server migrations, AG failovers
+- `checklists/` — step-by-step execution checklists for each migration type
+- `rollback/migration-rollback-playbook.md` — rollback triggers, decision ownership, and procedure per migration type
 
-## 🛠 How to Use This Repo
+---
 
-- Start in `sql/` for SSMS‑ready analysis scripts
-- Use `powershell/` for automation and local troubleshooting
-- Use `sql-operations/` for production runbooks
-- Use `helpers/triage/` for repo discovery
-- Use `helpers/local-sql/` for SQL connectivity and execution
-- Use `tools/` for repo maintenance
-- Read [`docs/script-index.md`](docs/script-index.md) for a full index of every script with one-line descriptions
-- Read `docs/structure.md` for the full repo map
-- Treat all scripts as production‑safe starting points and extend them for your environment
+## Requirements
 
-## 📝 Notes
+- SQL Server 2016 or later
+- PowerShell 5.1 or PowerShell 7+
+- `Invoke-Sqlcmd` (SqlServer module) or `sqlcmd.exe` on the path
+- `VIEW SERVER STATE` and `VIEW ANY DATABASE` for most scripts
 
-- Folder names are lowercase for consistency
-- Scripts are grouped by real production DBA use cases
-- Lab/test scripts are intentionally separate
-- `docs/` contains runbooks, templates, and operational notes
-
-## 📥 Clone the Repository
-
-```bash
-git clone https://github.com/peterwhyte-lgtm/dba-scripts
+```powershell
+# Install the SqlServer module if not present
+Install-Module -Name SqlServer -Scope CurrentUser -Force
 ```
+
+---
+
+## Running against a remote server
+
+Set a session-level connection once and every script picks it up:
+
+```powershell
+# Windows auth
+.\helpers\local-sql\Set-SqlConnection.ps1 -ServerInstance PROD01\SQL2019
+
+# SQL auth
+.\helpers\local-sql\Set-SqlConnection.ps1 -ServerInstance PROD01 -Username sa
+
+# Or pass -ServerInstance directly
+.\run.ps1 Get-WaitStatistics -ServerInstance PROD01\SQL2019
+```
+
+---
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md). Bug reports and script improvements are welcome.
+
+---
+
+## License
+
+[MIT](LICENSE) — use freely, attribution appreciated.
+
+Built and maintained by [Peter Whyte](https://sqldba.blog).
