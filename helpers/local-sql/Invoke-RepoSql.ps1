@@ -129,7 +129,10 @@ if ($invokeSqlcmd) {
 
 if ($sqlcmd) {
     $tempOutput = Join-Path $OutputDirectory ("$scriptName-{0}.tmp.csv" -f (Get-Date -Format 'yyyyMMdd-HHmmss'))
-    $sqlcmdArgs = @('-S', $ServerInstance, '-d', $Database, '-i', $resolvedPath, '-b', '-r', '1', '-t', $QueryTimeout, '-C', '-o', $tempOutput, '-W', '-w', '4000', '-s', ',')
+    # No -r flag: SQL errors (severity < 17) go to stdout which sqlcmd writes to the -o file,
+    # so we can read the actual error text on failure. With -r 1 they go to the console
+    # handle (not stderr fd) and cannot be captured by PowerShell redirection.
+    $sqlcmdArgs = @('-S', $ServerInstance, '-d', $Database, '-i', $resolvedPath, '-b', '-f', '65001', '-t', $QueryTimeout, '-C', '-o', $tempOutput, '-W', '-w', '4000', '-s', ',')
     if ($Username -and $Password) {
         $sqlcmdArgs += @('-U', $Username, '-P', $Password)
     }
@@ -140,16 +143,30 @@ if ($sqlcmd) {
     Write-Host "[repo-sql] Using sqlcmd.exe" -ForegroundColor Green
     & $sqlcmd.Source @sqlcmdArgs
     if ($LASTEXITCODE -ne 0) {
-        throw "sqlcmd.exe failed with exit code $LASTEXITCODE"
+        $errContent = ''
+        if (Test-Path -LiteralPath $tempOutput) {
+            $errContent = (Get-Content -LiteralPath $tempOutput -Raw -Encoding UTF8 -EA SilentlyContinue)?.Trim() -replace '\r?\n', ' ' -replace '\s+', ' '
+        }
+        throw ($errContent ? $errContent : "sqlcmd.exe failed with exit code $LASTEXITCODE")
     }
 
     if (Test-Path -LiteralPath $tempOutput) {
-        $rawRows = @(Import-Csv -LiteralPath $tempOutput -ErrorAction Stop)
-        # sqlcmd.exe inserts a separator row (all dashes) as the second row — strip it
-        $rows = @($rawRows | Where-Object {
-            $row = $_; $cols = $row.PSObject.Properties.Name
-            -not ($cols | Where-Object { $row.$_ -match '^-+$' })
-        })
+        # Separator-aware CSV parsing: find the dash row and use the line before it as the
+        # header. This handles PRINT output appearing before the SELECT results, which
+        # happens because PRINT goes to stdout (same as SELECT) without the -r flag.
+        $allLines = @(Get-Content -LiteralPath $tempOutput -Encoding UTF8 -EA SilentlyContinue)
+        $sepIdx = -1
+        for ($li = 1; $li -lt $allLines.Count; $li++) {
+            if ($allLines[$li] -match '^-+(?:,-+)*\s*$') { $sepIdx = $li; break }
+        }
+        $csvText = if ($sepIdx -gt 0) {
+            $dataLines = if ($sepIdx + 1 -lt $allLines.Count) { @($allLines[($sepIdx + 1)..($allLines.Count - 1)]) } else { @() }
+            (@($allLines[$sepIdx - 1]) + $dataLines) -join "`n"
+        } else {
+            $allLines -join "`n"
+        }
+        $rows = @($csvText | ConvertFrom-Csv -Delimiter ',' -EA SilentlyContinue)
+
         if ($RawOutput -and $rows.Count -gt 0) {
             $col     = $rows[0].PSObject.Properties.Name | Select-Object -First 1
             $rawText = ($rows | ForEach-Object { $_.$col }) -join "`n"

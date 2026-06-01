@@ -15,6 +15,7 @@ Notes       : Iterates every online user database and collects into a single res
 SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Medium
+-- Fixes : sql\maintenance\Generate-IndexMaintenanceScript.sql
 
 CREATE TABLE #frag (
     database_name      sysname         NOT NULL,

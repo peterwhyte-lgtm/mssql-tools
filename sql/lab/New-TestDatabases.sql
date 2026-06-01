@@ -76,3 +76,11 @@ BEGIN
 END
 
 PRINT 'Done.';
+
+SELECT
+    name        AS database_name,
+    create_date AS created_at,
+    state_desc
+FROM sys.databases
+WHERE name LIKE @Prefix + N'_%'
+ORDER BY create_date DESC;

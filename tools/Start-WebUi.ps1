@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Local web UI for browsing scripts and visualising output CSVs.
 .DESCRIPTION
@@ -317,12 +317,26 @@ tr:hover td{background:#161b22}
 @keyframes spin{to{transform:rotate(360deg)}}
 .run-spinner-label{color:#c9d1d9;font-size:.9rem}
 .run-error{color:#f78166;font-size:.82rem;margin-top:6px;padding:8px 12px;background:#1a0e0e;border:1px solid #f78166;border-radius:6px}
+.triage-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;margin-bottom:28px}
+.triage-card{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:16px 18px}
+.triage-title{font-size:.92rem;font-weight:600;color:#e6edf3;margin-bottom:5px}
+.triage-when{font-size:.76rem;color:#8b949e;margin-bottom:12px;line-height:1.45}
+.triage-links{display:flex;flex-direction:column;gap:0}
+.triage-link{display:flex;align-items:center;gap:8px;font-size:.82rem;color:#c9d1d9;padding:5px 0;border-bottom:1px solid #1a1f27;text-decoration:none}
+.triage-link:last-child{border-bottom:none}
+.triage-link:hover{color:#58a6ff;text-decoration:none}
+.triage-fix-tag{font-size:.68rem;padding:1px 6px;border-radius:8px;background:#1a3a2a;color:#3fb950;margin-left:auto;white-space:nowrap;font-weight:600}
+.info-banner{background:#0b1220;border:1px solid #1f3a4a;border-radius:6px;padding:8px 14px;font-size:.82rem;color:#58a6ff;margin-bottom:14px}
+.empty-state{background:#0b1220;border:1px solid #1f3a4a;border-radius:8px;padding:32px 24px;text-align:center;margin-bottom:16px}
+.empty-state-title{color:#58a6ff;font-size:.92rem;font-weight:600;margin-bottom:6px}
+.empty-state-sub{color:#8b949e;font-size:.78rem;line-height:1.5}
 '@
 
 # ── page wrapper ───────────────────────────────────────────────────────────────
 
 function Wrap-Page([string]$title, [string]$body, [string]$q='', [string]$active='scripts') {
     $qEsc = Html-Escape $q
+    $navTriage  = if ($active -eq 'triage')  { "class='active'" } else { '' }
     $navScripts = if ($active -eq 'scripts') { "class='active'" } else { '' }
     $navReview  = if ($active -eq 'review')  { "class='active'" } else { '' }
     $navDisk    = if ($active -eq 'disk')    { "class='active'" } else { '' }
@@ -335,6 +349,7 @@ function Wrap-Page([string]$title, [string]$body, [string]$q='', [string]$active
 <header>
   <h1>dba-scripts</h1>
   <nav>
+    <a href="/triage" $navTriage>Triage</a>
     <a href="/" $navScripts>Scripts</a>
     <a href="/review" $navReview>Health Check</a>
     <a href="/disk" $navDisk>Disk Space</a>
@@ -397,10 +412,16 @@ function Build-ViewPage([string]$relPath) {
     $safeLabel = Resolve-SafetyLabel $safety
     $safeBadgeHtml = "<span class='safe-badge $safeCls'>$safeLabel</span>"
 
-    # Determine if this script can be run through the web UI
+    # Determine if this script can be run through the web UI.
+    # Manual-only: lab scripts that contain a GOTO safety gate or an explicit LAB:ManualOnly tag.
+    # These require multiple SSMS windows or deliberate human review before execution.
+    $isLab        = $relPath -match '(^|[\\/])sql[\\/]lab[\\/]'
+    $isManualOnly = $isLab -and (
+        ($content -match 'GOTO\s+CannotRunAsFullScript') -or
+        ($content -match '--\s*LAB\s*:\s*ManualOnly')
+    )
     $isRunnable = $false
-    $isLab = $relPath -match '(^|[\\/])sql[\\/]lab[\\/]'
-    if ($ext -eq '.sql' -and $relPath -match '(^|[\\/])sql[\\/]' -and -not $isLab) {
+    if ($ext -eq '.sql' -and $relPath -match '(^|[\\/])sql[\\/]' -and -not $isManualOnly) {
         $isRunnable = $true
     } elseif ($ext -eq '.ps1' -and $relPath -match '(^|[\\/])powershell[\\/]') {
         $isRunnable = ($content -match 'OutputFormat') -and ($content -match 'OutputPath')
@@ -410,7 +431,8 @@ function Build-ViewPage([string]$relPath) {
     $defaultSrv  = if ($env:DBASCRIPTS_SERVER) { Html-Escape $env:DBASCRIPTS_SERVER } else { '' }
     $srvHint     = if ($env:DBASCRIPTS_SERVER) { $env:DBASCRIPTS_SERVER } else { 'local ( . )' }
     $dryRunToggle = if ($isWrites -and $isRunnable) { "<div class='dryrun-wrap'><input type='checkbox' id='dryrun' checked><label for='dryrun'>Dry Run</label></div>" } else { '' }
-    $labBanner = if ($isLab) { "<div class='dryrun-banner'>&#9888;&nbsp; <strong>Run this script manually in SSMS</strong> — it is a multi-step lab demo that requires two open query windows and cannot be automated from the web UI. Copy the code and follow the instructions in the script header.</div>" } else { '' }
+    $labBanner   = if ($isManualOnly) { "<div class='dryrun-banner'>&#9888;&nbsp; <strong>Run this script manually in SSMS</strong> — it is a multi-step lab demo that requires two open query windows and cannot be automated from the web UI. Copy the code and follow the instructions in the script header.</div>" } else { '' }
+    $scopeBanner = if (($content -match '--\s*SCOPE\s*:\s*CurrentDatabase') -and $isRunnable) { "<div class='info-banner'>&#9432;&nbsp; This script runs against the <strong>currently connected database</strong>. From the web UI that is <strong>master</strong>, which will return empty or limited results. For meaningful output, copy the script and run it in SSMS against the target user database.</div>" } else { '' }
 
     $runControls = ''
     if ($isRunnable) {
@@ -473,6 +495,7 @@ async function runScript(path) {
 </div>
 $errDiv
 $labBanner
+$scopeBanner
 <div class='code-wrap'>
   <button id='copy-btn' class='copy-btn' onclick='copyCode()'>Copy</button>
   <pre id='code-block'>$(Html-Escape $content)</pre>
@@ -519,6 +542,99 @@ function Build-SearchPage([string]$q) {
     $html += '</div>'
     Wrap-Page "Search: $q" $html $q 'scripts'
 }
+
+function Build-TriagePage {
+    $groups = @(
+        [ordered]@{ Title='Right Now'; When='First stop during any active incident — see what is running, waiting, or blocked this moment'; Scripts=@(
+            [ordered]@{P='sql\performance\Get-ActiveRequests.sql';                T='SQL'}
+            [ordered]@{P='sql\performance\Get-ActiveRequestsWithPlan.sql';        T='SQL'}
+            [ordered]@{P='sql\performance\Get-WorkerThreadsAndActiveSessions.sql';T='SQL'}
+            [ordered]@{P='sql\performance\Get-BackupRestoreProgress.sql';         T='SQL'}
+            [ordered]@{P='sql\monitoring\Get-TempdbHotspots.sql';                 T='SQL'}
+        )}
+        [ordered]@{ Title='Blocking & Locks'; When='Users timing out, SSMS hanging, head blocker suspected, long-running transactions'; Scripts=@(
+            [ordered]@{P='sql\performance\Get-BlockingChains.sql';        T='SQL'}
+            [ordered]@{P='sql\performance\Get-BlockingChainsWithPlan.sql';T='SQL'}
+            [ordered]@{P='sql\performance\Get-BlockingSessions.sql';      T='SQL'}
+            [ordered]@{P='sql\performance\Get-BlockingSummary.sql';       T='SQL'}
+            [ordered]@{P='sql\performance\Get-DeadlockSummary.sql';       T='SQL'}
+            [ordered]@{P='sql\performance\Get-ContentionAnalysis.sql';    T='SQL'}
+        )}
+        [ordered]@{ Title='Slow Queries & High CPU'; When='CPU high, specific queries regressed, plan cache pollution, IO pressure'; Scripts=@(
+            [ordered]@{P='sql\performance\Get-TopCpuQueries.sql';        T='SQL'}
+            [ordered]@{P='sql\performance\Get-TopIoQueries.sql';         T='SQL'}
+            [ordered]@{P='sql\performance\Get-LongRunningQueries.sql';   T='SQL'}
+            [ordered]@{P='sql\performance\Get-SlowQueriesFromCache.sql'; T='SQL'}
+            [ordered]@{P='sql\performance\Get-DatabaseIoUsage.sql';      T='SQL'}
+            [ordered]@{P='sql\performance\Get-QueryStoreTopQueries.sql'; T='SQL'}
+        )}
+        [ordered]@{ Title='Wait Statistics'; When='Unexplained slowness — identify the bottleneck category before digging deeper into queries'; Scripts=@(
+            [ordered]@{P='sql\performance\Get-WaitStatistics.sql'; T='SQL'}
+        )}
+        [ordered]@{ Title='Index & Statistics Health'; When='Queries slowing over time, fragmentation suspected, missing index warnings, heap tables'; Scripts=@(
+            [ordered]@{P='sql\monitoring\Get-IndexFragmentation.sql';           T='SQL'}
+            [ordered]@{P='sql\performance\Get-IndexUsageStats.sql';             T='SQL'}
+            [ordered]@{P='sql\performance\Get-MissingIndexes.sql';              T='SQL'; Fix=$true}
+            [ordered]@{P='sql\performance\Get-UnusedIndexes.sql';               T='SQL'}
+            [ordered]@{P='sql\performance\Get-Heaps.sql';                       T='SQL'}
+            [ordered]@{P='sql\performance\Get-StatisticsHealth.sql';            T='SQL'; Fix=$true}
+            [ordered]@{P='sql\maintenance\Generate-IndexMaintenanceScript.sql'; T='SQL'; Fix=$true}
+        )}
+        [ordered]@{ Title='Disk & Space'; When='Disk alerts, databases growing unexpectedly, transaction log filling up, autogrowth events'; Scripts=@(
+            [ordered]@{P='sql\monitoring\Get-DiskSpace.sql';                  T='SQL'}
+            [ordered]@{P='sql\monitoring\Get-DatabaseSizesAndFreeSpace.sql';  T='SQL'}
+            [ordered]@{P='sql\monitoring\Get-TransactionLogSizeAndUsage.sql'; T='SQL'}
+            [ordered]@{P='sql\monitoring\Get-VlfCount.sql';                   T='SQL'}
+            [ordered]@{P='sql\monitoring\Get-AutogrowthHistory.sql';          T='SQL'}
+            [ordered]@{P='sql\monitoring\Get-DatabaseGrowthRisk.sql';         T='SQL'}
+        )}
+        [ordered]@{ Title='Backups'; When='Verifying coverage, investigating a missed backup, planning or scripting a restore'; Scripts=@(
+            [ordered]@{P='sql\backups\Get-BackupCoverage.sql';          T='SQL'}
+            [ordered]@{P='sql\backups\Get-LastDatabaseBackupTimes.sql'; T='SQL'}
+            [ordered]@{P='sql\backups\Get-DatabaseBackupHistory.sql';   T='SQL'}
+            [ordered]@{P='sql\backups\Generate-FullBackupScript.sql';   T='SQL'; Fix=$true}
+            [ordered]@{P='sql\backups\Generate-RestoreScript.sql';      T='SQL'; Fix=$true}
+        )}
+        [ordered]@{ Title='Jobs & Errors'; When='Agent job failures, unexpected error log entries, maintenance jobs not running on schedule'; Scripts=@(
+            [ordered]@{P='sql\monitoring\Get-SqlAgentJobFailureSummary.sql'; T='SQL'}
+            [ordered]@{P='sql\monitoring\Get-RecentErrorLogEntries.sql';     T='SQL'}
+            [ordered]@{P='sql\monitoring\Get-SqlAgentJobOverview.sql';       T='SQL'}
+        )}
+        [ordered]@{ Title='Security'; When='Permissions audit, sysadmin membership review, orphaned users, weak password policy'; Scripts=@(
+            [ordered]@{P='sql\security\Get-SysadminMembers.sql';      T='SQL'}
+            [ordered]@{P='sql\security\Get-WeakLoginSettings.sql';    T='SQL'}
+            [ordered]@{P='sql\security\Get-UserPermissionsAudit.sql'; T='SQL'}
+            [ordered]@{P='sql\security\Get-OrphanedUsers.sql';        T='SQL'}
+        )}
+        [ordered]@{ Title='Instance Configuration'; When='New server review, performance baseline, best practice settings check, integrity'; Scripts=@(
+            [ordered]@{P='sql\monitoring\Get-Databases.sql';                   T='SQL'}
+            [ordered]@{P='sql\monitoring\Get-InstanceConfigurationScore.sql';  T='SQL'}
+            [ordered]@{P='sql\monitoring\Get-MaxdopConfiguration.sql';         T='SQL'}
+            [ordered]@{P='sql\monitoring\Get-MemoryConfigurationAndUsage.sql'; T='SQL'}
+            [ordered]@{P='sql\monitoring\Get-LastDbccCheckdb.sql';             T='SQL'}
+            [ordered]@{P='sql\monitoring\Get-SuspectPages.sql';                T='SQL'}
+            [ordered]@{P='sql\monitoring\Get-DatabaseHealth.sql';              T='SQL'}
+        )}
+    )
+
+    $html = "<h2>What are you investigating?</h2><div class='triage-grid'>"
+    foreach ($g in $groups) {
+        $html += "<div class='triage-card'><div class='triage-title'>$(Html-Escape $g.Title)</div><div class='triage-when'>$(Html-Escape $g.When)</div><div class='triage-links'>"
+        foreach ($s in $g.Scripts) {
+            $fp = Join-Path $repoRoot $s.P
+            if (-not (Test-Path -LiteralPath $fp)) { continue }
+            $name   = [IO.Path]::GetFileNameWithoutExtension($s.P)
+            $enc    = [Uri]::EscapeDataString($s.P)
+            $bdgCls = if ($s.T -eq 'SQL') { 'badge-sql' } else { 'badge-ps' }
+            $fixTag = if ($s.Fix) { "<span class='triage-fix-tag'>generates fix</span>" } else { '' }
+            $html  += "<a href='/view?p=$enc' class='triage-link'><span class='badge $bdgCls'>$($s.T)</span>$(Html-Escape $name)$fixTag</a>"
+        }
+        $html += "</div></div>"
+    }
+    $html += "</div>"
+    Wrap-Page 'Triage' $html '' 'triage'
+}
+
 
 function Build-CsvListPage {
     $csvs = @(Get-ChildItem "$repoRoot\output-files" -Recurse -Filter '*.csv' -File -ErrorAction SilentlyContinue |
@@ -718,7 +834,10 @@ async function init(){
   }
 
   if(!data.rows||!data.rows.length){
-    document.getElementById('mode-badge').textContent='No results returned.';
+    document.getElementById('mode-badge').innerHTML=
+      '<div class="empty-state"><div class="empty-state-title">No results returned</div>' +
+      '<div class="empty-state-sub">The query ran successfully but matched zero rows on this server.<br>' +
+      'If this script is database-scoped, run it in SSMS against the target database for meaningful results.</div></div>';
     document.querySelector('.table-toolbar').style.display='none';
     document.getElementById('tbl').closest('.table-wrap').style.display='none';
     return;
@@ -1576,96 +1695,97 @@ async function runHealthcheck(page){
     if (-not $dbSizes) {
         $html += "<p class='no-data'>No <code>database-sizes.csv</code> in this folder.</p>"
     } else {
-        # Build chart data — top 12 by data size, remainder bucketed as "Other"
-        $MAX_SLICES = 12
-        $byDataSize = @($dbSizes | Sort-Object { [double]($_.data_size_mb -as [double]) } -Descending)
-        $chartRows  = if ($byDataSize.Count -le $MAX_SLICES) { $byDataSize } else {
-            $main  = @($byDataSize | Select-Object -First $MAX_SLICES)
-            $rest  = @($byDataSize | Select-Object -Skip  $MAX_SLICES)
-            $oData = [Math]::Round(($rest | Measure-Object { [double]($_.data_size_mb -as [double]) } -Sum).Sum, 1)
-            $oLog  = [Math]::Round(($rest | Measure-Object { [double]($_.log_size_mb  -as [double]) } -Sum).Sum, 1)
-            $oFree = [Math]::Round(($rest | Measure-Object { [double]($_.data_free_mb -as [double]) } -Sum).Sum, 1)
-            $oLFr  = [Math]::Round(($rest | Measure-Object { [double]($_.log_free_mb  -as [double]) } -Sum).Sum, 1)
-            @($main) + @([PSCustomObject]@{
-                database_name = '(Other '+$rest.Count+' DBs)'
-                data_size_mb  = $oData; log_size_mb  = $oLog
-                data_free_mb  = $oFree; log_free_mb  = $oLFr
-                data_free_pct = 0;      log_free_pct = 0
-            })
-        }
-        $cLabels    = ($chartRows | ForEach-Object { $_.database_name | ConvertTo-Json }) -join ','
-        $cDataMb    = ($chartRows | ForEach-Object { [Math]::Round(($_.data_size_mb -as [double]),1) }) -join ','
-        $cLogMb     = ($chartRows | ForEach-Object { [Math]::Round(($_.log_size_mb  -as [double]),1) }) -join ','
-        $cUsedMb    = ($chartRows | ForEach-Object {
-            [Math]::Round([Math]::Max(($_.data_size_mb -as [double]) - ($_.data_free_mb -as [double]), 0), 1)
-        }) -join ','
-        $cFreeMb    = ($chartRows | ForEach-Object { [Math]::Round(($_.data_free_mb -as [double]),1) }) -join ','
-        $cLogUsedMb = ($chartRows | ForEach-Object {
-            [Math]::Round([Math]::Max(($_.log_size_mb -as [double]) - ($_.log_free_mb -as [double]), 0), 1)
-        }) -join ','
-        $cLogFreeMb = ($chartRows | ForEach-Object { [Math]::Round(($_.log_free_mb -as [double]),1) }) -join ','
+        # Top 20 by total size go to charts; all rows go to table
+        $TOP_N   = 20
+        $dbSorted   = @($dbSizes | Sort-Object { [double]($_.data_size_mb -as [double]) + [double]($_.log_size_mb -as [double]) } -Descending)
+        $chartRows  = if ($dbSorted.Count -gt $TOP_N) { @($dbSorted[0..($TOP_N-1)]) } else { $dbSorted }
+        $chartNote  = if ($dbSorted.Count -gt $TOP_N) { " &nbsp;·&nbsp; top $TOP_N of $($dbSorted.Count)" } else { '' }
+
+        $cL  = ($chartRows | ForEach-Object { $_.database_name | ConvertTo-Json }) -join ','
+        $cDU = ($chartRows | ForEach-Object { [Math]::Max([Math]::Round(([double]($_.data_size_mb -as [double])) - ([double]($_.data_free_mb -as [double])), 1), 0) }) -join ','
+        $cDF = ($chartRows | ForEach-Object { [Math]::Max([Math]::Round([double]($_.data_free_mb -as [double]), 1), 0) }) -join ','
+        $cLU = ($chartRows | ForEach-Object { [Math]::Max([Math]::Round(([double]($_.log_size_mb  -as [double])) - ([double]($_.log_free_mb  -as [double])), 1), 0) }) -join ','
+        $cLF = ($chartRows | ForEach-Object { [Math]::Max([Math]::Round([double]($_.log_free_mb  -as [double]), 1), 0) }) -join ','
 
         $html += @"
 <script src='https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js'></script>
-<div style='display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px'>
-  <div class='chart-wrap'>
-    <div style='font-size:.75rem;color:#8b949e;font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px'>Data File Sizes (MB)</div>
-    <canvas id='ch-data' style='max-height:260px'></canvas>
-  </div>
-  <div class='chart-wrap'>
-    <div style='font-size:.75rem;color:#8b949e;font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px'>Log File Sizes (MB)</div>
-    <canvas id='ch-log' style='max-height:260px'></canvas>
-  </div>
-</div>
 <div style='display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px'>
   <div class='chart-wrap'>
-    <div style='font-size:.75rem;color:#8b949e;font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px'>Data Files — Used vs Free (MB)</div>
-    <canvas id='ch-bar-data' style='max-height:280px'></canvas>
+    <div style='font-size:.75rem;color:#8b949e;font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px'>Data Files — Used vs Free (MB)$chartNote</div>
+    <canvas id='ch-db-data'></canvas>
   </div>
   <div class='chart-wrap'>
-    <div style='font-size:.75rem;color:#8b949e;font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px'>Log Files — Used vs Free (MB)</div>
-    <canvas id='ch-bar-log' style='max-height:280px'></canvas>
+    <div style='font-size:.75rem;color:#8b949e;font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px'>Log Files — Used vs Free (MB)$chartNote</div>
+    <canvas id='ch-db-log'></canvas>
   </div>
 </div>
 <script>
 (function(){
-const L=[$cLabels],DM=[$cDataMb],LM=[$cLogMb],UM=[$cUsedMb],FM=[$cFreeMb],LUM=[$cLogUsedMb],LFM=[$cLogFreeMb];
-const C=['#58a6ff','#3fb950','#f78166','#d2a8ff','#ffa657','#79c0ff','#56d364','#ff7b72','#e3b341','#a5d6ff','#7ee787','#ffa8a8','#ff9e64'];
-const dOpts={responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'right',
-  labels:{color:'#c9d1d9',boxWidth:11,padding:9,font:{size:11}}}}};
+const L=[$cL],DU=[$cDU],DF=[$cDF],LU=[$cLU],LF=[$cLF];
 const bOpts=()=>({responsive:true,indexAxis:'y',
   plugins:{legend:{labels:{color:'#c9d1d9'}}},
   scales:{x:{stacked:true,ticks:{color:'#8b949e'},grid:{color:'#21262d'}},
-          y:{stacked:true,ticks:{color:'#8b949e'},grid:{color:'#21262d'}}}});
-new Chart(document.getElementById('ch-data'),{type:'doughnut',
-  data:{labels:L,datasets:[{data:DM,backgroundColor:C.map(c=>c+'cc'),borderColor:C,borderWidth:1}]},options:dOpts});
-new Chart(document.getElementById('ch-log'),{type:'doughnut',
-  data:{labels:L,datasets:[{data:LM,backgroundColor:C.map(c=>c+'cc'),borderColor:C,borderWidth:1}]},options:dOpts});
-new Chart(document.getElementById('ch-bar-data'),{type:'bar',
-  data:{labels:L,datasets:[
-    {label:'Used (MB)',data:UM,backgroundColor:'#58a6ffbb',borderColor:'#58a6ff',borderWidth:1},
-    {label:'Free (MB)',data:FM,backgroundColor:'#3fb95055',borderColor:'#3fb950',borderWidth:1}]},
-  options:bOpts()});
-new Chart(document.getElementById('ch-bar-log'),{type:'bar',
-  data:{labels:L,datasets:[
-    {label:'Used (MB)',data:LUM,backgroundColor:'#d2a8ffbb',borderColor:'#d2a8ff',borderWidth:1},
-    {label:'Free (MB)',data:LFM,backgroundColor:'#3fb95055',borderColor:'#3fb950',borderWidth:1}]},
-  options:bOpts()});
+          y:{stacked:true,ticks:{color:'#8b949e',font:{size:11}},grid:{color:'#21262d'}}}});
+new Chart(document.getElementById('ch-db-data'),{type:'bar',data:{labels:L,datasets:[
+  {label:'Used (MB)',data:DU,backgroundColor:'#58a6ffbb',borderColor:'#58a6ff',borderWidth:1},
+  {label:'Free (MB)',data:DF,backgroundColor:'#3fb95044',borderColor:'#3fb950',borderWidth:1}
+]},options:bOpts()});
+new Chart(document.getElementById('ch-db-log'),{type:'bar',data:{labels:L,datasets:[
+  {label:'Used (MB)',data:LU,backgroundColor:'#d2a8ffbb',borderColor:'#d2a8ff',borderWidth:1},
+  {label:'Free (MB)',data:LF,backgroundColor:'#3fb95044',borderColor:'#3fb950',borderWidth:1}
+]},options:bOpts()});
 })();
 </script>
 "@
 
-        $html += "<div class='table-wrap'><table><thead><tr><th>Database</th><th>Data (MB)</th><th>Data Free</th><th>Log (MB)</th><th>Log Free</th></tr></thead><tbody>"
-        foreach ($db in $dbSizes) {
+        $html += @"
+<div class='table-toolbar'>
+  <input class='table-filter' id='dbsz-filter' placeholder='Filter databases…' oninput='dbszFilter(this.value)' autocomplete='off'>
+  <span class='row-count' id='dbsz-count'>$($dbSorted.Count) databases</span>
+</div>
+<div class='table-wrap'><table id='dbsz-tbl'>
+<thead><tr>
+  <th class='sortable' onclick='dbszSort(0)'>Database</th>
+  <th class='sortable' onclick='dbszSort(1)' style='text-align:right'>Data (MB)</th>
+  <th>Data Free</th>
+  <th class='sortable' onclick='dbszSort(3)' style='text-align:right'>Log (MB)</th>
+  <th>Log Free</th>
+</tr></thead>
+<tbody id='dbsz-tbody'>
+"@
+        foreach ($db in $dbSorted) {
             $dfp = [double]($db.data_free_pct -as [double])
             $lfp = [double]($db.log_free_pct  -as [double])
             $dbc = if ($dfp -lt 10) { 'bar-crit' } elseif ($dfp -lt 20) { 'bar-warn' } else { 'bar-ok' }
             $lbc = if ($lfp -lt 10) { 'bar-crit' } elseif ($lfp -lt 20) { 'bar-warn' } else { 'bar-ok' }
-            $dfCell = "$(Fmt-Mb $db.data_free_mb) MB ($(Fmt-Pct $dfp)%)<span class='mini-bar-track'><span class='mini-bar-fill $dbc' style='width:${dfp}%'></span></span>"
-            $lfCell = "$(Fmt-Mb $db.log_free_mb) MB ($(Fmt-Pct $lfp)%)<span class='mini-bar-track'><span class='mini-bar-fill $lbc' style='width:${lfp}%'></span></span>"
-            $html += "<tr><td>$(Html-Escape $db.database_name)</td><td>$(Fmt-Mb $db.data_size_mb)</td><td>$dfCell</td><td>$(Fmt-Mb $db.log_size_mb)</td><td>$lfCell</td></tr>"
+            $dfCell = "$(Fmt-Mb $db.data_free_mb) MB ($(Fmt-Pct $dfp)%)<span class='mini-bar-track'><span class='mini-bar-fill $dbc' style='width:$([Math]::Min($dfp,100))%'></span></span>"
+            $lfCell = "$(Fmt-Mb $db.log_free_mb) MB ($(Fmt-Pct $lfp)%)<span class='mini-bar-track'><span class='mini-bar-fill $lbc' style='width:$([Math]::Min($lfp,100))%'></span></span>"
+            $html += "<tr><td>$(Html-Escape $db.database_name)</td><td style='text-align:right'>$(Fmt-Mb $db.data_size_mb)</td><td>$dfCell</td><td style='text-align:right'>$(Fmt-Mb $db.log_size_mb)</td><td>$lfCell</td></tr>`n"
         }
-        $html += "</tbody></table></div>"
+        $html += @"
+</tbody></table></div>
+<script>
+(function(){
+const tbody=document.getElementById('dbsz-tbody');
+let rows=[...tbody.querySelectorAll('tr')];
+let sd={};
+window.dbszFilter=function(t){
+  t=t.toLowerCase();let v=0;
+  rows.forEach(r=>{const s=!t||r.textContent.toLowerCase().includes(t);r.style.display=s?'':'none';if(s)v++;});
+  document.getElementById('dbsz-count').textContent=v===rows.length?rows.length+' databases':v+' of '+rows.length+' databases';
+};
+window.dbszSort=function(ci){
+  sd[ci]=(sd[ci]||1)*-1;const dir=sd[ci];
+  rows=[...rows].sort((a,b)=>{
+    const av=a.cells[ci].textContent.trim(),bv=b.cells[ci].textContent.trim();
+    const an=parseFloat(av),bn=parseFloat(bv);
+    return(!isNaN(an)&&!isNaN(bn))?(an-bn)*dir:av.localeCompare(bv)*dir;
+  });
+  rows.forEach(r=>tbody.appendChild(r));
+};
+})();
+</script>
+"@
     }
 
     # ── Transaction log usage ─────────────────────────────────────────────────
@@ -1743,6 +1863,7 @@ try {
         $statusCode  = 200
         $body = try { switch ($url) {
             '/'         { Build-HomePage }
+            '/triage'   { Build-TriagePage }
             '/search'   { Build-SearchPage ($qs['q'] ?? '') }
             '/view'     { Build-ViewPage   ($qs['p'] ?? '') }
             '/csvs'     { Build-CsvListPage }

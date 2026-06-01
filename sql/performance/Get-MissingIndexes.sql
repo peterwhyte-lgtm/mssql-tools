@@ -12,6 +12,7 @@ Notes       : Impact scores reset on SQL Server restart. Review carefully — DM
 SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+-- Fixes : the suggested_statement column contains the ready-to-run CREATE INDEX command
 
 SELECT
     mid.statement                                                                       AS table_name,

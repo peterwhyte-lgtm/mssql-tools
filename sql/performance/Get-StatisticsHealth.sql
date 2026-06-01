@@ -12,6 +12,8 @@ Requires    : VIEW DATABASE STATE
 SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+-- SCOPE:CurrentDatabase
+-- Fixes : the update_statement column contains the ready-to-run UPDATE STATISTICS command
 
 DECLARE @show_all   BIT = 0;    -- 0 = stale / unhealthy only  |  1 = all statistics
 DECLARE @min_rows   INT = 100;  -- skip tables below this row count (reduces noise from tiny tables)
