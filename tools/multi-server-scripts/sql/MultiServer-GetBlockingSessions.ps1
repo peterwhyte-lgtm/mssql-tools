@@ -1,26 +1,12 @@
 <#
 Script Name : MultiServer-GetBlockingSessions
-Category    : multi-server-queries/sql
-Purpose     : Check for active blocking sessions across multiple SQL Server instances.
-              Returns the blocking chain with head blocker, blocked sessions, wait type,
-              and current statement. Zero rows means no blocking is active.
-              SQL is embedded inline — no dependency on the repo at runtime.
-              Self-contained — copy this file and run it from any PowerShell session.
+Category    : multi-server-scripts/sql
+Purpose     : Check for active blocking sessions across multiple SQL Server instances. Zero rows means no blocking.
 Author      : Peter Whyte (https://sqldba.blog)
 Safe        : Read-only
 Impact      : Low
 Requires    : SqlServer PowerShell module.
               Install with: Install-Module -Name SqlServer -Scope CurrentUser -Force
-
-Parameters:
-  -Servers    Required. Comma-separated SQL Server instances: "SVR01,SVR02\INST01"
-  -Database   Target database for the connection. Default: master.
-  -SqlAuth    Switch. Prompt for SQL credentials instead of Windows auth.
-  -Parallel   Run against all servers simultaneously (PS7+). Default: sequential.
-
-Usage examples:
-  .\MultiServer-GetBlockingSessions.ps1 -Servers "SVR01,SVR02,SVR03"
-  .\MultiServer-GetBlockingSessions.ps1 -Servers "SVR01,SVR02" -SqlAuth -Parallel
 #>
 
 [CmdletBinding()]
@@ -29,9 +15,7 @@ param (
     [string]$Servers,
 
     [string]$Database = 'master',
-
     [switch]$SqlAuth,
-
     [switch]$Parallel
 )
 

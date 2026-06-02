@@ -1,29 +1,12 @@
 <#
 Script Name : MultiServer-GetDatabaseSizes
-Category    : multi-server-queries/sql
-Purpose     : Report data and log file sizes with used/free breakdown across multiple
-              SQL Server instances. Queries sys.master_files for total size and
-              sys.databases for recovery model — note that free space is approximate
-              from this context (use the single-server Get-DatabaseSizesAndFreeSpace
-              for precise per-file free space using database-scoped FILEPROPERTY).
-              SQL is embedded inline — no dependency on the repo at runtime.
-              Self-contained — copy this file and run it from any PowerShell session.
+Category    : multi-server-scripts/sql
+Purpose     : Report data and log file sizes across multiple SQL Server instances. Free space is approximate from sys.master_files.
 Author      : Peter Whyte (https://sqldba.blog)
 Safe        : Read-only
 Impact      : Low
 Requires    : SqlServer PowerShell module.
               Install with: Install-Module -Name SqlServer -Scope CurrentUser -Force
-
-Parameters:
-  -Servers    Required. Comma-separated SQL Server instances.
-  -Database   Connection database. Default: master.
-  -MinSizeMb  Only show databases larger than this. Default: 0 (show all).
-  -SqlAuth    Switch. Prompt for SQL credentials instead of Windows auth.
-  -Parallel   Run against all servers simultaneously (PS7+). Default: sequential.
-
-Usage examples:
-  .\MultiServer-GetDatabaseSizes.ps1 -Servers "SVR01,SVR02,SVR03"
-  .\MultiServer-GetDatabaseSizes.ps1 -Servers "SVR01,SVR02" -MinSizeMb 1000 -SqlAuth
 #>
 
 [CmdletBinding()]
@@ -32,12 +15,8 @@ param (
     [string]$Servers,
 
     [string]$Database = 'master',
-
-    # Only return databases larger than this size in MB
     [int]$MinSizeMb = 0,
-
     [switch]$SqlAuth,
-
     [switch]$Parallel
 )
 

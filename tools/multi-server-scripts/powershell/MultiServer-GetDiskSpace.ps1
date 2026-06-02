@@ -1,47 +1,21 @@
 <#
 Script Name : MultiServer-GetDiskSpace
-Category    : multi-server-queries/powershell
-Purpose     : Check disk space on multiple remote hosts using WMI/CIM.
-              Flags volumes below a configurable free percentage threshold.
-              Does not require WinRM — uses CIM over DCOM (port 135 + dynamic ports).
-              Self-contained — copy this file and run it from any PowerShell session.
+Category    : multi-server-scripts/powershell
+Purpose     : Check disk space on multiple remote hosts using CIM. Flags volumes below configurable thresholds.
 Author      : Peter Whyte (https://sqldba.blog)
 Safe        : Read-only
 Impact      : Low
-Requires    : WMI/CIM access on target hosts (no WinRM required — uses DCOM).
-              Port 135 and dynamic high ports (RPC) must be accessible on targets.
-
-Parameters:
-  -Servers            Required. Comma-separated hostnames or IPs: "SVR01,SVR02,SVR03"
-  -WarnBelowPctFree   Highlight volumes below this percentage free. Default: 20.
-  -CritBelowPctFree   Mark volumes as CRITICAL below this percentage free. Default: 10.
-  -Credential         Optional. PSCredential for alternate auth.
-  -Parallel           Run against all servers simultaneously (PS7+). Default: sequential.
-
-Usage examples:
-  # Disk space across five servers
-  .\MultiServer-GetDiskSpace.ps1 -Servers "SVR01,SVR02,SVR03,SVR04,SVR05"
-
-  # Custom thresholds
-  .\MultiServer-GetDiskSpace.ps1 -Servers "SVR01,SVR02" -WarnBelowPctFree 30 -CritBelowPctFree 15
+Requires    : WinRM on target hosts (Get-CimInstance uses WinRM by default in PS7+).
 #>
 
 [CmdletBinding()]
 param (
-    # Comma-separated list of target hostnames or IPs
     [Parameter(Mandatory)]
     [string]$Servers,
 
-    # Warn if free percentage is below this value
     [int]$WarnBelowPctFree = 20,
-
-    # Critical if free percentage is below this value
     [int]$CritBelowPctFree = 10,
-
-    # Alternate credentials for CIM connection — omit to use current Windows identity
     [PSCredential]$Credential,
-
-    # Run against all servers simultaneously (PS7+). Sequential is default.
     [switch]$Parallel
 )
 

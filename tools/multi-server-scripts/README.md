@@ -1,4 +1,4 @@
-# Multi-Server Queries
+# Multi-Server Scripts
 
 Standalone scripts for running operations across multiple servers simultaneously. Every script in this folder is **self-contained** — copy it out and run it anywhere. No repo dependency at runtime.
 
@@ -8,7 +8,7 @@ All scripts accept a `-Servers` parameter (comma-separated) and a `-Parallel` sw
 
 ## powershell/
 
-Scripts that connect to remote hosts via WinRM (`Invoke-Command`) or CIM over RPC. No SQL Server needed.
+Scripts that connect to remote hosts via WinRM or RPC. No SQL Server needed.
 
 | Script | What it does | Remoting |
 |--------|-------------|----------|
@@ -16,7 +16,7 @@ Scripts that connect to remote hosts via WinRM (`Invoke-Command`) or CIM over RP
 | `MultiServer-GetServiceStatus.ps1` | Check service running/stopped state across hosts | RPC (no WinRM) |
 | `MultiServer-GetRecentEventLogs.ps1` | Pull recent Error/Warning events from event logs | RPC (no WinRM) |
 | `MultiServer-GetFirewallRules.ps1` | List local Windows Firewall rules | WinRM |
-| `MultiServer-GetDiskSpace.ps1` | Disk free/used per volume across hosts | CIM/WMI (no WinRM) |
+| `MultiServer-GetDiskSpace.ps1` | Disk free/used per volume across hosts | WinRM |
 | `MultiServer-TestSqlPort.ps1` | Test TCP port 1433 reachability — no auth needed | None (TCP only) |
 
 **WinRM prerequisite** (for scripts that need it):

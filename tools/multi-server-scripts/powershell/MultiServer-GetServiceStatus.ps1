@@ -1,47 +1,19 @@
 <#
 Script Name : MultiServer-GetServiceStatus
-Category    : multi-server-queries/powershell
-Purpose     : Check the status of Windows services across multiple remote hosts.
-              Useful for confirming services are running after a restart, failover,
-              or patch cycle, or for auditing service state across an estate.
-              Self-contained — copy this file and run it from any PowerShell session.
+Category    : multi-server-scripts/powershell
+Purpose     : Check Windows service status across multiple remote hosts using Get-Service over RPC.
 Author      : Peter Whyte (https://sqldba.blog)
 Safe        : Read-only
 Impact      : Low
-Requires    : WinRM enabled on target hosts, or admin share access (Get-Service -ComputerName
-              uses RPC, not WinRM, so WinRM is not strictly required for this script).
-
-Parameters:
-  -Servers       Required. Comma-separated hostnames or IPs: "SVR01,SVR02,SVR03"
-  -ServiceName   Optional filter. Wildcard supported. Default: SQL* (all SQL Server services).
-                 Examples: "MSSQLSERVER", "SQL*", "W3SVC", "*"
-  -Credential    Optional. PSCredential for alternate auth.
-  -Parallel      Run against all servers simultaneously (PS7+). Default: sequential.
-
-Usage examples:
-  # Check all SQL services across three servers
-  .\MultiServer-GetServiceStatus.ps1 -Servers "SVR01,SVR02,SVR03"
-
-  # Check a specific service on multiple servers
-  .\MultiServer-GetServiceStatus.ps1 -Servers "SVR01,SVR02" -ServiceName MSSQLSERVER
-
-  # Check all services (use with caution on servers with many services)
-  .\MultiServer-GetServiceStatus.ps1 -Servers "SVR01,SVR02" -ServiceName "*"
+Requires    : RPC access to target hosts (port 135). Get-Service -ComputerName uses RPC, not WinRM.
 #>
 
 [CmdletBinding()]
 param (
-    # Comma-separated list of target hostnames or IPs
     [Parameter(Mandatory)]
     [string]$Servers,
 
-    # Service name filter — wildcard supported. Default SQL* returns all SQL Server services.
     [string]$ServiceName = 'SQL*',
-
-    # Alternate credentials — omit to use current Windows identity
-    [PSCredential]$Credential,
-
-    # Run against all servers simultaneously (PS7+). Sequential is default.
     [switch]$Parallel
 )
 
@@ -58,7 +30,6 @@ $results = [System.Collections.Generic.List[object]]::new()
 function Get-ServicesFromHost([string]$server) {
     try {
         $params = @{ Name = $ServiceName; ComputerName = $server; ErrorAction = 'Stop' }
-        if ($Credential) { $params.Credential = $Credential }
         $svcs = Get-Service @params
         foreach ($s in $svcs) {
             [PSCustomObject]@{
@@ -87,10 +58,8 @@ if ($Parallel) {
     $serverList | ForEach-Object -Parallel {
         $srv = $_
         $sn  = $using:ServiceName
-        $cr  = $using:Credential
         try {
             $params = @{ Name = $sn; ComputerName = $srv; ErrorAction = 'Stop' }
-            if ($cr) { $params.Credential = $cr }
             $svcs = Get-Service @params
             foreach ($s in $svcs) {
                 [PSCustomObject]@{ Server = $srv; ServiceName = $s.Name; DisplayName = $s.DisplayName; Status = $s.Status; StartType = $s.StartType; Error = '' }

@@ -1,60 +1,23 @@
 <#
 Script Name : MultiServer-GetRecentEventLogs
-Category    : multi-server-queries/powershell
-Purpose     : Pull recent Error and Warning events from Windows Event Logs on multiple
-              remote hosts. Useful for post-incident triage, patch validation, or routine
-              estate health checks.
-              Self-contained — copy this file and run it from any PowerShell session.
+Category    : multi-server-scripts/powershell
+Purpose     : Pull recent Error and Warning events from Windows Event Logs on multiple remote hosts.
 Author      : Peter Whyte (https://sqldba.blog)
 Safe        : Read-only
 Impact      : Low
-Requires    : Remote Event Log access on target hosts (uses RPC — WinRM not required).
-              The RemoteRegistry service must be running on target hosts.
-
-Parameters:
-  -Servers       Required. Comma-separated hostnames or IPs: "SVR01,SVR02,SVR03"
-  -LogName       Which log(s) to read. Default: Application, System.
-                 Pass multiple as comma-separated: "Application,System,Security"
-  -Level         Event severity to include. Default: Error, Warning.
-                 Options: Error | Warning | Information | Critical (comma-separated).
-  -Hours         How many hours back to look. Default: 24.
-  -MaxPerServer  Maximum events to return per server per log. Default: 50.
-  -Credential    Optional. PSCredential for alternate auth.
-  -Parallel      Run against all servers simultaneously (PS7+). Default: sequential.
-
-Usage examples:
-  # Last 24h errors and warnings from Application and System logs on three servers
-  .\MultiServer-GetRecentEventLogs.ps1 -Servers "SVR01,SVR02,SVR03"
-
-  # Last 48h errors only, Application log
-  .\MultiServer-GetRecentEventLogs.ps1 -Servers "SVR01,SVR02" -Level Error -Hours 48 -LogName Application
-
-  # Last 6h — quick post-restart check
-  .\MultiServer-GetRecentEventLogs.ps1 -Servers "SVR01,SVR02,SVR03" -Hours 6
+Requires    : Remote Event Log access via RPC. RemoteRegistry service running on targets.
 #>
 
 [CmdletBinding()]
 param (
-    # Comma-separated list of target hostnames or IPs
     [Parameter(Mandatory)]
     [string]$Servers,
 
-    # Event log(s) to read — comma-separated: "Application,System"
     [string]$LogName = 'Application,System',
-
-    # Event levels to include — comma-separated: "Error,Warning"
     [string]$Level = 'Error,Warning',
-
-    # How many hours back to look for events
     [int]$Hours = 24,
-
-    # Maximum events returned per server per log (avoids overwhelming output)
     [int]$MaxPerServer = 50,
-
-    # Alternate credentials — omit to use current Windows identity
     [PSCredential]$Credential,
-
-    # Run against all servers simultaneously (PS7+). Sequential is default.
     [switch]$Parallel
 )
 
@@ -133,7 +96,10 @@ if ($Parallel) {
                         Level = $e.LevelDisplayName; Source = $e.ProviderName; EventId = $e.Id;
                         Message = ($e.Message -split "`n")[0].Trim(); Error = '' }
                 }
-            } catch { }
+            } catch {
+                [PSCustomObject]@{ Server = $srv; Log = $log; TimeUtc = ''; Level = 'ERROR'; Source = '';
+                    EventId = 0; Message = $_.Exception.Message; Error = $_.Exception.Message }
+            }
         }
     } -ThrottleLimit 10 | ForEach-Object { $results.Add($_) }
 } else {

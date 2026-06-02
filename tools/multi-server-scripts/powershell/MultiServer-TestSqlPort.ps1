@@ -1,49 +1,20 @@
 <#
 Script Name : MultiServer-TestSqlPort
-Category    : multi-server-queries/powershell
-Purpose     : Test TCP connectivity to SQL Server port 1433 (or a custom port) on
-              multiple servers. No WinRM or credentials required — pure TCP test.
-              Use this before running SQL scripts to confirm port access, or to audit
-              which servers in an estate are reachable over SQL Server's default port.
-              Self-contained — copy this file and run it from any PowerShell session.
+Category    : multi-server-scripts/powershell
+Purpose     : Test TCP connectivity to SQL Server port 1433 (or custom port) on multiple servers. No WinRM needed.
 Author      : Peter Whyte (https://sqldba.blog)
 Safe        : Read-only
-Impact      : Low (initiates TCP connections to test reachability only)
-Requires    : Nothing — uses System.Net.Sockets.TcpClient, no modules or WinRM needed.
-
-Parameters:
-  -Servers     Required. Comma-separated hostnames, IPs, or SERVER\INSTANCE strings.
-               Named instances are extracted to hostname only for port testing.
-               Examples: "SVR01,SVR02,SVR03\INST01,192.168.1.10"
-  -Port        TCP port to test. Default: 1433 (SQL Server default instance).
-               Use 1434 for SQL Browser, or specify a custom port.
-  -Timeout     Connection timeout in milliseconds. Default: 1000 (1 second).
-  -Parallel    Run all tests simultaneously instead of sequentially. Default: sequential.
-
-Usage examples:
-  # Test SQL Server port on five servers
-  .\MultiServer-TestSqlPort.ps1 -Servers "SVR01,SVR02,SVR03,SVR04,SVR05"
-
-  # Test a custom port with a longer timeout
-  .\MultiServer-TestSqlPort.ps1 -Servers "SVR01,SVR02" -Port 1435 -Timeout 3000
-
-  # Quick parallel sweep of many servers
-  .\MultiServer-TestSqlPort.ps1 -Servers "SVR01,SVR02,SVR03,SVR04,SVR05,SVR06" -Parallel
+Impact      : Low
+Requires    : Nothing — uses System.Net.Sockets.TcpClient.
 #>
 
 [CmdletBinding()]
 param (
-    # Comma-separated server list — SERVER\INSTANCE is handled (instance part stripped for port test)
     [Parameter(Mandatory)]
     [string]$Servers,
 
-    # TCP port to test — default 1433 (SQL Server default instance port)
     [int]$Port = 1433,
-
-    # Connection timeout in milliseconds — default 1000ms (1 second)
     [int]$Timeout = 1000,
-
-    # Run all tests simultaneously instead of sequentially
     [switch]$Parallel
 )
 

@@ -1,27 +1,12 @@
 <#
 Script Name : MultiServer-GetBackupStatus
-Category    : multi-server-queries/sql
-Purpose     : Check backup coverage across multiple SQL Server instances.
-              Shows the last full, differential, and log backup for each database,
-              along with age in hours and a coverage status flag.
-              SQL is embedded inline — no dependency on the repo at runtime.
-              Self-contained — copy this file and run it from any PowerShell session.
+Category    : multi-server-scripts/sql
+Purpose     : Check backup coverage across multiple SQL Server instances. Shows last full, diff, and log backup age with coverage status.
 Author      : Peter Whyte (https://sqldba.blog)
 Safe        : Read-only
 Impact      : Low
 Requires    : SqlServer PowerShell module.
               Install with: Install-Module -Name SqlServer -Scope CurrentUser -Force
-
-Parameters:
-  -Servers            Required. Comma-separated SQL Server instances.
-  -Database           Connection database. Default: master.
-  -WarnFullAgeHours   Flag databases whose full backup is older than this. Default: 25.
-  -SqlAuth            Switch. Prompt for SQL credentials instead of Windows auth.
-  -Parallel           Run against all servers simultaneously (PS7+). Default: sequential.
-
-Usage examples:
-  .\MultiServer-GetBackupStatus.ps1 -Servers "SVR01,SVR02,SVR03"
-  .\MultiServer-GetBackupStatus.ps1 -Servers "SVR01,SVR02" -WarnFullAgeHours 12 -SqlAuth
 #>
 
 [CmdletBinding()]
@@ -30,12 +15,8 @@ param (
     [string]$Servers,
 
     [string]$Database = 'master',
-
-    # Flag databases where the full backup is older than this many hours
     [int]$WarnFullAgeHours = 25,
-
     [switch]$SqlAuth,
-
     [switch]$Parallel
 )
 

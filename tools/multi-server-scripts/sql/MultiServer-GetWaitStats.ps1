@@ -1,51 +1,22 @@
 <#
 Script Name : MultiServer-GetWaitStats
-Category    : multi-server-queries/sql
-Purpose     : Run wait statistics against multiple SQL Server instances and display
-              the top wait types ranked by percentage of total wait time.
-              SQL is embedded inline — no dependency on the repo at runtime.
-              Self-contained — copy this file and run it from any PowerShell session.
+Category    : multi-server-scripts/sql
+Purpose     : Show top wait types ranked by total wait time across multiple SQL Server instances.
 Author      : Peter Whyte (https://sqldba.blog)
 Safe        : Read-only
 Impact      : Low
 Requires    : SqlServer PowerShell module.
               Install with: Install-Module -Name SqlServer -Scope CurrentUser -Force
-              Port 1433 (or custom SQL port) must be accessible from this machine.
-
-Parameters:
-  -Servers    Required. Comma-separated SQL Server instances: "SVR01,SVR02\INST01"
-  -Database   Target database for the connection. Default: master.
-  -Top        How many wait types to show per server. Default: 10.
-  -SqlAuth    Switch. Prompt for SQL Server credentials instead of Windows auth.
-  -Parallel   Run against all servers simultaneously (PS7+). Default: sequential.
-
-Usage examples:
-  # Wait stats across three servers, Windows auth
-  .\MultiServer-GetWaitStats.ps1 -Servers "SVR01,SVR02,SVR03"
-
-  # Top 5 waits, SQL auth
-  .\MultiServer-GetWaitStats.ps1 -Servers "SVR01,SVR02" -Top 5 -SqlAuth
-
-  # Parallel sweep
-  .\MultiServer-GetWaitStats.ps1 -Servers "SVR01,SVR02,SVR03,SVR04" -Parallel
 #>
 
 [CmdletBinding()]
 param (
-    # Comma-separated SQL Server instance names — include instance name if not default
     [Parameter(Mandatory)]
     [string]$Servers,
 
-    # Target database for the SQL connection. Default: master.
     [string]$Database = 'master',
-
-    # Number of top wait types to show per server
     [int]$Top = 10,
-
-    # Use SQL authentication instead of Windows auth — prompts for credentials
     [switch]$SqlAuth,
-
-    # Run against all servers simultaneously (PS7+). Sequential is default.
     [switch]$Parallel
 )
 
@@ -139,7 +110,6 @@ $allResults = [System.Collections.Generic.List[object]]::new()
 
 if ($Parallel) {
     Write-Host "Querying $($serverList.Count) server(s) in parallel..." -ForegroundColor Cyan
-    # Parallel Invoke-Sqlcmd — each server in its own thread
     $serverList | ForEach-Object -Parallel {
         Import-Module SqlServer -ErrorAction SilentlyContinue
         $srv = $_

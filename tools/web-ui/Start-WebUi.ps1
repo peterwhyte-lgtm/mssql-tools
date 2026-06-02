@@ -37,7 +37,7 @@ function Get-AllScripts {
             @{n='RelPath'; e={ $_.FullName.Replace($repoRoot,'').TrimStart('\') }}
 
     # Multi-server scripts — browsable and copyable, not runnable via the web UI
-    $msq = Get-ChildItem "$repoRoot\tools\multi-server-queries" -Recurse -Filter '*.ps1' -File -ErrorAction SilentlyContinue |
+    $msq = Get-ChildItem "$repoRoot\tools\multi-server-scripts" -Recurse -Filter '*.ps1' -File -ErrorAction SilentlyContinue |
         Select-Object FullName,
             @{n='Name';    e={ $_.BaseName }},
             @{n='Category';e={ 'multi-server-queries/' + $_.Directory.Name }},

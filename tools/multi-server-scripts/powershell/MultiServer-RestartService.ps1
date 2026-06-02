@@ -1,56 +1,23 @@
 <#
 Script Name : MultiServer-RestartService
-Category    : multi-server-queries/powershell
+Category    : multi-server-scripts/powershell
 Purpose     : Restart a named Windows service on multiple remote hosts via WinRM.
-              Reports previous state, new state, and any error per server.
-              Self-contained — copy this file and run it from any PowerShell session.
 Author      : Peter Whyte (https://sqldba.blog)
 Safe        : WRITE — restarts the named service on each target host
 Impact      : High (causes a service interruption on each target)
-Requires    : WinRM enabled on target hosts (run Enable-PSRemoting -Force as admin on each target)
-              Admin rights on target hosts
-
-Parameters:
-  -Servers       Required. Comma-separated hostnames or IPs: "SVR01,SVR02,SVR03"
-  -ServiceName   Required. Windows service name to restart.
-                 Use the short service name, not the display name.
-                 Examples: MSSQLSERVER, SQLSERVERAGENT, SQLBROWSER, W3SVC
-  -Credential    Optional. PSCredential for alternate or non-domain auth.
-                 If omitted, uses the current Windows identity (pass-through auth).
-  -WhatIf        Show what would happen without restarting anything.
-  -Parallel      Run against all servers simultaneously instead of one at a time.
-                 Requires PowerShell 7+. Output may be interleaved.
-                 Default: sequential (safer, cleaner output).
-
-Usage examples:
-  # Restart SQL Server Agent on three hosts
-  .\MultiServer-RestartService.ps1 -Servers "SVR01,SVR02,SVR03" -ServiceName SQLSERVERAGENT
-
-  # Preview what would happen without doing it
-  .\MultiServer-RestartService.ps1 -Servers "SVR01,SVR02" -ServiceName MSSQLSERVER -WhatIf
-
-  # Use alternate credentials
-  $cred = Get-Credential
-  .\MultiServer-RestartService.ps1 -Servers "SVR01,SVR02" -ServiceName MSSQLSERVER -Credential $cred
-
-  # Run in parallel against many servers
-  .\MultiServer-RestartService.ps1 -Servers "SVR01,SVR02,SVR03,SVR04,SVR05" -ServiceName W3SVC -Parallel
+Requires    : WinRM on target hosts (Enable-PSRemoting -Force as admin on each target).
+              Admin rights on target hosts.
 #>
 
 [CmdletBinding(SupportsShouldProcess)]
 param (
-    # Comma-separated list of target hostnames or IP addresses
     [Parameter(Mandatory)]
     [string]$Servers,
 
-    # Windows service name (short name, not display name): MSSQLSERVER, SQLSERVERAGENT, W3SVC, etc.
     [Parameter(Mandatory)]
     [string]$ServiceName,
 
-    # Alternate credentials for WinRM auth — omit to use current Windows identity
     [PSCredential]$Credential,
-
-    # Run against all servers simultaneously (PS7+). Sequential is default.
     [switch]$Parallel
 )
 

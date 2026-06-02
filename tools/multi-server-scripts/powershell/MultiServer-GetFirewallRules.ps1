@@ -1,58 +1,28 @@
 <#
 Script Name : MultiServer-GetFirewallRules
-Category    : multi-server-queries/powershell
-Purpose     : List Windows Firewall rules across multiple remote hosts.
-              Useful for auditing port 1433 (SQL Server), port 80/443 (IIS), or any
-              custom rule across an estate. Runs the firewall cmdlets on the remote
-              host via Invoke-Command (WinRM required).
-              Self-contained — copy this file and run it from any PowerShell session.
+Category    : multi-server-scripts/powershell
+Purpose     : List Windows Firewall rules across multiple remote hosts via WinRM.
 Author      : Peter Whyte (https://sqldba.blog)
 Safe        : Read-only
 Impact      : Low
-Requires    : WinRM enabled on target hosts (Enable-PSRemoting -Force on each target).
-              The NetSecurity module must be present (standard on Windows Server 2012+).
-
-Parameters:
-  -Servers         Required. Comma-separated hostnames or IPs: "SVR01,SVR02,SVR03"
-  -DisplayNameLike Optional wildcard filter on rule display name: "*SQL*", "*Remote*"
-                   Default: no filter (returns all non-trivial rules).
-  -Enabled         Filter by enabled state: True | False | All. Default: All.
-  -Direction       Filter by direction: Inbound | Outbound | All. Default: Inbound.
-  -Credential      Optional. PSCredential for alternate auth.
-  -Parallel        Run against all servers simultaneously (PS7+). Default: sequential.
-
-Usage examples:
-  # All inbound firewall rules on three servers
-  .\MultiServer-GetFirewallRules.ps1 -Servers "SVR01,SVR02,SVR03"
-
-  # Rules matching SQL, both directions
-  .\MultiServer-GetFirewallRules.ps1 -Servers "SVR01,SVR02" -DisplayNameLike "*SQL*" -Direction All
-
-  # Only enabled rules
-  .\MultiServer-GetFirewallRules.ps1 -Servers "SVR01,SVR02,SVR03" -Enabled True
+Requires    : WinRM on target hosts (Enable-PSRemoting -Force on each target).
+              NetSecurity module (standard on Windows Server 2012+).
 #>
 
 [CmdletBinding()]
 param (
-    # Comma-separated list of target hostnames or IPs
     [Parameter(Mandatory)]
     [string]$Servers,
 
-    # Wildcard filter on rule display name — e.g. "*SQL*", "*Remote Desktop*"
     [string]$DisplayNameLike = '*',
 
-    # Filter by enabled state: True, False, or All
     [ValidateSet('True','False','All')]
     [string]$Enabled = 'All',
 
-    # Filter by traffic direction: Inbound, Outbound, or All
     [ValidateSet('Inbound','Outbound','All')]
     [string]$Direction = 'Inbound',
 
-    # Alternate credentials — omit to use current Windows identity
     [PSCredential]$Credential,
-
-    # Run against all servers simultaneously (PS7+). Sequential is default.
     [switch]$Parallel
 )
 
