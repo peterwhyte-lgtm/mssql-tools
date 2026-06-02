@@ -2,6 +2,7 @@
 title: SQL Server Wait Statistics Explained
 slug: sql-server-wait-statistics
 published: 
+published_url: 
 status: draft
 category: performance
 tags: [performance, waits, triage, dmv]
@@ -11,6 +12,8 @@ scripts:
 seo_keyphrase:    SQL Server wait statistics
 seo_title:        SQL Server Wait Statistics Explained
 seo_description:  Learn how to diagnose SQL Server performance problems using wait statistics. This script filters background noise and ranks the waits that actually matter. (155 chars)
+screenshots_needed:
+  - Get-WaitStatistics query output in SSMS showing top wait types with pct_total_wait column, at least one wait type over 20%
 repo: https://github.com/peterwhyte-lgtm/dba-scripts
 ---
 
@@ -140,6 +143,28 @@ The full script is available in the [dba-scripts repo on GitHub](https://github.
 
 - [`sql/performance/Get-WaitStatistics.sql`](https://github.com/peterwhyte-lgtm/dba-scripts/blob/main/sql/performance/Get-WaitStatistics.sql)
 - [`powershell/reporting/Get-WaitStatistics.ps1`](https://github.com/peterwhyte-lgtm/dba-scripts/blob/main/powershell/reporting/Get-WaitStatistics.ps1)
+
+---
+
+## Posts in this series
+
+Each wait type gets its own page covering what it means, whether it's a false positive, root causes, and what to do.
+
+| Post | Wait Type | What it signals |
+|------|-----------|-----------------|
+| [PAGEIOLATCH_SH](pageiolatch-sh.md) | Data page read I/O | Buffer pool pressure or slow storage |
+| [WRITELOG](writelog.md) | Transaction log writes | Slow log disk or chatty commit patterns |
+| [CXPACKET / CXCONSUMER](cxpacket.md) | Parallelism overhead | MAXDOP or cost threshold misconfiguration |
+| [ASYNC_NETWORK_IO](async-network-io.md) | Client not reading results | Usually an app-layer issue, not SQL Server |
+| [LCK_M_X / LCK_M_S / LCK_M_U](lck-m-x.md) | Lock contention | Blocking — investigate head blocker |
+| [RESOURCE_SEMAPHORE](resource-semaphore.md) | Memory grant queue | Missing indexes causing large sort/hash |
+| [SOS_SCHEDULER_YIELD](sos-scheduler-yield.md) | CPU scheduler pressure | High CPU or runaway queries |
+| [PAGEIOLATCH_EX](pageiolatch-ex.md) | Data page write I/O | Checkpoint pressure or heavy writes |
+| [IO_COMPLETION](io-completion.md) | Non-data file I/O | TempDB or backup I/O contention |
+| [THREADPOOL](threadpool.md) | Worker thread exhaustion | Too many connections or blocked threads |
+| [HADR_SYNC_COMMIT](hadr-sync-commit.md) | AG synchronous commit lag | Slow or distant AG secondary |
+| [BACKUPIO / BACKUPBUFFER](backupio.md) | Backup I/O throughput | Backup competing with production I/O |
+| [WRITELOG (tempdb)](writelog-tempdb.md) | tempdb log write pressure | Heavy tempdb use (spills, temp tables) |
 
 ---
 

@@ -2,6 +2,7 @@
 title: Finding Missing Indexes in SQL Server
 slug: sql-server-missing-indexes
 published: 
+published_url: 
 status: draft
 category: performance
 tags: [indexes, performance, dmv, query-tuning]
@@ -11,6 +12,8 @@ scripts:
 seo_keyphrase:    SQL Server missing indexes
 seo_title:        Finding Missing Indexes in SQL Server
 seo_description:  Find SQL Server missing indexes ranked by impact score. Prioritise suggestions, avoid index bloat, and create the right indexes for your workload. (146 chars)
+screenshots_needed:
+  - Get-MissingIndexes output showing top missing indexes ranked by impact_score with equality_columns, inequality_columns, and included_columns
 repo: https://github.com/peterwhyte-lgtm/dba-scripts
 ---
 

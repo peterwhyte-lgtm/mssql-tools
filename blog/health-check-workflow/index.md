@@ -2,6 +2,7 @@
 title: One-Command SQL Server Health Check
 slug: sql-server-health-check-one-command
 published: 
+published_url: 
 status: draft
 category: monitoring
 tags: [health-check, monitoring, automation, powershell]
@@ -11,6 +12,9 @@ scripts:
 seo_keyphrase:    SQL Server health check
 seo_title:        One-Command SQL Server Health Check
 seo_description:  Run a complete SQL Server health check with one command. Collect 19 diagnostic data points and get a prioritised list of CRITICAL and WARNING findings. (151 chars)
+screenshots_needed:
+  - Terminal output of Invoke-HealthCheckCollection showing collection progress across the 19 check categories
+  - Review-HealthCheckOutput results showing CRITICAL and WARNING findings sorted by severity with finding and detail columns
 repo: https://github.com/peterwhyte-lgtm/dba-scripts
 ---
 

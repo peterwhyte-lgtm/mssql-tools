@@ -2,6 +2,7 @@
 title: Finding and Diagnosing SQL Server Blocking
 slug: sql-server-blocking-sessions
 published: 
+published_url: 
 status: draft
 category: performance
 tags: [blocking, locking, performance, waits]
@@ -14,6 +15,9 @@ scripts:
 seo_keyphrase:    SQL Server blocking sessions
 seo_title:        Finding and Diagnosing SQL Server Blocking
 seo_description:  Find and diagnose SQL Server blocking with two scripts. Identify the head blocker, see the full blocking chain, and know when to kill versus investigate. (153 chars)
+screenshots_needed:
+  - Get-BlockingSummary output showing blocking session count, head blocker spid, and total wait time
+  - Get-BlockingSessions output showing the full blocking chain with spid, status, wait_type, and blocked_by columns
 repo: https://github.com/peterwhyte-lgtm/dba-scripts
 ---
 

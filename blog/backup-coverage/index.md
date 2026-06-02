@@ -2,6 +2,7 @@
 title: How to Audit SQL Server Backup Coverage in One Query
 slug: sql-server-backup-coverage-audit
 published: 
+published_url: 
 status: draft
 category: backups
 tags: [backups, recovery, msdb, audit]
@@ -12,6 +13,8 @@ scripts:
 seo_keyphrase:    SQL Server backup coverage
 seo_title:        How to Audit SQL Server Backup Coverage in One Query
 seo_description:  Audit SQL Server backup coverage across all databases in one query. Spot missing backups, stale full backups, and FULL recovery databases without log backups. (158 chars)
+screenshots_needed:
+  - Get-BackupCoverage output showing database_name, recovery_model, last_full_backup, last_log_backup, and coverage_status — include at least one NOT COVERED row
 repo: https://github.com/peterwhyte-lgtm/dba-scripts
 ---
 

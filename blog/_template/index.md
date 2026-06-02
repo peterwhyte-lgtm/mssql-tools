@@ -2,6 +2,7 @@
 title: 
 slug: 
 published: 
+published_url: 
 status: draft
 category: performance | backups | monitoring | security | maintenance
 tags: []
@@ -11,6 +12,8 @@ scripts:
 seo_keyphrase:    # the single focus phrase e.g. "SQL Server wait statistics"
 seo_title:        # 50–60 chars — leave blank to use title field
 seo_description:  # 150–160 chars — checked in SEO block at the bottom
+screenshots_needed:
+  - "[describe what screenshot is needed here — e.g. script output in SSMS showing key columns]"
 repo: https://github.com/peterwhyte-lgtm/dba-scripts
 ---
 
