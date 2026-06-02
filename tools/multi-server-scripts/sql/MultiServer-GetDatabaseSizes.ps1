@@ -75,7 +75,7 @@ if ($Parallel) {
             $rows = Invoke-Sqlcmd @p
             foreach ($r in $rows) { $r | Select-Object *, @{n='Server'; e={ $srv }} }
         } catch {
-            [PSCustomObject]@{ Server = $srv; database_name = 'ERROR'; total_size_mb = 0 }
+            [PSCustomObject]@{ Server = $srv; database_name = 'ERROR'; total_size_mb = 0; Error = $_.Exception.Message }
         }
     } -ThrottleLimit 10 | ForEach-Object { $allResults.Add($_) }
 } else {

@@ -142,6 +142,16 @@ if ($extension -notin '.sql', '.ps1') {
     exit 1
 }
 
+# A line starting with '@ at column 0 terminates a PowerShell single-quoted here-string early.
+# SQL files are embedded in @'...'@ so this would break the generated script.
+if ($extension -eq '.sql' -and $scriptContent -match "(?m)^'@") {
+    Write-Error (
+        "The SQL file contains a line beginning with '@ which would prematurely terminate " +
+        "the generated here-string and corrupt the output. Remove or rewrite that line first."
+    )
+    exit 1
+}
+
 $isSql      = $extension -eq '.sql'
 $serverList = $Servers -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne '' }
 
