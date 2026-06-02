@@ -17,7 +17,7 @@ if (-not $Inline) {
 }
 
 $ErrorActionPreference = 'Stop'
-$repoRoot = Split-Path $PSScriptRoot -Parent
+$repoRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 
 # ── data helpers ───────────────────────────────────────────────────────────────
 
@@ -36,7 +36,15 @@ function Get-AllScripts {
             @{n='Type';    e={ 'PS1' }},
             @{n='RelPath'; e={ $_.FullName.Replace($repoRoot,'').TrimStart('\') }}
 
-    @($sql) + @($ps)
+    # Multi-server scripts — browsable and copyable, not runnable via the web UI
+    $msq = Get-ChildItem "$repoRoot\tools\multi-server-queries" -Recurse -Filter '*.ps1' -File -ErrorAction SilentlyContinue |
+        Select-Object FullName,
+            @{n='Name';    e={ $_.BaseName }},
+            @{n='Category';e={ 'multi-server-queries/' + $_.Directory.Name }},
+            @{n='Type';    e={ 'PS1' }},
+            @{n='RelPath'; e={ $_.FullName.Replace($repoRoot,'').TrimStart('\') }}
+
+    @($sql) + @($ps) + @($msq)
 }
 
 function Html-Escape([string]$s) {

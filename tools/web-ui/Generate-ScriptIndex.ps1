@@ -6,7 +6,7 @@ Generates docs/script-index.md from script headers. Re-run after adding scripts.
 .\tools\Generate-ScriptIndex.ps1
 #>
 $ErrorActionPreference = 'Stop'
-$repoRoot = Resolve-Path (Join-Path $PSScriptRoot '..')
+$repoRoot = Resolve-Path (Join-Path $PSScriptRoot '..\..')
 $outFile  = Join-Path $repoRoot 'docs\script-index.md'
 
 function Get-SqlPurpose([string]$Path) {
