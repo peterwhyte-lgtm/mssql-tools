@@ -6,6 +6,13 @@ Author      : Peter Whyte (https://sqldba.blog)
 Safe        : Read-only
 Impact      : Low
 Requires    : WinRM on target hosts (Get-CimInstance uses WinRM by default in PS7+).
+Params      : -Servers "SVR01,SVR02"   Required. Comma-separated hostnames or IPs.
+              -WarnBelowPctFree 20     Flag volumes below this % free. Default: 20.
+              -CritBelowPctFree 10     Critical below this % free. Default: 10.
+              -Credential              Alternate PSCredential.
+              -Parallel                Run all servers simultaneously (PS7+).
+Output      : Server, Drive, Label, TotalGB, UsedGB, FreeGB, FreePct, Status
+Example     : .\MultiServer-GetDiskSpace.ps1 -Servers "SVR01,SVR02,SVR03" -WarnBelowPctFree 15
 #>
 
 [CmdletBinding()]

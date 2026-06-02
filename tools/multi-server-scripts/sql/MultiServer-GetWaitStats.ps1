@@ -7,6 +7,14 @@ Safe        : Read-only
 Impact      : Low
 Requires    : SqlServer PowerShell module.
               Install with: Install-Module -Name SqlServer -Scope CurrentUser -Force
+Params      : -Servers "SVR01,SVR02"   Required. Comma-separated SQL Server instances.
+              -Database master          Connection database. Default: master.
+              -Top 10                  Wait types to show per server. Default: 10.
+              -SqlAuth                  Prompt for SQL credentials instead of Windows auth.
+              -Parallel                 Run all servers simultaneously (PS7+).
+Output      : Server, wait_type, pct_total_wait, avg_wait_ms, max_wait_time_ms,
+              wait_time_ms, waiting_tasks_count, signal_wait_time_ms, resource_wait_time_ms
+Example     : .\MultiServer-GetWaitStats.ps1 -Servers "SVR01,SVR02,SVR03" -Top 5
 #>
 
 [CmdletBinding()]

@@ -7,6 +7,14 @@ Safe        : Read-only
 Impact      : Low
 Requires    : WinRM on target hosts (Enable-PSRemoting -Force on each target).
               NetSecurity module (standard on Windows Server 2012+).
+Params      : -Servers "SVR01,SVR02"          Required. Comma-separated hostnames or IPs.
+              -DisplayNameLike "*"              Wildcard filter on rule name. Default: * (all).
+              -Enabled All|True|False           Filter by enabled state. Default: All.
+              -Direction Inbound|Outbound|All   Filter by direction. Default: Inbound.
+              -Credential                       Alternate PSCredential.
+              -Parallel                         Run all servers simultaneously (PS7+).
+Output      : Server, Direction, Enabled, Action, Protocol, LocalPort, DisplayName
+Example     : .\MultiServer-GetFirewallRules.ps1 -Servers "SVR01,SVR02" -DisplayNameLike "*SQL*"
 #>
 
 [CmdletBinding()]

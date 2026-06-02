@@ -6,6 +6,12 @@ Author      : Peter Whyte (https://sqldba.blog)
 Safe        : Read-only
 Impact      : Low
 Requires    : RPC access to target hosts (port 135). Get-Service -ComputerName uses RPC, not WinRM.
+Params      : -Servers "SVR01,SVR02"   Required. Comma-separated hostnames or IPs.
+              -ServiceName "SQL*"      Service name filter; wildcard supported. Default: SQL*.
+              -Parallel                Run all servers simultaneously (PS7+).
+              Note: no -Credential — Get-Service over RPC uses pass-through auth only.
+Output      : Server, ServiceName, DisplayName, Status, StartType
+Example     : .\MultiServer-GetServiceStatus.ps1 -Servers "SVR01,SVR02" -ServiceName MSSQLSERVER
 #>
 
 [CmdletBinding()]

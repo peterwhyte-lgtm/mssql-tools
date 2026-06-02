@@ -62,7 +62,9 @@ differs between two snapshots, the counters reset — discard that delta.
 
 ## SQL Agent job setup
 
-See the README in each collector folder for the exact T-SQL to create the job.
+Each collector folder has a README with the exact T-SQL to create the job:
+[blocking](blocking/README.md) · [deadlocks](deadlocks/README.md) · [tempdb](tempdb/README.md) · [perfmon](perfmon/README.md) · [ag-health](ag-health/README.md) · [storage-io](storage-io/README.md) · [database-growth](database-growth/README.md) · [wait-stats](wait-stats/README.md)
+
 All jobs follow the same pattern:
 
 - **Job category:** `DBA Collectors` (create once, shared across all jobs)

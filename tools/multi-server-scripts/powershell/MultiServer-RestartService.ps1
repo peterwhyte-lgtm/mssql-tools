@@ -7,6 +7,13 @@ Safe        : WRITE — restarts the named service on each target host
 Impact      : High (causes a service interruption on each target)
 Requires    : WinRM on target hosts (Enable-PSRemoting -Force as admin on each target).
               Admin rights on target hosts.
+Params      : -Servers "SVR01,SVR02"   Required. Comma-separated hostnames or IPs.
+              -ServiceName             Required. Short service name (MSSQLSERVER, W3SVC, etc.).
+              -Credential              Alternate PSCredential for WinRM auth.
+              -WhatIf                  Preview what would restart without doing it.
+              -Parallel                Run all servers simultaneously (PS7+).
+Output      : Server, Service, WasState, NowState, Result
+Example     : .\MultiServer-RestartService.ps1 -Servers "SVR01,SVR02" -ServiceName SQLSERVERAGENT -WhatIf
 #>
 
 [CmdletBinding(SupportsShouldProcess)]

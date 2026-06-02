@@ -6,6 +6,12 @@ Author      : Peter Whyte (https://sqldba.blog)
 Safe        : Read-only
 Impact      : Low
 Requires    : Nothing — uses System.Net.Sockets.TcpClient.
+Params      : -Servers "SVR01,SVR02"   Required. Hostnames, IPs, or SERVER\INSTANCE (instance part stripped).
+              -Port 1433               TCP port to test. Default: 1433.
+              -Timeout 1000            Connection timeout in milliseconds. Default: 1000.
+              -Parallel                Run all tests simultaneously.
+Output      : Server, Port, Reachable, LatencyMs, Error
+Example     : .\MultiServer-TestSqlPort.ps1 -Servers "SVR01,SVR02,SVR03" -Parallel
 #>
 
 [CmdletBinding()]

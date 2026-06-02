@@ -7,6 +7,15 @@ Safe        : Read-only
 Impact      : Low
 Requires    : SqlServer PowerShell module.
               Install with: Install-Module -Name SqlServer -Scope CurrentUser -Force
+Params      : -Servers "SVR01,SVR02"   Required. Comma-separated SQL Server instances.
+              -Database master          Connection database. Default: master.
+              -WarnFullAgeHours 25     Flag databases whose last full backup exceeds this age. Default: 25.
+              -SqlAuth                  Prompt for SQL credentials instead of Windows auth.
+              -Parallel                 Run all servers simultaneously (PS7+).
+Output      : Server, database_name, recovery_model_desc, coverage_status,
+              full_backup_age_hours, last_full_backup, last_diff_backup, last_log_backup
+              coverage_status: OK | FULL_STALE | NO_FULL_BACKUP | NO_LOG_BACKUP
+Example     : .\MultiServer-GetBackupStatus.ps1 -Servers "SVR01,SVR02,SVR03" -WarnFullAgeHours 12
 #>
 
 [CmdletBinding()]

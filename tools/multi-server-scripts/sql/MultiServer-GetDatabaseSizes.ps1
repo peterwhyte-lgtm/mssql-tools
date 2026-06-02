@@ -7,6 +7,15 @@ Safe        : Read-only
 Impact      : Low
 Requires    : SqlServer PowerShell module.
               Install with: Install-Module -Name SqlServer -Scope CurrentUser -Force
+Params      : -Servers "SVR01,SVR02"   Required. Comma-separated SQL Server instances.
+              -Database master          Connection database. Default: master.
+              -MinSizeMb 0             Only return databases above this size. Default: 0 (all).
+              -SqlAuth                  Prompt for SQL credentials instead of Windows auth.
+              -Parallel                 Run all servers simultaneously (PS7+).
+Output      : Server, database_name, state_desc, recovery_model_desc,
+              data_size_mb, log_size_mb, total_size_mb, data_file_count, log_file_count
+              Note: no free space — run Get-DatabaseSizesAndFreeSpace for per-file detail.
+Example     : .\MultiServer-GetDatabaseSizes.ps1 -Servers "SVR01,SVR02" -MinSizeMb 1000
 #>
 
 [CmdletBinding()]

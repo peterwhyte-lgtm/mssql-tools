@@ -6,6 +6,15 @@ Author      : Peter Whyte (https://sqldba.blog)
 Safe        : Read-only
 Impact      : Low
 Requires    : Remote Event Log access via RPC. RemoteRegistry service running on targets.
+Params      : -Servers "SVR01,SVR02"        Required. Comma-separated hostnames or IPs.
+              -LogName "Application,System"  Logs to read (comma-separated). Default: Application,System.
+              -Level "Error,Warning"         Severity filter. Options: Error,Warning,Information,Critical.
+              -Hours 24                      How far back to look. Default: 24.
+              -MaxPerServer 50               Max events per server per log. Default: 50.
+              -Credential                    Alternate PSCredential.
+              -Parallel                      Run all servers simultaneously (PS7+).
+Output      : Server, Log, TimeUtc, Level, Source, EventId, Message
+Example     : .\MultiServer-GetRecentEventLogs.ps1 -Servers "SVR01,SVR02" -Hours 48 -Level Error
 #>
 
 [CmdletBinding()]

@@ -7,6 +7,14 @@ Safe        : Read-only
 Impact      : Low
 Requires    : SqlServer PowerShell module.
               Install with: Install-Module -Name SqlServer -Scope CurrentUser -Force
+Params      : -Servers "SVR01,SVR02"   Required. Comma-separated SQL Server instances.
+              -Database master          Connection database. Default: master.
+              -SqlAuth                  Prompt for SQL credentials instead of Windows auth.
+              -Parallel                 Run all servers simultaneously (PS7+).
+Output      : Server, session_id, blocking_session_id, wait_type, wait_sec,
+              database_name, login_name, host_name, current_statement
+              Zero rows returned means no active blocking on that server.
+Example     : .\MultiServer-GetBlockingSessions.ps1 -Servers "SVR01,SVR02,SVR03"
 #>
 
 [CmdletBinding()]
