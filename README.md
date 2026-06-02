@@ -24,6 +24,7 @@ A production-ready SQL Server DBA toolkit for diagnostics, monitoring, migration
 
 ## Table of contents
 
+- [Environment setup](#environment-setup)
 - [Quick start](#quick-start)
 - [Health check workflow](#health-check-workflow)
 - [Repository structure](#repository-structure)
@@ -31,6 +32,25 @@ A production-ready SQL Server DBA toolkit for diagnostics, monitoring, migration
 - [Migration toolkit](#migration-toolkit)
 - [Requirements](#requirements)
 - [Contributing](#contributing)
+
+---
+
+## Environment setup
+
+New to the repo? Run the setup script — it checks PowerShell version, installs missing modules, creates the output directory structure, and tests connectivity to your SQL Server.
+
+```powershell
+# Basic check (no SQL Server required)
+.\Initialize-Environment.ps1
+
+# Full setup — test connectivity and set the session default server
+.\Initialize-Environment.ps1 -ServerInstance PROD01\SQL2019
+
+# Fully automated — install missing modules + persist server to your PS profile
+.\Initialize-Environment.ps1 -ServerInstance PROD01\SQL2019 -AutoInstall -PersistProfile
+```
+
+For the complete guide covering permissions, collectors, multi-server scripts, and troubleshooting, see **[SETUP.md](SETUP.md)**.
 
 ---
 
