@@ -97,8 +97,10 @@ if ($Parallel) {
                         Message = ($e.Message -split "`n")[0].Trim(); Error = '' }
                 }
             } catch {
-                [PSCustomObject]@{ Server = $srv; Log = $log; TimeUtc = ''; Level = 'ERROR'; Source = '';
-                    EventId = 0; Message = $_.Exception.Message; Error = $_.Exception.Message }
+                if ($_.Exception.Message -notmatch 'No events') {
+                    [PSCustomObject]@{ Server = $srv; Log = $log; TimeUtc = ''; Level = 'ERROR'; Source = '';
+                        EventId = 0; Message = $_.Exception.Message; Error = $_.Exception.Message }
+                }
             }
         }
     } -ThrottleLimit 10 | ForEach-Object { $results.Add($_) }

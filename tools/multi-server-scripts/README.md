@@ -54,7 +54,7 @@ All scripts support:
 |-----------|-------------|
 | `-Servers "SVR01,SVR02,SVR03"` | Comma-separated server names or IPs |
 | `-Parallel` | Run against all servers at once (PS7+). Sequential is default. |
-| `-Credential` | PSCredential for alternate auth (PS scripts) |
+| `-Credential` | PSCredential for alternate auth — GetDiskSpace, GetFirewallRules, GetRecentEventLogs, RestartService only (not GetServiceStatus or TestSqlPort) |
 | `-SqlAuth` | Prompt for SQL credentials instead of Windows auth (SQL scripts) |
 
 SQL scripts also accept:

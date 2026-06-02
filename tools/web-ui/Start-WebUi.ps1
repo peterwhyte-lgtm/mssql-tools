@@ -40,7 +40,7 @@ function Get-AllScripts {
     $msq = Get-ChildItem "$repoRoot\tools\multi-server-scripts" -Recurse -Filter '*.ps1' -File -ErrorAction SilentlyContinue |
         Select-Object FullName,
             @{n='Name';    e={ $_.BaseName }},
-            @{n='Category';e={ 'multi-server-queries/' + $_.Directory.Name }},
+            @{n='Category';e={ 'multi-server-scripts/' + $_.Directory.Name }},
             @{n='Type';    e={ 'PS1' }},
             @{n='RelPath'; e={ $_.FullName.Replace($repoRoot,'').TrimStart('\') }}
 
