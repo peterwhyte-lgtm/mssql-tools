@@ -1,139 +1,74 @@
 # DBA Scripts Roadmap
 
-## Current state (as of 2026-05-29)
+## Current state (updated 2026-06-03)
 
-The repo is a functional, comprehensive production DBA toolkit. Key capabilities:
+Fully functional production DBA toolkit. Since the initial build (2026-05-29), significant additions:
 
-- **SQL scripts**: ~45 canonical scripts across `sql/monitoring/`, `sql/performance/`, `sql/backups/`, `sql/security/`, `sql/migration/`
-- **PS wrappers**: Every SQL script has a matching PS wrapper — no coverage gaps
-- **Healthcheck workflow**: `Invoke-HealthCheckCollection.ps1` collects 19 scripts → `Review-HealthCheckOutput.ps1` flags 17 rule categories (CRITICAL / WARNING / INFO)
-- **Security coverage**: server roles, database roles, orphaned users, login permissions, weak login settings, surface area config
-- **Standards**: all canonical SQL scripts have standard headers, `SET NOCOUNT ON`, safety annotations, no NOLOCK, no deprecated catalog views
-
----
-
-## Fresh-eyes review findings (production DBA first look)
-
-These are the friction points a DBA would hit on first use, in order of impact.
-
-### 1. No `.gitignore` — output CSVs will be committed accidentally
-
-`output-files/` accumulates `.csv` and `.tmp.csv` files every time a script runs. There is no `.gitignore`. A DBA who does `git add .` will commit hundreds of CSV files. `output-files/test-backup-review/` also contains `.bak` fixture files that appear to be committed by accident.
-
-**Fix:** Add `.gitignore` covering `output-files/**/*.csv`, `.tmp.csv`, `output-files/healthcheck/`, and standard PS/SQL patterns.
+- **Multi-server scripts** — 10 standalone scripts (`tools/multi-server-scripts/`) covering disk, firewall, event logs, service status, service restart, TCP port testing, backup status, blocking, database sizes, and wait stats. Self-contained, copy-and-run anywhere.
+- **Multi-server generator** — `helpers/multi-server-query/New-MultiServerScript.ps1` wraps any `.sql` or `.ps1` in a foreach/parallel loop. Fixed `$using:` bugs, added result collection with Server column, added credential template, `-ThrottleLimit` parameter.
+- **Collector documentation** — all 8 collectors now have per-collector READMEs covering output columns, write conditions, collection frequency, SQL Agent T-SQL, and permissions.
+- **Pester tests** — `tests/New-MultiServerScript.Tests.ps1` (18 tests, no SQL Server dependency).
+- **Environment setup** — `Initialize-Environment.ps1` + `SETUP.md` for new machine onboarding.
+- **Script headers** — all multi-server scripts have Params/Output/Example inline docs.
 
 ---
 
-### 2. Healthcheck collection is extremely noisy
+## Roadmap
 
-`Invoke-HealthCheckCollection.ps1` prints `[repo-sql]` headers for every script (5 lines each × 19 scripts = 95+ lines of noise) plus 25-row table previews. The summary and output folder path are buried at the bottom.
+### P3 — Active backlog (carry-over + new)
 
-**Fix:** Add a `-Quiet` switch that suppresses per-script verbose output, showing only the `[OK]` / `[FAILED]` status lines and the final summary.
+| Item | Type | Effort | Notes |
+|------|------|--------|-------|
+| `Invoke-MultiServerHealthCheck.ps1` | New PS | Medium | Server list → per-server collection → aggregated CRITICAL/WARNING report |
+| `Get-DatabasePermissions.sql` + wrapper | New SQL | Small | Object-level explicit grants per database |
+| `Get-ProxyAndCredentials.sql` + wrapper | New SQL | Small | SQL Agent proxies and credentials — privilege escalation surface |
+| Collector delta analysis scripts | New PS | Medium | `Compare-CollectorSnapshots.ps1` — load two CSV files, produce diff table |
+| `Invoke-CollectorAlert.ps1` | New PS | Medium | Check today's collector CSVs against thresholds, output CRITICAL/WARNING |
+| Web UI caching | Bug/Perf | Small | `Get-AllScripts` + `Get-ScriptPurpose` + `Get-ScriptSafety` run on every page load — 2N disk reads per request |
 
----
-
-### 3. `categories/` is a silent source of confusion
-
-`categories/` contains old copies of most scripts — many with older content (missing bug fixes, wrong formulas, old headers). `docs/catalog.md` still pointed to `categories/` paths throughout.
-
-**Fix:** Add `categories/ARCHIVED.md` redirecting to `sql/` and `powershell/`. Delete `docs/catalog.md`.
-
----
-
-### 4. `docs/standards.md` and `docs/catalog.md` were stale and misleading
-
-`docs/standards.md` showed the OLD header format conflicting with what scripts actually use. `docs/catalog.md` was a legacy-paths catalog pointing to `categories/` everywhere.
-
-**Fix:** Delete `docs/catalog.md`. Rewrite `docs/standards.md` to match the actual header format.
-
----
-
-### 5. `Invoke-RepoSql.ps1` used `categories/` path logic for CSV output naming
-
-Scripts run from `sql/monitoring/` were categorised as `general` in the output path.
-
-**Fix:** Update the regex to also detect `sql/monitoring`, `sql/performance`, etc.
-
----
-
-### 6. No discovery mode in `run.ps1`
-
-Running `.\run.ps1` with no script name threw. No way to browse available scripts.
-
-**Fix:** Add `-List` mode showing all scripts grouped by category.
-
----
-
-### 7. `hybrid/` folder was empty but documented as a key layer
-
-All three subfolders (`agent-job-monitoring/`, `backup-validation/`, `sql-inventory-reporting/`) were empty.
-
-**Fix:** Delete the empty subfolders. Update `hybrid/README.md` to reflect current state.
-
----
-
-### 8. `docs/runbook.md` was a skeleton
-
-The daily runbook was 10 lines with no paths, commands, or thresholds.
-
-**Fix:** Expand into a genuine daily/weekly/incident runbook with canonical commands, thresholds, and scenario coverage.
-
----
-
-### 9. Review findings had no collection timestamp
-
-No visible signal that findings may be from stale data.
-
-**Fix:** Parse the timestamp from the folder name and show "Collected: YYYY-MM-DD HH:MM:SS" in the review header.
-
----
-
-### 10. No multi-server support
-
-Every script targets a single `$ServerInstance`.
-
-**Status:** Deferred — see P3.
-
----
-
-## Roadmap priorities
-
-### P1 — Completed 2026-05-29
-
-| Item | Status |
-|------|--------|
-| Add `.gitignore` | ✓ Complete |
-| Healthcheck `-Quiet` switch | ✓ Complete |
-| Fix `Invoke-RepoSql.ps1` category detection | ✓ Complete |
-| Delete `docs/catalog.md` | ✓ Complete |
-| Rewrite `docs/standards.md` | ✓ Complete |
-| Archive `categories/` with ARCHIVED.md | ✓ Complete |
-
-### P2 — Completed 2026-05-29
-
-| Item | Status |
-|------|--------|
-| `run.ps1` list/discovery mode (`-List`) | ✓ Complete |
-| Collection timestamp in review output header | ✓ Complete |
-| Expand `docs/runbook.md` | ✓ Complete |
-| Resolve `hybrid/` — delete empty subfolders, update README | ✓ Complete |
-
-### P3 — Pending
-
-| Item | Effort | Notes |
-|------|--------|-------|
-| `Get-DatabasePermissions.sql` + wrapper | Small | Object-level explicit grants per database |
-| `Get-ProxyAndCredentials.sql` + wrapper | Small | Agent proxies and credentials (privilege escalation surface) |
-| `Invoke-MultiServerHealthCheck.ps1` | Medium | Server list file → per-server collection → consolidated findings |
-
-### P4 — CI and quality gates (currently 0/10)
+### P4 — CI and quality gates (0% complete)
 
 | Item | Notes |
 |------|-------|
-| SQLFluff T-SQL linting | GitHub Actions, flag unsafe patterns |
-| markdownlint | Enforce docs consistency |
-| Broken link checker | Flag stale `categories/` references in docs |
-| PS wrapper smoke test | Assert every wrapper resolves its SQL path at import time |
+| GitHub Actions: Pester | `Invoke-Pester tests/` on push — currently 0 CI |
+| GitHub Actions: PS syntax check | `$null = [System.Management.Automation.Language.Parser]::ParseFile()` per .ps1 |
+| GitHub Actions: markdownlint | `.markdownlint.jsonc` already present, not wired to CI |
+| SQLFluff T-SQL linting | Flag `NOLOCK`, deprecated catalog views, non-standard patterns |
+| Broken link checker | Catch stale doc cross-references |
+
+### P5 — New collectors
+
+| Collector | Source | Value | Delta needed? |
+|-----------|--------|-------|---------------|
+| `query-store` | `sys.query_store_*` | Track plan regressions and query performance trends over time | No — point-in-time |
+| `index-fragmentation` | `sys.dm_db_index_physical_stats` | Weekly snapshot — see which indexes degrade fastest | No — point-in-time |
+| `vlf-count` | `sys.dm_db_log_info` | Track VLF accumulation before it becomes a maintenance emergency | No — point-in-time |
+| `errorlog` | `sys.dm_os_ring_buffers` / `xp_readerrorlog` | Group SQL errorlog entries by severity + source over time | No — new events only |
+
+Each would follow the existing collector pattern: one `.sql` + one `Collect-*.ps1` + one `README.md` with SQL Agent T-SQL.
+
+### P6 — New SQL scripts
+
+| Script | Category | Purpose |
+|--------|----------|---------|
+| `Get-TempDbConfiguration.sql` | monitoring | File count, sizing parity, relevant trace flags (T1118, T1117) |
+| `Get-PlanCacheHealth.sql` | performance | Single-use plan ratio, memory pressure from ad-hoc queries |
+| `Get-ReadableSecondaryUsage.sql` | high-availability | What queries are running on AG read replicas |
+| `Get-BackupEncryptionStatus.sql` | backups | Backup encryption certificates and which databases are covered |
+| `Get-LinkedServerSecurity.sql` | security | Linked server login mappings and security context |
+| `Get-DatabasePermissions.sql` | security | Object-level explicit grants per database (P3 carry-over) |
+| `Get-ProxyAndCredentials.sql` | security | SQL Agent proxies and credentials (P3 carry-over) |
+| `Get-LockEscalationStats.sql` | performance | Lock escalation events and frequency from `sys.dm_os_wait_stats` |
+
+### P7 — Larger ideas (no timeline)
+
+| Idea | Description |
+|------|-------------|
+| Multi-server collector | Run any collector against a list of servers — `Invoke-MultiCollector.ps1 -Collector wait-stats -Servers "SVR01,SVR02"` |
+| Baseline comparison | `Compare-MigrationBaseline.ps1` — load pre and post CSV sets, diff every metric, flag regressions |
+| Trend forecasting | Given database growth collector data, calculate MB/day growth rate and project when disk runs out |
+| Assessment scheduling | Run `Invoke-AssessmentReport.ps1` on a schedule via SQL Agent or Task Scheduler, email the output |
+| Blog post automation | Tag a SQL script with `-- Blog: https://...` and have `Ensure-SqlHeaders.ps1` validate the link is live |
 
 ---
 
@@ -141,23 +76,15 @@ Every script targets a single `$ServerInstance`.
 
 | Date | Item |
 |------|------|
-| 2026-05-29 | Added `.gitignore` — covers CSVs, .bak files, healthcheck output |
-| 2026-05-29 | Healthcheck `-Quiet` switch — `Invoke-HealthCheckCollection.ps1` |
-| 2026-05-29 | Fixed `Invoke-RepoSql.ps1` category detection — now resolves `sql/monitoring`, `sql/performance` etc. |
-| 2026-05-29 | Deleted `docs/catalog.md` — was pointing to stale `categories/` paths |
-| 2026-05-29 | Rewrote `docs/standards.md` — matches actual header format in use |
-| 2026-05-29 | Archived `categories/` — added ARCHIVED.md, empty subfolders not searched by overview tools |
-| 2026-05-29 | `run.ps1` list/discovery mode — `.\run.ps1 -List` shows all scripts grouped by category |
-| 2026-05-29 | Collection timestamp in review header — `Review-HealthCheckOutput.ps1` now shows when data was collected |
-| 2026-05-29 | Expanded `docs/runbook.md` — real daily/weekly/incident runbook with canonical commands and thresholds |
-| 2026-05-29 | Resolved `hybrid/` — deleted empty subfolders, updated README to reflect current state |
-| 2026-05-29 | Created CLAUDE.md — full architecture, usage patterns, healthcheck table, and standards reference |
-| 2026-05-29 | Full canonical `sql/` + `powershell/` layout with zero PS wrapper coverage gaps |
-| 2026-05-29 | All SQL scripts single-result-set, standard headers, no NOLOCK, no deprecated catalog views |
-| 2026-05-29 | Bug fixes: TempDB growth formula, TransactionLog used vs free column naming, MemoryConfig multi-result-set, BlockingSessions OUTER APPLY, AG non-AG guard, SqlAgentJobFailureSummary unreadable int dates |
-| 2026-05-29 | Key improvements: WaitStatistics benign wait filter + pct_total, LongRunningQueries DB_NAME + seconds, MissingIndexes impact score + suggested statement, BlockingSummary head-blocker context |
-| 2026-05-29 | New diagnostic scripts: OsAndHardwareInfo, DatabaseFilesDetail, RecentErrorLogEntries, ActiveSessions, LastDbccCheckdb, SuspectPages, JobScheduleSummary, TopIoQueries, IndexUsageStats, SlowQueriesFromCache |
-| 2026-05-29 | Security suite: ServerRoleMembers, DatabaseRoleMembers, OrphanedUsers, LoginPermissions, WeakLoginSettings + powershell/security/ wrappers |
-| 2026-05-29 | `Invoke-HealthCheckCollection.ps1` (19 scripts) + `Review-HealthCheckOutput.ps1` (17 rule categories) |
-| 2026-05-29 | `powershell/migration/` folder with wrappers for all 4 migration SQL scripts |
-| 2026-05-29 | Canonical layout under `sql/`, `powershell/`, `helpers/`, `docs/` with top-level `run.ps1` launcher |
+| 2026-06-03 | `Initialize-Environment.ps1` + `SETUP.md` — new machine onboarding script and full setup guide |
+| 2026-06-03 | `tests/New-MultiServerScript.Tests.ps1` — 18 Pester tests for the generator, no SQL Server dependency |
+| 2026-06-03 | 7 collector READMEs — blocking, deadlocks, tempdb, perfmon, ag-health, storage-io, database-growth |
+| 2026-06-03 | Params/Output/Example added to all 10 multi-server script headers |
+| 2026-06-03 | Multi-server scripts code review — fixed 6 bugs: $using: in parallel paths, GetRecentEventLogs catch, GetDatabaseSizes error loss, WebUI category label, README -Credential table, generator here-string guard |
+| 2026-06-03 | `New-MultiServerScript.ps1` improvements — fixed $using: bugs, added -ThrottleLimit, result collection with Server column, credential template for PS remoting, updated helpers README |
+| 2026-06-03 | `tools/multi-server-scripts/` — renamed from multi-server-queries, 10 scripts with compact headers, bug fixes (invalid Get-Service -Credential, WinRM documentation, parallel catch handling) |
+| 2026-05-29 | Added `.gitignore`, healthcheck `-Quiet` switch, fixed `Invoke-RepoSql.ps1` category detection, archived `categories/`, rewrote `docs/standards.md`, deleted `docs/catalog.md` |
+| 2026-05-29 | `run.ps1 -List` discovery mode, collection timestamp in review header, expanded `docs/runbook.md`, resolved `hybrid/` folder |
+| 2026-05-29 | Full canonical `sql/` + `powershell/` layout, all scripts single-result-set, standard headers, no NOLOCK, no deprecated catalog views |
+| 2026-05-29 | 8 collectors with SQL + PS orchestrator pairs: wait-stats, blocking, deadlocks, tempdb, perfmon, ag-health, storage-io, database-growth |
+| 2026-05-29 | `Invoke-HealthCheckCollection.ps1` (22 scripts) + `Review-HealthCheckOutput.ps1` (17 rule categories) |

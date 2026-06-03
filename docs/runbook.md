@@ -3,7 +3,7 @@
 ## Quick triage commands
 
 ```powershell
-# Full healthcheck — collect 19 scripts, review findings
+# Full healthcheck — collect 22 scripts, review findings
 .\powershell\reporting\Invoke-HealthCheckCollection.ps1 -ServerInstance . -Quiet
 .\powershell\reporting\Review-HealthCheckOutput.ps1
 
@@ -91,6 +91,7 @@ Fragmentation thresholds (`recommended_action` column): `REBUILD` >= 30%, `REORG
 .\run.ps1 Get-DatabaseIoUsage         # read/write latency per database
 .\run.ps1 Get-TopIoQueries -OutputFormat Csv
 ```
+
 Latency concern thresholds: > 20ms read or > 10ms write on data files.
 
 ### TempDB pressure
@@ -123,6 +124,184 @@ Latency concern thresholds: > 20ms read or > 10ms write on data files.
 .\run.ps1 Get-SuspectPages            # any entries = CRITICAL — run CHECKDB immediately
 .\run.ps1 Get-LastDbccCheckdb         # last successful CHECKDB per database
 .\run.ps1 Get-DatabaseIntegrityChecks # pre-CHECKDB readiness review
+```
+
+---
+
+## Post-incident investigation with collectors
+
+The collectors build timestamped historical records. Use them when a problem has already resolved and you need to understand what happened.
+
+### "Blocking occurred at 3am — investigate"
+
+```powershell
+# Open the blocking collector CSV for that date
+# output-files\collectors\blocking\<server>-<YYYYMMDD>.csv
+$blocking = Import-Csv "output-files\collectors\blocking\PROD01-20260603.csv"
+
+# Find the worst blocking events
+$blocking | Sort-Object wait_time_ms -Descending | Select-Object -First 20 |
+    Format-Table collection_time, blocked_spid, blocking_spid, is_head_blocker,
+                   wait_type, wait_time_ms, login_name, blocked_statement -AutoSize
+
+# Identify the head blockers
+$blocking | Where-Object { $_.is_head_blocker -eq '1' } |
+    Group-Object blocking_spid, login_name | Sort-Object Count -Descending |
+    Format-Table Count, Name -AutoSize
+```
+
+### "Wait stats spiked last Tuesday — what was it?"
+
+```powershell
+# Wait-stats snapshots are cumulative — diff two adjacent ones to get interval waits
+$snap = Import-Csv "output-files\collectors\wait-stats\PROD01-20260527.csv"
+
+# Get two adjacent snapshots
+$times = $snap.collection_time | Sort-Object | Get-Unique
+$snap1 = $snap | Where-Object { $_.collection_time -eq $times[6] }  # 08:30
+$snap2 = $snap | Where-Object { $_.collection_time -eq $times[7] }  # 08:45
+
+# Delta for the 15-minute interval
+$t1 = $snap1 | Group-Object wait_type -AsHashTable
+$snap2 | ForEach-Object {
+    $prev = $t1[$_.wait_type]
+    if ($prev -and $_.sqlserver_start_time -eq $prev.sqlserver_start_time) {
+        [PSCustomObject]@{
+            wait_type       = $_.wait_type
+            delta_wait_ms   = [long]$_.wait_time_ms - [long]$prev.wait_time_ms
+            delta_tasks     = [long]$_.waiting_tasks_count - [long]$prev.waiting_tasks_count
+        }
+    }
+} | Where-Object { $_.delta_wait_ms -gt 0 } |
+    Sort-Object delta_wait_ms -Descending | Select-Object -First 10 |
+    Format-Table wait_type, delta_wait_ms, delta_tasks -AutoSize
+
+# NOTE: if sqlserver_start_time differs between snap1 and snap2, SQL Server restarted
+# between those snapshots — discard the delta for that interval.
+```
+
+### "I/O latency was high overnight — which files?"
+
+```powershell
+$io = Import-Csv "output-files\collectors\storage-io\PROD01-20260603.csv"
+$times = $io.collection_time | Sort-Object | Get-Unique
+
+$snap1 = $io | Where-Object { $_.collection_time -eq $times[0] }
+$snap2 = $io | Where-Object { $_.collection_time -eq $times[1] }
+
+$t1 = $snap1 | Group-Object database_name, file_id -AsHashTable
+$snap2 | ForEach-Object {
+    $key  = "$($_.database_name) $($_.file_id)"
+    $prev = $t1[$key]
+    if ($prev -and $_.sqlserver_start_time -eq $prev.sqlserver_start_time) {
+        $dr = [long]$_.num_of_reads  - [long]$prev.num_of_reads
+        $rs = [long]$_.io_stall_read_ms - [long]$prev.io_stall_read_ms
+        [PSCustomObject]@{
+            database_name    = $_.database_name
+            file_type        = $_.file_type
+            interval_reads   = $dr
+            interval_read_stall_ms = $rs
+            avg_read_ms      = if ($dr -gt 0) { [Math]::Round($rs / $dr, 1) } else { 0 }
+        }
+    }
+} | Where-Object { $_.avg_read_ms -gt 5 } |
+    Sort-Object avg_read_ms -Descending |
+    Format-Table database_name, file_type, interval_reads, avg_read_ms -AutoSize
+```
+
+### Correlating collectors
+
+```text
+LCK_M_* spike in wait-stats delta
+  → blocking: head blocker login, blocked_statement, time of peak wait_time_ms
+
+PAGEIOLATCH_* spike in wait-stats delta
+  → storage-io: which database file had the highest interval read stall?
+  → perfmon: was PLE dropping at the same time? (cntr_value for 'Page life expectancy')
+
+PAGELATCH_* spike in wait-stats delta
+  → tempdb: version_store_mb growing? large user_objects_mb?
+  → tempdb: session row — which login is the top consumer?
+
+HADR_SYNC_COMMIT spike in wait-stats delta
+  → ag-health: redo_queue_kb and log_send_queue_kb on secondary at that time
+```
+
+---
+
+## Multi-server estate checks
+
+```powershell
+# Check backup coverage across all SQL instances
+.\tools\multi-server-scripts\sql\MultiServer-GetBackupStatus.ps1 -Servers "SVR01,SVR02,SVR03" -Parallel
+
+# Check for active blocking across all instances right now
+.\tools\multi-server-scripts\sql\MultiServer-GetBlockingSessions.ps1 -Servers "SVR01,SVR02,SVR03"
+
+# Disk space across all Windows servers
+.\tools\multi-server-scripts\powershell\MultiServer-GetDiskSpace.ps1 -Servers "SVR01,SVR02,SVR03" -WarnBelowPctFree 15
+
+# Test SQL port reachability across estate
+.\tools\multi-server-scripts\powershell\MultiServer-TestSqlPort.ps1 -Servers "SVR01,SVR02,SVR03,SVR04,SVR05" -Parallel
+
+# Generate a custom multi-server wrapper for any SQL script
+.\helpers\multi-server-query\New-MultiServerScript.ps1 `
+    -ScriptPath sql\performance\Get-WaitStatistics.sql `
+    -Servers "SVR01,SVR02,SVR03" `
+    -OutputFile C:\Temp\run-waits.ps1
+# Review the generated script, then: pwsh -File C:\Temp\run-waits.ps1
+```
+
+---
+
+## Common maintenance procedures
+
+### Rebuild / reorganize fragmented indexes
+
+```powershell
+# Identify — run against each user database
+.\run.ps1 Get-IndexFragmentation -Database YourDatabase -OutputFormat Csv
+
+# Generate maintenance script
+.\run.ps1 Generate-IndexMaintenanceScript -Database YourDatabase -OutputFormat Csv
+# Review output-files\...\Generate-IndexMaintenanceScript-*.csv, then run in SSMS
+```
+
+### Update statistics
+
+```powershell
+# Find stale statistics
+.\run.ps1 Get-StatisticsHealth -Database YourDatabase -OutputFormat Csv
+# Output includes UPDATE STATISTICS commands — copy from CSV and run in SSMS
+```
+
+### Shrink transaction log (last resort)
+
+```powershell
+# Check log usage first
+.\run.ps1 Get-TransactionLogSizeAndUsage -OutputFormat Csv
+```
+
+Then in SSMS:
+```sql
+-- 1. Take a log backup first (FULL/BULK_LOGGED recovery models)
+BACKUP LOG [YourDatabase] TO DISK = N'NUL';
+
+-- 2. Shrink to reclaim VLFs (not the file itself — just the unused space)
+USE [YourDatabase];
+DBCC SHRINKFILE (YourDatabase_log, 1);
+
+-- 3. Check VLF count after
+SELECT COUNT(*) AS vlf_count FROM sys.dm_db_log_info(DB_ID('YourDatabase'));
+-- > 1000 VLFs = consider log backup cycle review; > 10000 = serious
+```
+
+**Never use AUTO_SHRINK. Never shrink data files unless disk is critically low.**
+
+### Clear output files before a fresh assessment run
+
+```powershell
+.\helpers\maintenance\Clear-OutputFiles.ps1
 ```
 
 ---
@@ -160,5 +339,8 @@ Latency concern thresholds: > 20ms read or > 10ms write on data files.
 |----------|----------------|
 | `output-files\healthcheck\<server>-<timestamp>\` | Named CSVs from `Invoke-HealthCheckCollection.ps1` |
 | `output-files\reviews\<category>\<script>-<timestamp>.csv` | Individual script runs via `Invoke-RepoSql.ps1` |
+| `output-files\collectors\<type>\<server>-<YYYYMMDD>.csv` | Scheduled collector snapshots |
+| `output-files\assessment\<server>-<timestamp>.md` | Assessment reports |
+| `output-files\migration\*.sql` | Generated DDL scripts (logins, jobs, user mappings) |
 
 Clear all generated output: `.\helpers\maintenance\Clear-OutputFiles.ps1`
