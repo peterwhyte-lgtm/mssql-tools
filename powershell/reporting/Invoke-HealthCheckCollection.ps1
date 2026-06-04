@@ -37,6 +37,11 @@ Scripts collected:
   security-surface-area - xp_cmdshell, CLR, Database Mail enabled state
   weak-logins           - SQL logins with policy/expiration off or sa enabled
   missing-indexes       - top missing index candidates ranked by DMV impact score (resets on restart)
+  tempdb-config         - TempDB file count, sizing parity, and autogrowth type
+  plan-cache            - plan cache composition — single-use plan ratio and ad-hoc bloat
+  linked-server-security - linked server login mappings with risk level assessment
+  vlf-count             - virtual log file count per database (high counts degrade recovery)
+  maintenance-jobs      - DBA maintenance job deployment and last-run status
 
 .PARAMETER ServerInstance
 SQL Server instance to query. Defaults to '.'.
@@ -180,6 +185,27 @@ $scripts = @(
         Label = 'missing-indexes'
         Paths = @('sql\performance\Get-MissingIndexes.sql')
     }
+    [PSCustomObject]@{
+        Label = 'tempdb-config'
+        Paths = @('sql\monitoring\Get-TempDbConfiguration.sql')
+    }
+    [PSCustomObject]@{
+        Label = 'plan-cache'
+        Paths = @('sql\performance\Get-PlanCacheHealth.sql')
+    }
+    [PSCustomObject]@{
+        Label = 'linked-server-security'
+        Paths = @('sql\security\Get-LinkedServerSecurity.sql')
+    }
+    [PSCustomObject]@{
+        Label = 'vlf-count'
+        Paths = @('sql\monitoring\Get-VlfCount.sql')
+    }
+    [PSCustomObject]@{
+        Label    = 'maintenance-jobs'
+        Paths    = @('sql\maintenance\Get-MaintenanceJobStatus.sql')
+        Database = 'msdb'
+    }
 )
 
 $summary = [System.Collections.Generic.List[PSObject]]::new()
@@ -197,6 +223,7 @@ foreach ($s in $scripts) {
     $csvPath = Join-Path $outFolder "$($s.Label).csv"
     $status  = 'OK'
     $note    = ''
+    $db      = if ($s.PSObject.Properties['Database'] -and $s.Database) { $s.Database } else { 'master' }
 
     if (-not $resolvedSql) {
         $status = 'SKIPPED'
@@ -207,14 +234,14 @@ foreach ($s in $scripts) {
             if ($Quiet) {
                 & $runner -ScriptPath $resolvedSql `
                           -ServerInstance $ServerInstance `
-                          -Database 'master' `
+                          -Database $db `
                           -OutputFormat 'Csv' `
                           -OutputPath $csvPath *>$null
             }
             else {
                 & $runner -ScriptPath $resolvedSql `
                           -ServerInstance $ServerInstance `
-                          -Database 'master' `
+                          -Database $db `
                           -OutputFormat 'Csv' `
                           -OutputPath $csvPath
             }

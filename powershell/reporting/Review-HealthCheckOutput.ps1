@@ -30,6 +30,14 @@ Rules applied:
   WARNING   - max server memory left at SQL Server default (unconfigured)
   WARNING   - data files with less than 10% free space
   WARNING   - specific wait types indicating I/O, log, or memory pressure
+  WARNING   - TempDB percent-based autogrowth, unequal file sizing, or low file count
+  WARNING   - high ad-hoc single-use plan ratio in plan cache (> 60%)
+  WARNING   - HIGH-risk linked server login mapping (stored credentials)
+  INFO      - MEDIUM-risk linked server (impersonation mapping)
+  CRITICAL  - VLF count > 1000 on any database log file
+  WARNING   - VLF count > 200 on any database log file
+  INFO      - VLF count > 50 on any database log file
+  WARNING   - DBA maintenance job missing, failed, or disabled
   INFO      - sessions with active blocking
   INFO      - sessions with open transactions
   INFO      - error log entries present (requires manual review)
@@ -300,6 +308,88 @@ foreach ($row in $dbSizes) {
     if ([double]::TryParse($row.data_free_pct, [ref]$freePct) -and $freePct -lt 10) {
         Add-Finding 'WARNING' 'Disk Space' $row.database_name (
             "Data files $freePct% free ($($row.data_free_mb) MB free of $($row.data_size_mb) MB) — autogrowth risk")
+    }
+}
+
+# ── tempdb-config ─────────────────────────────────────────────────────────────
+$tempdbConfig = Read-Csv-Safe 'tempdb-config'
+foreach ($row in $tempdbConfig) {
+    if ($row.autogrowth_status -like 'WARN*') {
+        Add-Finding 'WARNING' 'TempDB Config' "TempDB / $($row.logical_name)" (
+            $row.autogrowth_status)
+    }
+    if ($row.sizing_status -like 'WARN*') {
+        Add-Finding 'WARNING' 'TempDB Config' "TempDB sizing" (
+            $row.sizing_status)
+    }
+    if ($row.file_count_status -like 'WARN*') {
+        Add-Finding 'WARNING' 'TempDB Config' "TempDB file count" (
+            $row.file_count_status)
+    }
+}
+
+# ── plan-cache ────────────────────────────────────────────────────────────────
+$planCache = Read-Csv-Safe 'plan-cache'
+foreach ($row in $planCache) {
+    if ($row.recommendation -like 'WARN*') {
+        $pct = if ($row.single_use_pct) { "$($row.single_use_pct)% single-use" } else { '' }
+        Add-Finding 'WARNING' 'Plan Cache' $row.plan_type (
+            "$($row.recommendation) — $pct ($($row.single_use_mb) MB wasted)")
+    }
+}
+
+# ── linked-server-security ────────────────────────────────────────────────────
+$linkedSec = Read-Csv-Safe 'linked-server-security'
+$seenLs = @{}
+foreach ($row in $linkedSec) {
+    $key = "$($row.linked_server)|$($row.local_login)"
+    if ($seenLs.ContainsKey($key)) { continue }
+    $seenLs[$key] = $true
+    if ($row.risk_level -like 'HIGH*') {
+        Add-Finding 'WARNING' 'Linked Server' $row.linked_server (
+            "Risk: $($row.risk_level) — $($row.security_context)")
+    }
+    elseif ($row.risk_level -like 'MEDIUM*') {
+        Add-Finding 'INFO' 'Linked Server' $row.linked_server (
+            "Risk: $($row.risk_level) — $($row.security_context)")
+    }
+}
+
+# ── vlf-count ─────────────────────────────────────────────────────────────────
+$vlfData = Read-Csv-Safe 'vlf-count'
+foreach ($row in $vlfData) {
+    if ($row.status -eq 'CRITICAL') {
+        Add-Finding 'CRITICAL' 'VLF Count' $row.database_name (
+            "VLF count $($row.vlf_count) is severe (>1000). Shrink log to near-zero then grow in one fixed-MB step.")
+    } elseif ($row.status -eq 'HIGH') {
+        Add-Finding 'WARNING' 'VLF Count' $row.database_name (
+            "VLF count $($row.vlf_count) is high (>200). Shrink and resize the log file.")
+    } elseif ($row.status -eq 'ELEVATED') {
+        Add-Finding 'INFO' 'VLF Count' $row.database_name (
+            "VLF count $($row.vlf_count) is elevated (>50). Monitor — resize on next maintenance window.")
+    }
+}
+
+# ── maintenance-jobs ──────────────────────────────────────────────────────────
+# Check file existence separately: empty file (0 DBA jobs) vs missing file (collection
+# skipped/failed) need different responses. Count-based guard silently swallows the
+# most important case — a fresh server with no maintenance framework deployed at all.
+$maintJobsFile = Join-Path $FolderPath 'maintenance-jobs.csv'
+if (Test-Path -LiteralPath $maintJobsFile) {
+    $maintJobs = Read-Csv-Safe 'maintenance-jobs'
+    $backupJob = $maintJobs | Where-Object { $_.job_name -like 'DBA - Backup - FULL*' }
+    if (-not $backupJob) {
+        Add-Finding 'WARNING' 'Maintenance Jobs' 'DBA - Backup - FULL' (
+            'Full backup job not found. Run Generate-BackupJobs.sql and Invoke-MaintenanceDeployment.ps1.')
+    }
+    foreach ($row in $maintJobs) {
+        if ($row.last_run_status -eq 'Failed') {
+            Add-Finding 'WARNING' 'Maintenance Job' $row.job_name (
+                "Last run FAILED. Check SQL Agent job history for details.")
+        }
+        if ($row.status -eq 'Disabled') {
+            Add-Finding 'WARNING' 'Maintenance Job' $row.job_name "Job is disabled — no scheduled maintenance running."
+        }
     }
 }
 

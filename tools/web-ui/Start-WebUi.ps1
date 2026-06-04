@@ -19,6 +19,9 @@ if (-not $Inline) {
 $ErrorActionPreference = 'Stop'
 $repoRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 
+$script:enrichedCache       = $null
+$script:enrichedCacheExpiry = [DateTime]::MinValue
+
 # ── data helpers ───────────────────────────────────────────────────────────────
 
 function Get-AllScripts {
@@ -45,6 +48,23 @@ function Get-AllScripts {
             @{n='RelPath'; e={ $_.FullName.Replace($repoRoot,'').TrimStart('\') }}
 
     @($sql) + @($ps) + @($msq)
+}
+
+function Get-AllScriptsCached {
+    $now = [DateTime]::UtcNow
+    if ($script:enrichedCache -and $now -lt $script:enrichedCacheExpiry) {
+        return $script:enrichedCache
+    }
+    $raw = Get-AllScripts
+    $enriched = @($raw | ForEach-Object {
+        $fp = $_.FullName
+        $_ | Select-Object *,
+            @{n='Purpose'; e={ Get-ScriptPurpose $fp }},
+            @{n='Safety';  e={ Get-ScriptSafety  $fp }}
+    })
+    $script:enrichedCache       = $enriched
+    $script:enrichedCacheExpiry = $now.AddSeconds(30)
+    return $enriched
 }
 
 function Html-Escape([string]$s) {
@@ -375,7 +395,7 @@ function Wrap-Page([string]$title, [string]$body, [string]$q='', [string]$active
 # ── page builders ──────────────────────────────────────────────────────────────
 
 function Build-HomePage {
-    $scripts  = Get-AllScripts
+    $scripts  = Get-AllScriptsCached
     $byType   = $scripts | Group-Object Type
     $html     = ''
 
@@ -387,11 +407,11 @@ function Build-HomePage {
         foreach ($cat in ($typeGroup.Group | Group-Object Category | Sort-Object Name)) {
             $html += "<div class='cat-label'>$($cat.Name)</div><div class='grid'>"
             foreach ($s in ($cat.Group | Sort-Object Name)) {
-                $purpose    = Get-ScriptPurpose $s.FullName
+                $purpose     = $s.Purpose
                 $purposeHtml = if ($purpose) { "<div class='purpose'>$(Html-Escape $purpose)</div>" } else { '' }
-                $relEnc     = [Uri]::EscapeDataString($s.RelPath)
-                $safety     = Get-ScriptSafety $s.FullName
-                $sBadge     = "<span class='safe-badge $(Resolve-SafetyClass $safety)'>$(Resolve-SafetyLabel $safety)</span>"
+                $relEnc      = [Uri]::EscapeDataString($s.RelPath)
+                $safety      = $s.Safety
+                $sBadge      = "<span class='safe-badge $(Resolve-SafetyClass $safety)'>$(Resolve-SafetyLabel $safety)</span>"
                 $html += "<div class='card'><span class='badge $badgeClass'>$typeName</span>$sBadge<a href='/view?p=$relEnc'>$(Html-Escape $s.Name)</a>$purposeHtml</div>"
             }
             $html += '</div>'
@@ -527,10 +547,10 @@ $runJs
 }
 
 function Build-SearchPage([string]$q) {
-    $scripts = Get-AllScripts
+    $scripts = Get-AllScriptsCached
     $results = @($scripts | Where-Object {
         $_.Name -like "*$q*" -or $_.Category -like "*$q*" -or
-        (Get-ScriptPurpose $_.FullName) -like "*$q*"
+        $_.Purpose -like "*$q*"
     })
 
     if (-not $results) {
@@ -539,11 +559,11 @@ function Build-SearchPage([string]$q) {
 
     $html = "<h2>Search: $(Html-Escape $q) ($($results.Count) results)</h2><div class='grid'>"
     foreach ($s in ($results | Sort-Object Name)) {
-        $purpose    = Get-ScriptPurpose $s.FullName
+        $purpose     = $s.Purpose
         $purposeHtml = if ($purpose) { "<div class='purpose'>$(Html-Escape $purpose)</div>" } else { '' }
-        $relEnc     = [Uri]::EscapeDataString($s.RelPath)
+        $relEnc      = [Uri]::EscapeDataString($s.RelPath)
         $badgeClass  = if ($s.Type -eq 'SQL') { 'badge-sql' } else { 'badge-ps' }
-        $safety      = Get-ScriptSafety $s.FullName
+        $safety      = $s.Safety
         $sBadge      = "<span class='safe-badge $(Resolve-SafetyClass $safety)'>$(Resolve-SafetyLabel $safety)</span>"
         $html += "<div class='card'><span class='badge $badgeClass'>$($s.Type)</span>$sBadge<a href='/view?p=$relEnc'>$(Html-Escape $s.Name)</a>$purposeHtml</div>"
     }

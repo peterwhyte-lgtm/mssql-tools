@@ -37,7 +37,7 @@ pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\helpers\local-sql\Invoke
 
 Full healthcheck workflow:
 ```powershell
-# Collect 19 scripts, save CSVs to output-files\healthcheck\<server>-<timestamp>\
+# Collect 27 scripts, save CSVs to output-files\healthcheck\<server>-<timestamp>\
 .\powershell\reporting\Invoke-HealthCheckCollection.ps1 -ServerInstance .
 
 # Review the latest collection folder and surface CRITICAL / WARNING / INFO findings
@@ -206,7 +206,7 @@ If there is no matching subcategory, add to `powershell/reporting/` for read/que
 
 ## Healthcheck collection — what it covers
 
-`Invoke-HealthCheckCollection.ps1` runs 19 scripts and saves named CSVs:
+`Invoke-HealthCheckCollection.ps1` runs 27 scripts and saves named CSVs:
 
 | CSV label | SQL script |
 |-----------|-----------|
@@ -231,8 +231,14 @@ If there is no matching subcategory, add to `powershell/reporting/` for read/que
 | growth-risk | Get-DatabaseGrowthRisk.sql |
 | security-surface-area | Get-DatabaseMailAndXpCmdShell.sql |
 | weak-logins | Get-WeakLoginSettings.sql |
+| missing-indexes | Get-MissingIndexes.sql |
+| tempdb-config | Get-TempDbConfiguration.sql |
+| plan-cache | Get-PlanCacheHealth.sql |
+| linked-server-security | Get-LinkedServerSecurity.sql |
+| vlf-count | Get-VlfCount.sql |
+| maintenance-jobs | Get-MaintenanceJobStatus.sql (msdb) |
 
-`Review-HealthCheckOutput.ps1` reads those CSVs and fires on: databases not ONLINE, missing backups, stale full/log backups, tlog >80% used, auto-shrink, auto-close, percent-based autogrowth, DBCC CHECKDB not run in >7 days, any suspect pages (CRITICAL), SA enabled (CRITICAL), weak SQL login settings, I/O latency >50ms, specific wait type patterns (PAGEIOLATCH, WRITELOG, RESOURCE_SEMAPHORE, CXPACKET), max server memory unconfigured, and data files <10% free.
+`Review-HealthCheckOutput.ps1` reads those CSVs and fires on: databases not ONLINE, missing backups, stale full/log backups, tlog >80% used, auto-shrink, auto-close, percent-based autogrowth, DBCC CHECKDB not run in >7 days, any suspect pages (CRITICAL), SA enabled (CRITICAL), weak SQL login settings, I/O latency >50ms, specific wait type patterns (PAGEIOLATCH, WRITELOG, RESOURCE_SEMAPHORE, CXPACKET), max server memory unconfigured, data files <10% free, VLF count >200 (WARNING) or >1000 (CRITICAL), and DBA maintenance job missing/failed/disabled.
 
 ## Important caveats
 
