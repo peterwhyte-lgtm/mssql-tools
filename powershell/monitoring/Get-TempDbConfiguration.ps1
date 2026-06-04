@@ -1,0 +1,43 @@
+<#
+.SYNOPSIS
+Reviews TempDB file configuration — count, sizing parity, and autogrowth settings.
+
+.NOTES
+ScriptType   : hybrid
+TargetScope  : single server
+RiskLevel    : SAFE
+Purpose      : Surface TempDB misconfigurations that cause allocation contention:
+               unequal file sizing, percent-based autogrowth, insufficient file count.
+
+.PARAMETER ServerInstance
+SQL Server instance to query. Defaults to '.'.
+
+.PARAMETER OutputFormat
+Output mode: 'Table' (default) or 'Csv'.
+
+.PARAMETER OutputPath
+Optional file path to save the output.
+
+.EXAMPLE
+pwsh -File .\powershell\monitoring\Get-TempDbConfiguration.ps1
+#>
+
+param(
+    [string]$ServerInstance = '.',
+    [string]$Database       = 'master',
+    [ValidateSet('Table', 'Csv')]
+    [string]$OutputFormat   = 'Table',
+    [string]$OutputPath
+)
+
+$ErrorActionPreference = 'Stop'
+
+$repoRoot  = Resolve-Path (Join-Path $PSScriptRoot '..\..')
+$sqlScript = Join-Path $repoRoot 'sql\monitoring\Get-TempDbConfiguration.sql'
+$runner    = Join-Path $repoRoot 'helpers\local-sql\Invoke-RepoSql.ps1'
+
+if (-not (Test-Path -LiteralPath $sqlScript)) { throw "SQL script not found: $sqlScript" }
+if (-not (Test-Path -LiteralPath $runner))    { throw "Runner not found: $runner" }
+
+Write-Host 'Running TempDB configuration review...' -ForegroundColor Cyan
+& $runner -ScriptPath $sqlScript -ServerInstance $ServerInstance -Database $Database -OutputFormat $OutputFormat -OutputPath $OutputPath

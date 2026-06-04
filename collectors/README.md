@@ -15,6 +15,10 @@ post-incident investigation. Each collector appends timestamped snapshots to dai
 | `ag-health` | `sys.dm_hadr_*` | 1–5 min | AG present only | No — point-in-time |
 | `storage-io` | `sys.dm_io_virtual_file_stats` | 15–30 min | Always | Yes — cumulative |
 | `database-growth` | `sys.master_files` | 1–6 hr | Always | No — point-in-time |
+| `vlf-count` | `sys.dm_db_log_info` | Daily | Always | No — point-in-time |
+| `errorlog` | `sys.xp_readerrorlog` | 5–15 min | New entries only | No — event log |
+| `query-store` | `sys.query_store_*` | 15–30 min | New QS intervals only | No — point-in-time |
+| `index-fragmentation` | `sys.dm_db_index_physical_stats` | Weekly | Indexed tables ≥100 pages | No — point-in-time |
 
 ## Output structure
 
@@ -63,7 +67,7 @@ differs between two snapshots, the counters reset — discard that delta.
 ## SQL Agent job setup
 
 Each collector folder has a README with the exact T-SQL to create the job:
-[blocking](blocking/README.md) · [deadlocks](deadlocks/README.md) · [tempdb](tempdb/README.md) · [perfmon](perfmon/README.md) · [ag-health](ag-health/README.md) · [storage-io](storage-io/README.md) · [database-growth](database-growth/README.md) · [wait-stats](wait-stats/README.md)
+[blocking](blocking/README.md) · [deadlocks](deadlocks/README.md) · [tempdb](tempdb/README.md) · [perfmon](perfmon/README.md) · [ag-health](ag-health/README.md) · [storage-io](storage-io/README.md) · [database-growth](database-growth/README.md) · [wait-stats](wait-stats/README.md) · [vlf-count](vlf-count/README.md) · [errorlog](errorlog/README.md) · [query-store](query-store/README.md) · [index-fragmentation](index-fragmentation/README.md)
 
 All jobs follow the same pattern:
 

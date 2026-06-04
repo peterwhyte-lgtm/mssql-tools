@@ -45,6 +45,11 @@ jobs:
           $results = $paths | ForEach-Object {
             Invoke-ScriptAnalyzer -Path $_ -Recurse -Severity Warning,Error -ExcludeRule $exclude
           }
+          # Also scan tools/ and the new collectors analysis scripts
+          $extraPaths = @('tools','collectors') | Where-Object { Test-Path $_ }
+          $results += $extraPaths | ForEach-Object {
+            Invoke-ScriptAnalyzer -Path $_ -Recurse -Severity Warning,Error -ExcludeRule $exclude
+          }
           $results | Format-Table
           if ($results | Where-Object { $_.Severity -in 'Error','Warning' }) { exit 1 }
         shell: pwsh
@@ -61,6 +66,29 @@ jobs:
         with:
           globs: |
             **/*.md
+
+  pester:
+    name: Pester Tests
+    runs-on: windows-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install Pester
+        run: Install-Module Pester -Force -Scope CurrentUser -SkipPublisherCheck
+        shell: pwsh
+      - name: Run Pester
+        run: |
+          if (-not (Test-Path 'tests')) { Write-Host 'No tests/ folder found.'; exit 0 }
+          $cfg = New-PesterConfiguration
+          $cfg.Run.Path = 'tests'
+          $cfg.Output.Verbosity = 'Detailed'
+          $cfg.TestResult.Enabled = $true
+          $cfg.TestResult.OutputPath = 'pester-results.xml'
+          $result = Invoke-Pester -Configuration $cfg -PassThru
+          if ($result.FailedCount -gt 0) { exit 1 }
+        shell: pwsh
 
   secrets-scan:
     name: Secret Scan
