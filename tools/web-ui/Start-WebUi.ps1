@@ -59,8 +59,22 @@ function Get-AllScriptsCached {
     $enriched = @($raw | ForEach-Object {
         $fp = $_.FullName
         $_ | Select-Object *,
-            @{n='Purpose'; e={ Get-ScriptPurpose $fp }},
-            @{n='Safety';  e={ Get-ScriptSafety  $fp }}
+            @{n='Purpose';   e={ Get-ScriptPurpose $fp }},
+            @{n='Safety';    e={ Get-ScriptSafety  $fp }},
+            @{n='IsWrapper'; e={
+                # Thin wrapper = has a matching SQL file AND delegates to Invoke-RepoSql.
+                # Orchestrators (e.g. Invoke-HealthCheckCollection) also call Invoke-RepoSql
+                # but have no matching SQL file, so they correctly appear as workflows.
+                # Generate-* scripts have a matching SQL file but call Invoke-Sqlcmd directly,
+                # so they also correctly appear as workflows.
+                if ($_.Type -ne 'PS1') { $false }
+                else {
+                    $base          = [System.IO.Path]::GetFileNameWithoutExtension($fp)
+                    $hasMatchingSql = $null -ne (Get-ChildItem "$repoRoot\sql" -Recurse -Filter "$base.sql" -File -EA SilentlyContinue | Select-Object -First 1)
+                    $callsRunner   = (Get-Content $fp -Raw -EA SilentlyContinue) -match 'Invoke-RepoSql'
+                    $hasMatchingSql -and $callsRunner
+                }
+            }}
     })
     $script:enrichedCache       = $enriched
     $script:enrichedCacheExpiry = $now.AddSeconds(30)
@@ -358,6 +372,13 @@ tr:hover td{background:#161b22}
 .empty-state{background:#0b1220;border:1px solid #1f3a4a;border-radius:8px;padding:32px 24px;text-align:center;margin-bottom:16px}
 .empty-state-title{color:#58a6ff;font-size:.92rem;font-weight:600;margin-bottom:6px}
 .empty-state-sub{color:#8b949e;font-size:.78rem;line-height:1.5}
+details.cat-group{margin-bottom:20px}
+details.cat-group>summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px;padding:7px 2px;font-size:.75rem;color:#8b949e;text-transform:uppercase;letter-spacing:.05em;font-weight:600;user-select:none;border-bottom:1px solid #21262d;margin-bottom:10px}
+details.cat-group>summary::-webkit-details-marker{display:none}
+details.cat-group>summary::marker{display:none}
+details.cat-group>summary::before{content:'▶';font-size:.55rem;color:#58a6ff;transition:transform .15s;flex-shrink:0}
+details.cat-group[open]>summary::before{transform:rotate(90deg)}
+.cat-count{margin-left:auto;font-size:.72rem;color:#444c56;font-weight:400;text-transform:none;letter-spacing:0}
 '@
 
 # ── page wrapper ───────────────────────────────────────────────────────────────
@@ -394,29 +415,53 @@ function Wrap-Page([string]$title, [string]$body, [string]$q='', [string]$active
 
 # ── page builders ──────────────────────────────────────────────────────────────
 
+function Script-Card([object]$s, [string]$typeName, [string]$badgeClass) {
+    $purpose     = $s.Purpose
+    $purposeHtml = if ($purpose) { "<div class='purpose'>$(Html-Escape $purpose)</div>" } else { '' }
+    $relEnc      = [Uri]::EscapeDataString($s.RelPath)
+    $sBadge      = "<span class='safe-badge $(Resolve-SafetyClass $s.Safety)'>$(Resolve-SafetyLabel $s.Safety)</span>"
+    "<div class='card'><span class='badge $badgeClass'>$typeName</span>$sBadge<a href='/view?p=$relEnc'>$(Html-Escape $s.Name)</a>$purposeHtml</div>"
+}
+
 function Build-HomePage {
-    $scripts  = Get-AllScriptsCached
-    $byType   = $scripts | Group-Object Type
-    $html     = ''
+    $scripts = Get-AllScriptsCached
 
-    foreach ($typeGroup in ($byType | Sort-Object Name -Descending)) {
-        $typeName  = $typeGroup.Name
-        $badgeClass = if ($typeName -eq 'SQL') { 'badge-sql' } else { 'badge-ps' }
-        $html += "<h2>$typeName scripts ($($typeGroup.Count))</h2>"
+    $sqlScripts = @($scripts | Where-Object { $_.Type -eq 'SQL' })
 
-        foreach ($cat in ($typeGroup.Group | Group-Object Category | Sort-Object Name)) {
-            $html += "<div class='cat-label'>$($cat.Name)</div><div class='grid'>"
+    # PS scripts that are standalone tools/workflows — not thin SQL wrappers, not lab
+    $workflowScripts = @($scripts | Where-Object {
+        $_.Type -eq 'PS1' -and -not $_.IsWrapper -and
+        $_.RelPath -notmatch '[\\/]lab[\\/]'
+    })
+
+    # ── SQL scripts — collapsible per category, expanded by default ───────────
+    $html = "<h2>SQL Scripts ($($sqlScripts.Count))</h2>"
+    foreach ($cat in ($sqlScripts | Group-Object Category | Sort-Object { if ($_.Name -eq 'lab') { 'zzz' } else { $_.Name } })) {
+        $count   = $cat.Group.Count
+        $catName = Html-Escape $cat.Name
+        $plural  = if ($count -ne 1) { 's' } else { '' }
+        $html += "<details class='cat-group' open><summary><span>$catName</span><span class='cat-count'>$count script$plural</span></summary><div class='grid'>"
+        foreach ($s in ($cat.Group | Sort-Object Name)) {
+            $html += Script-Card $s 'SQL' 'badge-sql'
+        }
+        $html += '</div></details>'
+    }
+
+    # ── Workflows & Tools — same collapsible pattern, grouped by subcategory ──
+    if ($workflowScripts.Count -gt 0) {
+        $html += "<hr class='section-sep' style='margin-top:32px'><h2 style='margin-top:28px'>Workflows &amp; Tools ($($workflowScripts.Count))</h2>"
+        foreach ($cat in ($workflowScripts | Group-Object Category | Sort-Object Name)) {
+            $count   = $cat.Group.Count
+            $catName = Html-Escape $cat.Name
+            $plural  = if ($count -ne 1) { 's' } else { '' }
+            $html += "<details class='cat-group' open><summary><span>$catName</span><span class='cat-count'>$count script$plural</span></summary><div class='grid'>"
             foreach ($s in ($cat.Group | Sort-Object Name)) {
-                $purpose     = $s.Purpose
-                $purposeHtml = if ($purpose) { "<div class='purpose'>$(Html-Escape $purpose)</div>" } else { '' }
-                $relEnc      = [Uri]::EscapeDataString($s.RelPath)
-                $safety      = $s.Safety
-                $sBadge      = "<span class='safe-badge $(Resolve-SafetyClass $safety)'>$(Resolve-SafetyLabel $safety)</span>"
-                $html += "<div class='card'><span class='badge $badgeClass'>$typeName</span>$sBadge<a href='/view?p=$relEnc'>$(Html-Escape $s.Name)</a>$purposeHtml</div>"
+                $html += Script-Card $s 'PS1' 'badge-ps'
             }
-            $html += '</div>'
+            $html += '</div></details>'
         }
     }
+
     Wrap-Page 'Home' $html '' 'scripts'
 }
 
