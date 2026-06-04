@@ -46,7 +46,9 @@ param(
     [string]$Database       = 'master',
     [string]$Username,
     [string]$Password,
-    [string]$OutputPath
+    [string]$OutputPath,
+    [ValidateSet('Sql','Csv')]
+    [string]$OutputFormat   = 'Sql'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -111,7 +113,13 @@ if (-not $ddlText -or $ddlText.Trim() -eq '') {
     return
 }
 
-[System.IO.File]::WriteAllText($sqlOutPath, $ddlText, [System.Text.Encoding]::UTF8)
+$isCsv = $OutputFormat -eq 'Csv' -or $sqlOutPath -like '*.csv'
+if ($isCsv) {
+    [PSCustomObject]@{ ddl = $ddlText } |
+        Export-Csv -LiteralPath $sqlOutPath -NoTypeInformation -Encoding UTF8
+} else {
+    [System.IO.File]::WriteAllText($sqlOutPath, $ddlText, [System.Text.Encoding]::UTF8)
+}
 
 $lineCount = ($ddlText -split "`n").Count
 Write-Host "[generate] Done — $lineCount lines" -ForegroundColor Green
