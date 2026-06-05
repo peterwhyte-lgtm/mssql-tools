@@ -92,10 +92,10 @@ function Get-Hostname([string]$instance) {
 }
 
 # Test a TCP port from the local machine — returns $true/$false
-function Test-Port([string]$host, [int]$port, [int]$timeout = 3000) {
+function Test-Port([string]$hostName, [int]$port, [int]$timeout = 3000) {
     try {
         $tcp = [System.Net.Sockets.TcpClient]::new()
-        $ar  = $tcp.BeginConnect($host, $port, $null, $null)
+        $ar  = $tcp.BeginConnect($hostName, $port, $null, $null)
         $ok  = $ar.AsyncWaitHandle.WaitOne($timeout)
         if ($ok -and $tcp.Connected) { $tcp.Close(); return $true }
         $tcp.Close()
@@ -105,9 +105,9 @@ function Test-Port([string]$host, [int]$port, [int]$timeout = 3000) {
 }
 
 # Resolve a hostname to its first IPv4 address
-function Resolve-Ip([string]$host) {
+function Resolve-Ip([string]$hostName) {
     try {
-        $addrs = [System.Net.Dns]::GetHostAddresses($host) |
+        $addrs = [System.Net.Dns]::GetHostAddresses($hostName) |
             Where-Object { $_.AddressFamily -eq 'InterNetwork' }
         if ($addrs) { return $addrs[0].ToString() }
         return $null

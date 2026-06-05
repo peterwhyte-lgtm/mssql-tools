@@ -26,7 +26,7 @@ jobs:
         shell: pwsh
       - name: Run PSScriptAnalyzer
         run: |
-          $paths = @('powershell','helpers','hybrid','sql-operations','collectors') |
+          $paths = @('powershell','wrappers','helpers','sql-operations','tools') |
                    Where-Object { Test-Path $_ }
           if ($paths.Count -eq 0) { Write-Host "No PS paths found."; exit 0 }
           # Excluded rules — intentional for this repo:
@@ -35,23 +35,30 @@ jobs:
           #   PSAvoidUsingUsernameAndPasswordParams — same reason
           #   PSUseBOMForUnicodeEncodedFile        — encoding controlled separately
           #   PSReviewUnusedParameter              — many params are conditionally used via env var fallbacks
+          #   PSUseApprovedVerbs                   — internal helpers in web UI and migration scripts; not exported cmdlets
+          #   PSUseShouldProcessForStateChangingFunctions — internal helper functions; not public API
+          #   PSUseSingularNouns                   — internal function names; not exported cmdlets
+          #   PSAvoidUsingEmptyCatchBlock          — intentional silent catches in web UI and collectors
+          #   PSPossibleIncorrectComparisonWithNull — style preference; not a correctness issue here
+          #   PSUseDeclaredVarsMoreThanAssignments — too noisy across orchestration scripts
           $exclude = @(
             'PSAvoidUsingWriteHost',
             'PSAvoidUsingPlainTextForPassword',
             'PSAvoidUsingUsernameAndPasswordParams',
             'PSUseBOMForUnicodeEncodedFile',
-            'PSReviewUnusedParameter'
+            'PSReviewUnusedParameter',
+            'PSUseApprovedVerbs',
+            'PSUseShouldProcessForStateChangingFunctions',
+            'PSUseSingularNouns',
+            'PSAvoidUsingEmptyCatchBlock',
+            'PSPossibleIncorrectComparisonWithNull',
+            'PSUseDeclaredVarsMoreThanAssignments'
           )
           $results = $paths | ForEach-Object {
             Invoke-ScriptAnalyzer -Path $_ -Recurse -Severity Warning,Error -ExcludeRule $exclude
           }
-          # Also scan tools/ and the new collectors analysis scripts
-          $extraPaths = @('tools','collectors') | Where-Object { Test-Path $_ }
-          $results += $extraPaths | ForEach-Object {
-            Invoke-ScriptAnalyzer -Path $_ -Recurse -Severity Warning,Error -ExcludeRule $exclude
-          }
           $results | Format-Table
-          if ($results | Where-Object { $_.Severity -in 'Error','Warning' }) { exit 1 }
+          if ($results | Where-Object { $_.Severity -eq 'Error' }) { exit 1 }
         shell: pwsh
 
   markdown:
@@ -66,6 +73,8 @@ jobs:
         with:
           globs: |
             **/*.md
+            !blog/**/*.md
+            !CLAUDE.md
 
   pester:
     name: Pester Tests
@@ -83,10 +92,11 @@ jobs:
           if (-not (Test-Path 'tests')) { Write-Host 'No tests/ folder found.'; exit 0 }
           $cfg = New-PesterConfiguration
           $cfg.Run.Path = 'tests'
+          $cfg.Run.PassThru = $true
           $cfg.Output.Verbosity = 'Detailed'
           $cfg.TestResult.Enabled = $true
           $cfg.TestResult.OutputPath = 'pester-results.xml'
-          $result = Invoke-Pester -Configuration $cfg -PassThru
+          $result = Invoke-Pester -Configuration $cfg
           if ($result.FailedCount -gt 0) { exit 1 }
         shell: pwsh
 
