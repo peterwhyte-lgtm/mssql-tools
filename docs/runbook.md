@@ -233,16 +233,16 @@ HADR_SYNC_COMMIT spike in wait-stats delta
 
 ```powershell
 # Check backup coverage across all SQL instances
-.\tools\multi-server-scripts\sql\MultiServer-GetBackupStatus.ps1 -Servers "SVR01,SVR02,SVR03" -Parallel
+.\sql-operations\multi-server-scripts\sql\MultiServer-GetBackupStatus.ps1 -Servers "SVR01,SVR02,SVR03" -Parallel
 
 # Check for active blocking across all instances right now
-.\tools\multi-server-scripts\sql\MultiServer-GetBlockingSessions.ps1 -Servers "SVR01,SVR02,SVR03"
+.\sql-operations\multi-server-scripts\sql\MultiServer-GetBlockingSessions.ps1 -Servers "SVR01,SVR02,SVR03"
 
 # Disk space across all Windows servers
-.\tools\multi-server-scripts\powershell\MultiServer-GetDiskSpace.ps1 -Servers "SVR01,SVR02,SVR03" -WarnBelowPctFree 15
+.\sql-operations\multi-server-scripts\powershell\MultiServer-GetDiskSpace.ps1 -Servers "SVR01,SVR02,SVR03" -WarnBelowPctFree 15
 
 # Test SQL port reachability across estate
-.\tools\multi-server-scripts\powershell\MultiServer-TestSqlPort.ps1 -Servers "SVR01,SVR02,SVR03,SVR04,SVR05" -Parallel
+.\sql-operations\multi-server-scripts\powershell\MultiServer-TestSqlPort.ps1 -Servers "SVR01,SVR02,SVR03,SVR04,SVR05" -Parallel
 
 # Generate a custom multi-server wrapper for any SQL script
 .\helpers\multi-server-query\New-MultiServerScript.ps1 `

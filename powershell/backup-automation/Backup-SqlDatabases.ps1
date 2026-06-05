@@ -1,6 +1,12 @@
 ﻿<#
 .SYNOPSIS
 Backs up all user databases to a target folder.
+
+.NOTES
+ScriptType   : automation
+TargetScope  : single server
+RiskLevel    : MEDIUM
+Purpose      : Back up all user databases to a target folder using SMO with configurable backup type.
 #>
 
 param(

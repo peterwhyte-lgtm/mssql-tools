@@ -8,7 +8,7 @@ ScriptType   : hybrid
 TargetScope  : single server
 RiskLevel    : SAFE
 Purpose      : Single-server patch level check. For fleet-wide patch inventory use
-               MultiServer-GetPatchLevel.ps1 in tools/multi-server-scripts/sql/.
+               MultiServer-GetPatchLevel.ps1 in sql-operations/multi-server-scripts/sql/.
                Compare product_version against sqlserverupdates.com for latest CU.
 
 .PARAMETER ServerInstance

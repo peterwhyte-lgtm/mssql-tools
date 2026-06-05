@@ -57,7 +57,7 @@ Preflight and discovery:
 
 ## Layout — canonical vs legacy
 
-**Use `sql/` and `powershell/` for all new work.** The `categories/` folder is a legacy compatibility copy; it is stale, not maintained, and exists only so old references don't break.
+**Use `sql/`, `powershell/`, or `wrappers/` for all new work.** The `categories/` folder is a legacy compatibility copy; it is stale, not maintained, and exists only so old references don't break.
 
 ```text
 sql/
@@ -69,14 +69,29 @@ sql/
   migration/          — risk assessment, compat audit, login audit, deprecated features, DDL generators
 
 powershell/
-  inventory/          — storage, growth, disk, instance snapshots
-  reporting/          — performance wrappers, Invoke-HealthCheckCollection, Review-HealthCheckOutput,
-                        Invoke-AssessmentReport, Get-ActiveRequests, Get-BlockingChains (with -IncludePlan)
-  high-availability/  — AG replica state and latency wrappers
-  health-checks/      — DBCC, suspect pages, TempDB hotspots, integrity pre-checks
-  backup-automation/  — backup/restore execution and history wrappers
+  reporting/          — Invoke-HealthCheckCollection, Review-HealthCheckOutput, Invoke-AssessmentReport,
+                        Invoke-MultiServerHealthCheck, Get-ActiveRequests, Get-BlockingChains (with -IncludePlan)
+  migration/          — Generate-LoginScript, Generate-AgentJobScript, Generate-UserMappingScript,
+                        Generate-LinkedServerScript, Generate-RestoreWithMoveScript,
+                        Invoke-MigrationExport, Invoke-MigrationPreFlightCheck, Invoke-PreMigrationAssessment,
+                        Export-MigrationBaseline
+  maintenance/        — Generate-BackupJobs, Generate-IndexMaintenanceJobs, Generate-MaintenanceJobs,
+                        Invoke-MaintenanceDeployment
+  backup-automation/  — Backup-AllDatabases, Backup-SqlDatabases, Restore-AllDatabases,
+                        Generate-FullBackupScript, Generate-DiffBackupScript, Generate-TLogBackupScript,
+                        Generate-RestoreScript, Get-BackupAge
+  inventory/          — Get-LargestFolders, Get-DiskSpaceSummary, Get-OldestBackupFolderFiles,
+                        Get-InstanceSnapshot, Get-InstanceHealthSummary
+  lab/                — lab and test database scripts (dev/test only)
+
+wrappers/             — thin PS wrappers: one per SQL script, mirrors sql/ category structure.
+  monitoring/         — wrappers for all sql/monitoring/ scripts
+  performance/        — wrappers for all sql/performance/ scripts
+  backups/            — wrappers for all sql/backups/ scripts
   security/           — wrappers for all sql/security/ scripts
-  migration/          — wrappers for all sql/migration/ scripts
+  migration/          — wrappers for all sql/migration/ Get-* scripts
+  high-availability/  — wrappers for all sql/high-availability/ scripts
+  maintenance/        — wrappers for sql/maintenance/ Get-* scripts
 
 collectors/
   Each collector pairs a SQL file with a PS orchestrator for scheduled historical data collection.
@@ -95,8 +110,6 @@ output-files/               — generated CSVs, healthcheck folders, reviews
 docs/                       — roadmap, quick-start, runbook
 blog/                       — draft blog posts for sqldba.blog (one post per script/workflow)
 ```
-
-The `hybrid/` folder exists in the layout but its subfolders are currently empty.
 
 ## Running against a remote server
 
@@ -151,7 +164,7 @@ Every script in `powershell/**/*.ps1` (except helpers and orchestrators) is a th
 
 `Invoke-RepoSql.ps1` tries `Invoke-Sqlcmd` first (SqlServer module), falls back to `sqlcmd.exe`. Always writes a CSV to `output-files\reviews\<category>\<scriptname>-<timestamp>.csv` and prints a table preview. If neither tool is available it throws.
 
-`run.ps1` → `helpers\Run-Helper.ps1` → resolves script by name fuzzy match → `& $target @Arguments`. It searches `helpers/`, `sql/`, `powershell/`, `hybrid/`, `tools/` recursively. Throws if more than one match — callers must be specific.
+`run.ps1` → `helpers\Run-Helper.ps1` → resolves script by name fuzzy match → `& $target @Arguments`. It searches `helpers/`, `sql/`, `powershell/`, `wrappers/`, `tools/` recursively. Throws if more than one match — callers must be specific.
 
 **PowerShell script rules:**
 - Classify script type in `.NOTES`: `runner` / `automation` / `hybrid`
@@ -196,7 +209,7 @@ SET NOCOUNT ON;
 
 New SQL script: `sql/<category>/Get-Something.sql` using the header above.
 
-New PS wrapper: copy any existing wrapper in `powershell/<subcategory>/`, update the three variables (`syn`, `$sqlScript` path, `Write-Host` message). The `$PSScriptRoot '..\..'` path is correct for all subfolders one level under `powershell/`.
+New PS wrapper: copy any existing wrapper in `wrappers/<category>/` (matching the sql/ category), update the three variables (`syn`, `$sqlScript` path, `Write-Host` message). The `$PSScriptRoot '..\..'` path is correct — `wrappers/<category>/` is the same depth as `sql/<category>/`.
 
 If there is no matching subcategory, add to `powershell/reporting/` for read/query scripts or `powershell/inventory/` for environment/config scripts.
 

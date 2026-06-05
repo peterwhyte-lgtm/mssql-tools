@@ -4,7 +4,7 @@
 
 Fully functional production DBA toolkit. Since the initial build (2026-05-29), significant additions:
 
-- **Multi-server scripts** — 10 standalone scripts (`tools/multi-server-scripts/`) covering disk, firewall, event logs, service status, service restart, TCP port testing, backup status, blocking, database sizes, and wait stats. Self-contained, copy-and-run anywhere.
+- **Multi-server scripts** — 10 standalone scripts (`sql-operations/multi-server-scripts/`) covering disk, firewall, event logs, service status, service restart, TCP port testing, backup status, blocking, database sizes, and wait stats. Self-contained, copy-and-run anywhere.
 - **Multi-server generator** — `helpers/multi-server-query/New-MultiServerScript.ps1` wraps any `.sql` or `.ps1` in a foreach/parallel loop. Fixed `$using:` bugs, added result collection with Server column, added credential template, `-ThrottleLimit` parameter.
 - **Collector documentation** — all 8 collectors now have per-collector READMEs covering output columns, write conditions, collection frequency, SQL Agent T-SQL, and permissions.
 - **Pester tests** — `tests/New-MultiServerScript.Tests.ps1` (18 tests, no SQL Server dependency).
@@ -49,16 +49,7 @@ Each would follow the existing collector pattern: one `.sql` + one `Collect-*.ps
 
 ### P6 — New SQL scripts
 
-| Script | Category | Purpose |
-|--------|----------|---------|
-| `Get-TempDbConfiguration.sql` | monitoring | File count, sizing parity, relevant trace flags (T1118, T1117) |
-| `Get-PlanCacheHealth.sql` | performance | Single-use plan ratio, memory pressure from ad-hoc queries |
-| `Get-ReadableSecondaryUsage.sql` | high-availability | What queries are running on AG read replicas |
-| `Get-BackupEncryptionStatus.sql` | backups | Backup encryption certificates and which databases are covered |
-| `Get-LinkedServerSecurity.sql` | security | Linked server login mappings and security context |
-| `Get-DatabasePermissions.sql` | security | Object-level explicit grants per database (P3 carry-over) |
-| `Get-ProxyAndCredentials.sql` | security | SQL Agent proxies and credentials (P3 carry-over) |
-| `Get-LockEscalationStats.sql` | performance | Lock escalation events and frequency from `sys.dm_os_wait_stats` |
+All P6 items are complete — moved to the completion log below.
 
 ### P7 — Larger ideas (no timeline)
 
@@ -76,13 +67,26 @@ Each would follow the existing collector pattern: one `.sql` + one `Collect-*.ps
 
 | Date | Item |
 |------|------|
+| 2026-06-05 | `wrappers/` top-level folder — 84 thin PS wrappers separated from `powershell/`; mirrors `sql/` category structure |
+| 2026-06-05 | Phase 2 PS standards — `.NOTES` block (ScriptType, TargetScope, RiskLevel, Purpose) added to all 20 remaining non-compliant PS scripts |
+| 2026-06-05 | 7 new PS wrappers — Get-Heaps, Get-UnusedIndexes, Get-CompatibilityLevelAudit, Get-MigrationLoginAudit, Get-PostMigrationValidation, Generate-LinkedServerScript, Generate-RestoreWithMoveScript |
+| 2026-06-05 | `docs/dba-scripts-repo-structure.md` — accurate structure doc replacing the stale structure.md |
+| 2026-06-05 | `docs/script-catalog.md` — full script list with descriptions (SQL + unique PS, no wrappers) |
+| 2026-06-05 | `hybrid/` removed — placeholder folder with no scripts |
+| 2026-06-04 | Generate-BackupJobs/IndexMaintenanceJobs/MaintenanceJobs — fixed OutputFormat=Csv path so web UI renders DDL as code block instead of table |
+| 2026-06-04 | Web UI Scripts page — collapsible SQL categories, separate Workflows & Tools section, IsWrapper detection excludes thin wrappers |
+| 2026-06-04 | Web UI charts — top-N cap with Others aggregation, inferred chart type from column name patterns, threshold visual markers |
+| 2026-06-04 | Web UI threshold constants — named constants block replacing scattered magic numbers |
+| 2026-06-04 | Web UI window title — `dba-scripts web UI — localhost:8787` for process identification |
+| 2026-06-03 | P6 SQL scripts — Get-TempDbConfiguration, Get-PlanCacheHealth, Get-ReadableSecondaryUsage, Get-BackupEncryptionStatus, Get-LinkedServerSecurity, Get-DatabasePermissions, Get-ProxyAndCredentials, Get-LockEscalationStats |
+| 2026-06-03 | P3 items — Invoke-MultiServerHealthCheck, Get-DatabasePermissions + wrapper, Get-ProxyAndCredentials + wrapper |
 | 2026-06-03 | `Initialize-Environment.ps1` + `SETUP.md` — new machine onboarding script and full setup guide |
 | 2026-06-03 | `tests/New-MultiServerScript.Tests.ps1` — 18 Pester tests for the generator, no SQL Server dependency |
 | 2026-06-03 | 7 collector READMEs — blocking, deadlocks, tempdb, perfmon, ag-health, storage-io, database-growth |
 | 2026-06-03 | Params/Output/Example added to all 10 multi-server script headers |
 | 2026-06-03 | Multi-server scripts code review — fixed 6 bugs: $using: in parallel paths, GetRecentEventLogs catch, GetDatabaseSizes error loss, WebUI category label, README -Credential table, generator here-string guard |
 | 2026-06-03 | `New-MultiServerScript.ps1` improvements — fixed $using: bugs, added -ThrottleLimit, result collection with Server column, credential template for PS remoting, updated helpers README |
-| 2026-06-03 | `tools/multi-server-scripts/` — renamed from multi-server-queries, 10 scripts with compact headers, bug fixes (invalid Get-Service -Credential, WinRM documentation, parallel catch handling) |
+| 2026-06-03 | `sql-operations/multi-server-scripts/` — renamed from multi-server-queries, 10 scripts with compact headers, bug fixes (invalid Get-Service -Credential, WinRM documentation, parallel catch handling) |
 | 2026-05-29 | Added `.gitignore`, healthcheck `-Quiet` switch, fixed `Invoke-RepoSql.ps1` category detection, archived `categories/`, rewrote `docs/standards.md`, deleted `docs/catalog.md` |
 | 2026-05-29 | `run.ps1 -List` discovery mode, collection timestamp in review header, expanded `docs/runbook.md`, resolved `hybrid/` folder |
 | 2026-05-29 | Full canonical `sql/` + `powershell/` layout, all scripts single-result-set, standard headers, no NOLOCK, no deprecated catalog views |

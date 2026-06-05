@@ -155,7 +155,7 @@ No external dependencies for the server itself. Chart.js is loaded from CDN on t
 
 ## Multi-server scripts
 
-Scripts in `tools/multi-server-scripts/` run operations across multiple servers simultaneously. They have two extra requirements:
+Scripts in `sql-operations/multi-server-scripts/` run operations across multiple servers simultaneously. They have two extra requirements:
 
 **For PowerShell remoting scripts** (GetDiskSpace, GetFirewallRules, GetRecentEventLogs, RestartService):
 

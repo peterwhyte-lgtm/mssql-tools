@@ -173,6 +173,18 @@ if ($hasPester) {
 Write-Host ''
 Write-Host '  Output directories' -ForegroundColor DarkGray
 
+# Verify key repo folders are present
+Write-Host ''
+Write-Host '  Repo structure' -ForegroundColor DarkGray
+foreach ($folder in @('sql', 'powershell', 'wrappers', 'helpers', 'collectors')) {
+    $full = Join-Path $repoRoot $folder
+    if (Test-Path $full) {
+        Add-Check "$folder/" 'OK' ''
+    } else {
+        Add-Check "$folder/" 'FAIL' "Expected folder not found — repo may be incomplete or cloned incorrectly"
+    }
+}
+
 $outputDirs = @(
     'output-files'
     'output-files\collectors\wait-stats'
@@ -305,12 +317,21 @@ if ($fails.Count -eq 0 -and $warns.Count -eq 0) {
 Write-Host ''
 Write-Host '  Next steps' -ForegroundColor DarkGray
 if ($ServerInstance -and ($fails | Where-Object { $_.Label -match 'Connectivity' }).Count -eq 0) {
-    Write-Host "    .\run.ps1 Get-WaitStatistics" -ForegroundColor White
-    Write-Host "    .\powershell\reporting\Invoke-HealthCheckCollection.ps1 -ServerInstance $ServerInstance" -ForegroundColor White
+    Write-Host ''
+    Write-Host '  Run a script                   ' -NoNewline -ForegroundColor DarkGray; Write-Host ".\run.ps1 Get-WaitStatistics" -ForegroundColor White
+    Write-Host '  Full health check              ' -NoNewline -ForegroundColor DarkGray; Write-Host ".\powershell\reporting\Invoke-HealthCheckCollection.ps1 -ServerInstance $ServerInstance" -ForegroundColor White
+    Write-Host '  Review health check findings   ' -NoNewline -ForegroundColor DarkGray; Write-Host '.\powershell\reporting\Review-HealthCheckOutput.ps1' -ForegroundColor White
+    Write-Host '  Browse all scripts             ' -NoNewline -ForegroundColor DarkGray; Write-Host '.\run.ps1 -List' -ForegroundColor White
+    Write-Host '  Find a script by keyword       ' -NoNewline -ForegroundColor DarkGray; Write-Host '.\helpers\triage\Find-UsefulScript.ps1 -Keyword blocking' -ForegroundColor White
+    Write-Host '  Browser UI                     ' -NoNewline -ForegroundColor DarkGray; Write-Host '.\tools\web-ui\Start-WebUi.ps1' -ForegroundColor White
 } else {
-    Write-Host '    .\Initialize-Environment.ps1 -ServerInstance YOURSERVER' -ForegroundColor White
-    Write-Host '    .\run.ps1 Get-WaitStatistics -ServerInstance YOURSERVER' -ForegroundColor White
+    Write-Host ''
+    Write-Host '  Set your server                ' -NoNewline -ForegroundColor DarkGray; Write-Host '.\helpers\local-sql\Set-SqlConnection.ps1 -ServerInstance YOURSERVER' -ForegroundColor White
+    Write-Host '  Re-run with connectivity check ' -NoNewline -ForegroundColor DarkGray; Write-Host '.\Initialize-Environment.ps1 -ServerInstance YOURSERVER' -ForegroundColor White
+    Write-Host '  Browse all scripts             ' -NoNewline -ForegroundColor DarkGray; Write-Host '.\run.ps1 -List' -ForegroundColor White
+    Write-Host '  Run a script                   ' -NoNewline -ForegroundColor DarkGray; Write-Host '.\run.ps1 Get-WaitStatistics -ServerInstance YOURSERVER' -ForegroundColor White
+    Write-Host '  Browser UI                     ' -NoNewline -ForegroundColor DarkGray; Write-Host '.\tools\web-ui\Start-WebUi.ps1' -ForegroundColor White
 }
-Write-Host '    .\tools\web-ui\Start-WebUi.ps1                  # browser UI for all scripts' -ForegroundColor DarkGray
-Write-Host '    Get-Help .\SETUP.md                             # full setup guide' -ForegroundColor DarkGray
+Write-Host ''
+Write-Host '  Full guide: SETUP.md   •   Script list: docs\script-catalog.md   •   Quick start: docs\quick-start.md' -ForegroundColor DarkGray
 Write-Host ''

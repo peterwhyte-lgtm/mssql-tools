@@ -2,6 +2,12 @@
 .SYNOPSIS
 Runs the long-running query review script for the current SQL Server instance.
 
+.NOTES
+ScriptType   : runner
+TargetScope  : single server
+RiskLevel    : SAFE
+Purpose      : Run the long-running query SQL query from the repo and export results.
+
 .DESCRIPTION
 A convenience wrapper for the repo’s long-running query review SQL.
 It delegates to the local SQL helper so you can run the same script from

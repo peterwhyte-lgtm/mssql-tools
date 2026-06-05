@@ -2,6 +2,12 @@
 .SYNOPSIS
 Lists the oldest file in each backup subfolder and flags folders older than a threshold.
 
+.NOTES
+ScriptType   : runner
+TargetScope  : single server
+RiskLevel    : SAFE
+Purpose      : Review the age of backup sets in a backup root to identify stale or missing backup media.
+
 .DESCRIPTION
 Walks a backup root (local folder or UNC share) and reports the oldest file found
 inside each subfolder. This is useful for reviewing backup media where folders are

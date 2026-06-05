@@ -1,36 +1,175 @@
-# Quick Start for Production DBA Work
+# Quick start
 
-Use this repo as a practical desktop toolkit for day-to-day SQL Server operations.
+Get from a fresh clone to running diagnostics against a SQL Server instance in five minutes.
 
-## Recommended workflow
+---
 
-1. Start with the SQL or PowerShell area that matches the issue you are investigating.
-2. Use SSMS-first SQL scripts from sql/ for analysis and reporting.
-3. Use PowerShell helpers from powershell/ for local automation or cleanup tasks.
-4. Save output or notes to your incident runbook for repeatability.
-
-## Good first scripts to try
-
-- sql/performance/Get-LongRunningQueries.sql
-- sql/backups/Get-BackupCoverage.sql
-- sql/monitoring/Get-InstanceConfigurationSnapshot.sql
-- sql/security/Get-SysadminMembers.sql
-- powershell/inventory/Get-DatabaseSizesAndFreeSpace.ps1
-
-## Best way to start a DBA review
-
-1. Run `helpers/triage/Show-RepoOverview.ps1` to see the repo inventory and the fastest entry points.
-2. Use `sql/` for SSMS-ready analysis and category-specific checks.
-3. Use `powershell/` for automation and local validation.
-4. Use `helpers/local-sql/Test-SqlConnectivity.ps1` as a preflight check before running repo scripts locally.
-5. Use `helpers/local-sql/Invoke-RepoSql.ps1` to execute a SQL script from this repo.
-6. Use `sql-operations` when you need a production-style runbook or change-order template.
-7. Use `helpers/maintenance/Clear-OutputFiles.ps1` when you want to reset `output-files/` before a fresh review run.
-
-### Example commands
+## 1. Clone and initialise
 
 ```powershell
-pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\helpers\triage\Show-RepoOverview.ps1
-pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\helpers\local-sql\Test-SqlConnectivity.ps1 -ServerInstance . -Database master
-pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\helpers\local-sql\Invoke-RepoSql.ps1 -ScriptPath .\sql\monitoring\Get-InstanceConfigurationSnapshot.sql -Database master
+git clone https://github.com/peterwhyte-lgtm/dba-scripts
+cd dba-scripts
+
+# Checks PowerShell version, SQL execution tools, and creates output directories
+.\Initialize-Environment.ps1
+
+# Full setup — also tests connectivity and sets the session default server
+.\Initialize-Environment.ps1 -ServerInstance PROD01\SQL2019
 ```
+
+<p align="center">
+  <img src="../assets/screenshots/01-initialize-environment.png" alt="Initialize-Environment output" width="720">
+  <br><em>Initialize-Environment.ps1 — all checks pass, next steps shown</em>
+</p>
+
+The setup script checks everything and tells you exactly what needs fixing. See [SETUP.md](../SETUP.md) for the full prerequisites guide including permissions, modules, and troubleshooting.
+
+---
+
+## 2. Connect to your SQL Server
+
+Set the server once for the session — every script picks it up automatically:
+
+```powershell
+# Windows auth (recommended)
+.\helpers\local-sql\Set-SqlConnection.ps1 -ServerInstance PROD01\SQL2019
+
+# SQL auth
+.\helpers\local-sql\Set-SqlConnection.ps1 -ServerInstance PROD01 -Username sa
+
+# Check what is currently set
+.\helpers\local-sql\Set-SqlConnection.ps1 -Show
+
+# Verify connectivity
+.\helpers\local-sql\Test-SqlConnectivity.ps1
+```
+
+To persist the connection across sessions:
+
+```powershell
+.\Initialize-Environment.ps1 -ServerInstance PROD01\SQL2019 -PersistProfile
+```
+
+---
+
+## 3. Run your first script
+
+Use `run.ps1` to run any script by name — no paths needed:
+
+```powershell
+# Top wait types since last restart
+.\run.ps1 Get-WaitStatistics
+
+# Active blocking chains
+.\run.ps1 Get-BlockingChains
+
+# Backup coverage across all databases
+.\run.ps1 Get-BackupCoverage
+
+# Against a specific server
+.\run.ps1 Get-WaitStatistics -ServerInstance PROD01\SQL2019
+
+# Save output to CSV
+.\run.ps1 Get-WaitStatistics -OutputFormat Csv
+# Output saved to: output-files\reviews\performance\Get-WaitStatistics-<timestamp>.csv
+```
+
+<p align="center">
+  <img src="../assets/screenshots/02-run-wait-statistics.png" alt="run.ps1 Get-WaitStatistics output" width="720">
+  <br><em>.\run.ps1 Get-WaitStatistics — wait type breakdown with filtered benign waits</em>
+</p>
+
+Browse all available scripts:
+
+```powershell
+.\run.ps1 -List
+
+# Find scripts by keyword
+.\helpers\triage\Find-UsefulScript.ps1 -Keyword blocking
+.\helpers\triage\Find-UsefulScript.ps1 -Keyword backup
+```
+
+<p align="center">
+  <img src="../assets/screenshots/03-run-list.png" alt="run.ps1 -List output" width="720">
+  <br><em>.\run.ps1 -List — all scripts grouped by category</em>
+</p>
+
+---
+
+## 4. Run a health check
+
+Collect all key monitoring data in one pass and review the findings:
+
+```powershell
+# Collect ~27 scripts, save named CSVs to output-files\healthcheck\<server>-<timestamp>\
+.\powershell\reporting\Invoke-HealthCheckCollection.ps1 -ServerInstance PROD01\SQL2019
+
+# Review findings — surfaces CRITICAL / WARNING / INFO
+.\powershell\reporting\Review-HealthCheckOutput.ps1
+```
+
+<p align="center">
+  <img src="../assets/screenshots/04-healthcheck-collection.png" alt="Invoke-HealthCheckCollection output" width="720">
+  <br><em>Invoke-HealthCheckCollection — collecting scripts, saving CSVs</em>
+</p>
+
+<p align="center">
+  <img src="../assets/screenshots/05-healthcheck-review.png" alt="Review-HealthCheckOutput findings" width="720">
+  <br><em>Review-HealthCheckOutput — CRITICAL / WARNING / INFO findings</em>
+</p>
+
+What gets flagged: missing backups, stale DBCC CHECKDB, suspect pages, sa enabled, percent-based autogrowth, unconfigured max server memory, high I/O latency, transaction log pressure, and more.
+
+For a scored client report:
+
+```powershell
+.\powershell\reporting\Invoke-AssessmentReport.ps1 -ServerInstance PROD01\SQL2019 -AssessedBy "Peter Whyte"
+# Output: output-files\assessment\<server>-<timestamp>.md
+```
+
+---
+
+## 5. Browse scripts in the web UI
+
+An optional local web interface for browsing, running, and visualising script output:
+
+```powershell
+.\tools\web-ui\Start-WebUi.ps1
+# Opens http://localhost:8787
+```
+
+<p align="center">
+  <img src="../assets/screenshots/06-web-ui-scripts.png" alt="Web UI scripts page" width="720">
+  <br><em>Web UI — scripts page with collapsible categories and one-click run</em>
+</p>
+
+<p align="center">
+  <img src="../assets/screenshots/07-web-ui-csv.png" alt="Web UI CSV output view" width="720">
+  <br><em>Web UI — CSV output with chart, table view, and threshold colouring</em>
+</p>
+
+---
+
+## 6. Run SQL directly in SSMS
+
+Every script in `sql/` is paste-and-run in SSMS. No PowerShell needed:
+
+```sql
+-- Open any .sql file from sql/ and paste directly into SSMS
+-- Example: sql\performance\Get-WaitStatistics.sql
+-- All scripts: read-only, SET NOCOUNT ON, no USE database statement
+```
+
+---
+
+## Where to go from here
+
+| Need | Resource |
+|------|----------|
+| Full script list with descriptions | [docs/script-catalog.md](script-catalog.md) |
+| Repo folder layout | [docs/dba-scripts-repo-structure.md](dba-scripts-repo-structure.md) |
+| Prerequisites, permissions, troubleshooting | [SETUP.md](../SETUP.md) |
+| Migration workflow | `powershell/migration/Invoke-PreMigrationAssessment.ps1` |
+| Change orders and runbooks | `sql-operations/` |
+| Scheduled trend collection | `collectors/` |
+| Multi-server operations | `sql-operations/multi-server-scripts/` |

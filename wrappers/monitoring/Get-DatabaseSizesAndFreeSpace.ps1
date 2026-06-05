@@ -1,6 +1,12 @@
-﻿<#
+<#
 .SYNOPSIS
-Runs the database health review query for the current SQL Server instance.
+Runs the database sizes and free space review query.
+
+.NOTES
+ScriptType   : runner
+TargetScope  : single server
+RiskLevel    : SAFE
+Purpose      : Run the database sizes and free space SQL query from the repo and export results.
 #>
 
 param(
@@ -13,14 +19,14 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-$repoRoot = Resolve-Path (Join-Path $PSScriptRoot '..\..')
-$sqlScript = Join-Path $repoRoot 'sql\monitoring\Get-DatabaseHealth.sql'
+$repoRoot = Resolve-Path (Join-Path $PSScriptRoot '..\\..')
+$sqlScript = Join-Path $repoRoot 'sql\monitoring\Get-DatabaseSizesAndFreeSpace.sql'
 $runner = Join-Path $repoRoot 'helpers\local-sql\Invoke-RepoSql.ps1'
 
 if (-not (Test-Path -LiteralPath $sqlScript)) { throw "Script not found: $sqlScript" }
 if (-not (Test-Path -LiteralPath $runner)) { throw "Runner not found: $runner" }
 
-Write-Host 'Running database health review...' -ForegroundColor Cyan
+Write-Host 'Running database sizes and free space review...' -ForegroundColor Cyan
 & $runner -ScriptPath $sqlScript -ServerInstance $ServerInstance -Database $Database -OutputFormat $OutputFormat -OutputPath $OutputPath
 
 

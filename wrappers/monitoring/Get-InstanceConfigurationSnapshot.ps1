@@ -1,6 +1,12 @@
 ﻿<#
 .SYNOPSIS
-Runs the backup coverage review query for the current SQL Server instance.
+Runs the instance configuration snapshot review query.
+
+.NOTES
+ScriptType   : runner
+TargetScope  : single server
+RiskLevel    : SAFE
+Purpose      : Run the instance configuration snapshot SQL query from the repo and export results.
 #>
 
 param(
@@ -14,13 +20,13 @@ param(
 $ErrorActionPreference = 'Stop'
 
 $repoRoot = Resolve-Path (Join-Path $PSScriptRoot '..\..')
-$sqlScript = Join-Path $repoRoot 'sql\backups\Get-BackupCoverage.sql'
+$sqlScript = Join-Path $repoRoot 'sql\monitoring\Get-InstanceConfigurationSnapshot.sql'
 $runner = Join-Path $repoRoot 'helpers\local-sql\Invoke-RepoSql.ps1'
 
 if (-not (Test-Path -LiteralPath $sqlScript)) { throw "Script not found: $sqlScript" }
 if (-not (Test-Path -LiteralPath $runner)) { throw "Runner not found: $runner" }
 
-Write-Host 'Running backup coverage review...' -ForegroundColor Cyan
+Write-Host 'Running instance configuration snapshot review...' -ForegroundColor Cyan
 & $runner -ScriptPath $sqlScript -ServerInstance $ServerInstance -Database $Database -OutputFormat $OutputFormat -OutputPath $OutputPath
 
 

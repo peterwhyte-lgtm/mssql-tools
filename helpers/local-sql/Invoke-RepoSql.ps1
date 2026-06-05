@@ -39,7 +39,7 @@ function Show-ResultsFooter([string]$csvPath) {
         Write-Host "  Review  : $url" -ForegroundColor Cyan
     } else {
         Write-Host "  Review  : $url" -ForegroundColor DarkGray
-        Write-Host "            (web UI not running — start with: .\tools\Start-WebUi.ps1)" -ForegroundColor DarkGray
+        Write-Host "            (web UI not running — start with: .\tools\web-ui\Start-WebUi.ps1)" -ForegroundColor DarkGray
     }
     Write-Host ('─' * 64) -ForegroundColor DarkCyan
 }

@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     Local web UI for browsing scripts and visualising output CSVs.
 .DESCRIPTION
@@ -6,8 +6,8 @@
     Chart.js is loaded from CDN on the CSV chart page (requires internet for that page only).
     Press Ctrl+C to stop.
 .EXAMPLE
-    .\tools\Start-WebUi.ps1
-    .\tools\Start-WebUi.ps1 -Port 9090
+    .\tools\web-ui\Start-WebUi.ps1
+    .\tools\web-ui\Start-WebUi.ps1 -Port 9090
 #>
 param([int]$Port = 8787, [switch]$Inline)
 
@@ -41,7 +41,7 @@ function Get-AllScripts {
             @{n='RelPath'; e={ $_.FullName.Replace($repoRoot,'').TrimStart('\') }}
 
     # Multi-server scripts — browsable and copyable, not runnable via the web UI
-    $msq = Get-ChildItem "$repoRoot\tools\multi-server-scripts" -Recurse -Filter '*.ps1' -File -ErrorAction SilentlyContinue |
+    $msq = Get-ChildItem "$repoRoot\sql-operations\multi-server-scripts" -Recurse -Filter '*.ps1' -File -ErrorAction SilentlyContinue |
         Select-Object FullName,
             @{n='Name';    e={ $_.BaseName }},
             @{n='Category';e={ 'multi-server-scripts/' + $_.Directory.Name }},
@@ -2046,6 +2046,36 @@ try {
         $url  = $req.Url.AbsolutePath
         $qs   = [System.Web.HttpUtility]::ParseQueryString($req.Url.Query)
 
+        # Static assets — serve binary files directly and skip normal response path
+        if ($url -like '/assets/*') {
+            $assetName = [IO.Path]::GetFileName($url)
+            $assetFile = Join-Path $PSScriptRoot "assets\$assetName"
+            if (Test-Path -LiteralPath $assetFile) {
+                $ext  = [IO.Path]::GetExtension($assetFile).ToLower()
+                $mime = switch ($ext) {
+                    '.png'  { 'image/png' }
+                    '.jpg'  { 'image/jpeg' }
+                    '.jpeg' { 'image/jpeg' }
+                    '.svg'  { 'image/svg+xml' }
+                    '.ico'  { 'image/x-icon' }
+                    default { 'application/octet-stream' }
+                }
+                $imgBytes = [IO.File]::ReadAllBytes($assetFile)
+                $res.ContentType     = $mime
+                $res.ContentLength64 = $imgBytes.Length
+                $res.StatusCode      = 200
+                $res.OutputStream.Write($imgBytes, 0, $imgBytes.Length)
+                $res.OutputStream.Close()
+                continue
+            }
+            $nb = [Text.Encoding]::UTF8.GetBytes('Not found')
+            $res.StatusCode = 404; $res.ContentType = 'text/plain'
+            $res.ContentLength64 = $nb.Length
+            $res.OutputStream.Write($nb, 0, $nb.Length)
+            $res.OutputStream.Close()
+            continue
+        }
+
         $contentType = 'text/html; charset=utf-8'
         $statusCode  = 200
         $body = try { switch ($url) {
@@ -2081,6 +2111,7 @@ try {
                 $sExt   = [IO.Path]::GetExtension($fullRunPath).ToLower()
                 $cat    = if ($p -match '(^|[\\/])sql[\\/]([^\\/]+)[\\/]')            { $Matches[2] }
                           elseif ($p -match '(^|[\\/])powershell[\\/]([^\\/]+)[\\/]') { $Matches[2] }
+                          elseif ($p -match '(^|[\\/])wrappers[\\/]([^\\/]+)[\\/]')  { $Matches[2] }
                           else { 'general' }
                 $ts      = Get-Date -Format 'yyyyMMdd-HHmmss'
                 $csvDir  = Join-Path $repoRoot "output-files\reviews\$cat$(if ($dryRun) {'\dry-runs'} else {''})"

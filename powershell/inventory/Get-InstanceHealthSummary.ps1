@@ -1,3 +1,14 @@
+<#
+.SYNOPSIS
+Returns a brief server identity and key configuration settings snapshot.
+
+.NOTES
+ScriptType   : runner
+TargetScope  : single server
+RiskLevel    : SAFE
+Purpose      : Retrieve server name, edition, version, and core configuration settings for a quick health summary.
+#>
+
 param(
     [string]$SqlInstance = '.',
     [string]$Database = 'master'

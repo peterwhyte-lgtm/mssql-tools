@@ -2,6 +2,12 @@
 .SYNOPSIS
 Captures a quick SQL Server instance configuration snapshot.
 
+.NOTES
+ScriptType   : runner
+TargetScope  : single server
+RiskLevel    : SAFE
+Purpose      : Retrieve SQL Server instance configuration settings for baseline, migration, or incident prep.
+
 .DESCRIPTION
 Useful for baseline reviews, migration planning, and incident prep.
 #>

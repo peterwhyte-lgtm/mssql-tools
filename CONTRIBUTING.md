@@ -73,7 +73,8 @@ Required `.NOTES` fields: `ScriptType` (runner / automation / hybrid), `TargetSc
 | Type | Location |
 |------|----------|
 | New SQL diagnostic or monitoring script | `sql/<category>/Get-Something.sql` |
-| New PowerShell wrapper | `powershell/<subcategory>/Get-Something.ps1` |
+| New PowerShell wrapper for a SQL script | `wrappers/<category>/Get-Something.ps1` |
+| New unique PowerShell script (orchestration, automation) | `powershell/<subfolder>/` |
 | New change order template | `sql-operations/change-orders/` |
 | New operational checklist | `sql-operations/checklists/` |
 

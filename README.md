@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/sqldba-logo.png" alt="sqldba.blog" width="220">
+</p>
+
 # DBA Scripts
 
 [![SQL Server](https://img.shields.io/badge/SQL%20Server-2016%2B-CC2927?logo=microsoftsqlserver&logoColor=white)](https://github.com/peterwhyte-lgtm/dba-scripts)
@@ -104,37 +108,38 @@ The report includes an instance score (0–100), CRITICAL/WARNING/INFO findings,
 ## Repository structure
 
 ```text
-sql/
+sql/                  — paste-and-run SQL scripts by category
   monitoring/         — health, memory, MAXDOP, jobs, TempDB, DBCC, instance config
   performance/        — waits, blocking, long queries, missing indexes, I/O, active requests
   high-availability/  — AG replica state, AG latency
   backups/            — coverage, history, DR estimates, restore generation
   security/           — roles, permissions, orphans, weak logins, surface area
-  migration/          — risk assessment, compat audit, login audit, deprecated features
+  migration/          — risk assessment, compat audit, login audit, deprecated features, DDL generators
+  maintenance/        — index maintenance, backup jobs, housekeeping job DDL generators
 
-powershell/
-  reporting/          — wrappers, health check collection, assessment report
-  inventory/          — storage, growth, disk, instance snapshots
-  high-availability/  — AG state and latency wrappers
-  health-checks/      — DBCC, suspect pages, TempDB hotspots
-  backup-automation/  — backup and restore execution
-  security/           — security audit wrappers
-  migration/          — migration assessment, baseline capture, DDL generators
+wrappers/             — thin PS wrappers, one per SQL script, mirrors sql/ categories
+  monitoring/ performance/ backups/ security/ migration/ high-availability/ maintenance/
 
-collectors/           — scheduled collectors for historical trend data (blocking, waits, I/O, AG)
+powershell/           — unique PS scripts: orchestration, automation, DDL generators, OS tools
+  reporting/          — health check collection, assessment report, Get-BlockingChains, Get-ActiveRequests
+  migration/          — Generate-LoginScript, Invoke-MigrationExport, Invoke-PreMigrationAssessment, and more
+  maintenance/        — Generate-BackupJobs, Generate-IndexMaintenanceJobs, Invoke-MaintenanceDeployment
+  backup-automation/  — Backup-AllDatabases, Restore-AllDatabases, Generate-*BackupScript
+  inventory/          — Get-LargestFolders, Get-DiskSpaceSummary, Get-OldestBackupFolderFiles
 
-sql-operations/
-  change-orders/      — CAB-ready change order templates
+collectors/           — scheduled data collectors for trend analysis (blocking, waits, I/O, AG, TempDB)
+
+sql-operations/       — execution content for planned DBA work
+  change-orders/      — CAB-ready change order documents
   checklists/         — step-by-step execution checklists
-  rollback/           — rollback decision criteria and procedures
-  change-templates/   — SQL runbook templates (CDC, TDE, AG, statistics)
-  installation/       — SQL Server installation automation
+  runbooks/           — full migration and upgrade runbooks
+  change-templates/   — SQL templates (CDC, TDE, AG, statistics, DBCC)
+  installation/       — SQL Server install, configure, and validate scripts
   patches/            — CU and SSMS update scripts
 
 helpers/
   local-sql/          — Invoke-RepoSql.ps1, Set-SqlConnection.ps1, Test-SqlConnectivity.ps1
   triage/             — Show-RepoOverview.ps1, Find-UsefulScript.ps1
-  scaffolding/        — Generate-NextPowerShell.ps1
 ```
 
 ---

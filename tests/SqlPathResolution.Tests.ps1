@@ -14,7 +14,8 @@ $repoRoot = (Resolve-Path "$PSScriptRoot\..")
 
 $wrappers = @(
     Get-ChildItem "$repoRoot\powershell" -Recurse -Filter '*.ps1' -File
-    Get-ChildItem "$repoRoot\tools\multi-server-scripts" -Recurse -Filter '*.ps1' -File -ErrorAction SilentlyContinue
+    Get-ChildItem "$repoRoot\wrappers" -Recurse -Filter '*.ps1' -File
+    Get-ChildItem "$repoRoot\sql-operations\multi-server-scripts" -Recurse -Filter '*.ps1' -File -ErrorAction SilentlyContinue
 )
 
 $allPairs = @(

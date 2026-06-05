@@ -2,6 +2,12 @@
 .SYNOPSIS
 Shows a friendly local disk space summary for the current machine.
 
+.NOTES
+ScriptType   : runner
+TargetScope  : single server
+RiskLevel    : SAFE
+Purpose      : Display available disk space for all local fixed drives on the current machine.
+
 .DESCRIPTION
 Displays available drive space for all local fixed drives in a simple terminal-friendly format.
 Useful for quick checks before creating large test databases.

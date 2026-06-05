@@ -1,6 +1,12 @@
-<#
+﻿<#
 .SYNOPSIS
-Runs the transaction log size and usage review query.
+Runs the backup coverage review query for the current SQL Server instance.
+
+.NOTES
+ScriptType   : runner
+TargetScope  : single server
+RiskLevel    : SAFE
+Purpose      : Run the backup coverage SQL query from the repo and export results.
 #>
 
 param(
@@ -13,14 +19,14 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-$repoRoot = Resolve-Path (Join-Path $PSScriptRoot '..\\..')
-$sqlScript = Join-Path $repoRoot 'sql\monitoring\Get-TransactionLogSizeAndUsage.sql'
+$repoRoot = Resolve-Path (Join-Path $PSScriptRoot '..\..')
+$sqlScript = Join-Path $repoRoot 'sql\backups\Get-BackupCoverage.sql'
 $runner = Join-Path $repoRoot 'helpers\local-sql\Invoke-RepoSql.ps1'
 
 if (-not (Test-Path -LiteralPath $sqlScript)) { throw "Script not found: $sqlScript" }
 if (-not (Test-Path -LiteralPath $runner)) { throw "Runner not found: $runner" }
 
-Write-Host 'Running transaction log size and usage review...' -ForegroundColor Cyan
+Write-Host 'Running backup coverage review...' -ForegroundColor Cyan
 & $runner -ScriptPath $sqlScript -ServerInstance $ServerInstance -Database $Database -OutputFormat $OutputFormat -OutputPath $OutputPath
 
 

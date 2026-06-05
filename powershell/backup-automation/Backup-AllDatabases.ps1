@@ -2,6 +2,12 @@
 .SYNOPSIS
 Backs up every user database on the instance to a target folder.
 
+.NOTES
+ScriptType   : automation
+TargetScope  : single server
+RiskLevel    : MEDIUM
+Purpose      : Back up all user databases to a target folder using SMO with optional compression and copy-only.
+
 .DESCRIPTION
 Production-friendly backup helper for full backups with backup compression enabled.
 Use this for routine backup validation or lab environment setup.

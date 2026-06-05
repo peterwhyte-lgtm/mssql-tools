@@ -53,6 +53,16 @@ if ($List -or -not $ScriptName) {
         }
     }
 
+    $wrRoot = Join-Path $repoRoot 'wrappers'
+    foreach ($folder in (Get-ChildItem $wrRoot -Directory -ErrorAction SilentlyContinue | Sort-Object Name)) {
+        $scripts = Get-ChildItem $folder.FullName -Filter '*.ps1' -ErrorAction SilentlyContinue | Sort-Object Name
+        if ($scripts.Count -gt 0) {
+            Write-Host "  wrappers/$($folder.Name)/" -ForegroundColor DarkGray
+            $scripts | ForEach-Object { Write-Host "    $($_.BaseName)" -ForegroundColor DarkGray }
+            Write-Host ''
+        }
+    }
+
     Write-Host 'Usage:' -ForegroundColor Cyan
     Write-Host '  .\run.ps1 <ScriptName> [-ServerInstance .] [-OutputFormat Csv]'
     Write-Host '  .\run.ps1 -List'
@@ -64,9 +74,9 @@ if ($List -or -not $ScriptName) {
 # which mangles named parameters during array splatting.
 $searchRoots = @(
     (Join-Path $repoRoot 'powershell'),
+    (Join-Path $repoRoot 'wrappers'),
     (Join-Path $repoRoot 'helpers'),
     (Join-Path $repoRoot 'sql'),
-    (Join-Path $repoRoot 'hybrid'),
     (Join-Path $repoRoot 'tools')
 )
 

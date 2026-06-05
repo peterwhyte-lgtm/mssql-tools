@@ -2,6 +2,12 @@
 .SYNOPSIS
 Restores all user databases from backup files in a folder.
 
+.NOTES
+ScriptType   : automation
+TargetScope  : single server
+RiskLevel    : HIGH IMPACT
+Purpose      : Restore all user databases from backup files in a folder using SMO — use with caution.
+
 .DESCRIPTION
 Simple DR and migration helper for restoring databases from a known backup path.
 Review the generated restore script first when possible.

@@ -284,5 +284,5 @@ if ($failed -gt 0) {
         ForEach-Object { Write-Host "    $($_.Server): $($_.Detail)" -ForegroundColor DarkRed }
 }
 Write-Host ''
-Write-Host "  Verify with: .\tools\multi-server-scripts\sql\MultiServer-GetMaintenanceJobStatus.ps1 -Servers `"$Servers`"" -ForegroundColor DarkGray
+Write-Host "  Verify with: .\sql-operations\multi-server-scripts\sql\MultiServer-GetMaintenanceJobStatus.ps1 -Servers `"$Servers`"" -ForegroundColor DarkGray
 Write-Host ''

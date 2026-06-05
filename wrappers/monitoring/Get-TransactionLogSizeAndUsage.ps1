@@ -1,6 +1,12 @@
-﻿<#
+<#
 .SYNOPSIS
-Runs the TempDB usage review query.
+Runs the transaction log size and usage review query.
+
+.NOTES
+ScriptType   : runner
+TargetScope  : single server
+RiskLevel    : SAFE
+Purpose      : Run the transaction log size and usage SQL query from the repo and export results.
 #>
 
 param(
@@ -13,14 +19,14 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-$repoRoot = Resolve-Path (Join-Path $PSScriptRoot '..\..')
-$sqlScript = Join-Path $repoRoot 'sql\monitoring\Get-TempdbUsage.sql'
+$repoRoot = Resolve-Path (Join-Path $PSScriptRoot '..\\..')
+$sqlScript = Join-Path $repoRoot 'sql\monitoring\Get-TransactionLogSizeAndUsage.sql'
 $runner = Join-Path $repoRoot 'helpers\local-sql\Invoke-RepoSql.ps1'
 
 if (-not (Test-Path -LiteralPath $sqlScript)) { throw "Script not found: $sqlScript" }
 if (-not (Test-Path -LiteralPath $runner)) { throw "Runner not found: $runner" }
 
-Write-Host 'Running TempDB usage review...' -ForegroundColor Cyan
+Write-Host 'Running transaction log size and usage review...' -ForegroundColor Cyan
 & $runner -ScriptPath $sqlScript -ServerInstance $ServerInstance -Database $Database -OutputFormat $OutputFormat -OutputPath $OutputPath
 
 

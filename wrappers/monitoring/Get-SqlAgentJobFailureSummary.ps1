@@ -1,6 +1,12 @@
 ﻿<#
 .SYNOPSIS
 Runs the SQL Agent failure summary review query.
+
+.NOTES
+ScriptType   : runner
+TargetScope  : single server
+RiskLevel    : SAFE
+Purpose      : Run the SQL Agent job failure summary SQL query from the repo and export results.
 #>
 
 param(

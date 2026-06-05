@@ -2,6 +2,12 @@
 .SYNOPSIS
 Reports the age of the latest backup for each user database.
 
+.NOTES
+ScriptType   : runner
+TargetScope  : single server
+RiskLevel    : SAFE
+Purpose      : Report the age of the most recent backup for each user database using msdb history.
+
 .DESCRIPTION
 Uses msdb backup history to show how old the most recent backup is for each user database.
 This is useful for backup coverage checks, DR readiness, and weekly operational reviews.

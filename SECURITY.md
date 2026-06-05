@@ -6,7 +6,7 @@
 ## Supported versions
 
 We aim for compatibility with:
-- SQL Server 2016+ (compat notes in docs/standards.md)
+- SQL Server 2016+ (compat notes in CLAUDE.md)
 - PowerShell 7+ (Windows PowerShell 5.1 usually works but is not primary)
 
 ## Reporting a vulnerability
@@ -39,7 +39,7 @@ Include: what you found, which file(s) are affected, and steps to reproduce. Res
 
 ## What is out of scope
 
-The web UI (`tools/Start-WebUi.ps1`) runs on localhost only and is not intended to be network-exposed. Security issues specific to internet-facing deployments are out of scope.
+The web UI (`tools/web-ui/Start-WebUi.ps1`) runs on localhost only and is not intended to be network-exposed. Security issues specific to internet-facing deployments are out of scope.
 
 ## CI security controls
 

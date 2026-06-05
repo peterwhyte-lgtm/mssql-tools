@@ -1,6 +1,12 @@
 ﻿<#
 .SYNOPSIS
-Runs the memory configuration and usage review query.
+Runs the TempDB usage review query.
+
+.NOTES
+ScriptType   : runner
+TargetScope  : single server
+RiskLevel    : SAFE
+Purpose      : Run the TempDB usage SQL query from the repo and export results.
 #>
 
 param(
@@ -14,13 +20,13 @@ param(
 $ErrorActionPreference = 'Stop'
 
 $repoRoot = Resolve-Path (Join-Path $PSScriptRoot '..\..')
-$sqlScript = Join-Path $repoRoot 'sql\monitoring\Get-MemoryConfigurationAndUsage.sql'
+$sqlScript = Join-Path $repoRoot 'sql\monitoring\Get-TempdbUsage.sql'
 $runner = Join-Path $repoRoot 'helpers\local-sql\Invoke-RepoSql.ps1'
 
 if (-not (Test-Path -LiteralPath $sqlScript)) { throw "Script not found: $sqlScript" }
 if (-not (Test-Path -LiteralPath $runner)) { throw "Runner not found: $runner" }
 
-Write-Host 'Running memory configuration and usage review...' -ForegroundColor Cyan
+Write-Host 'Running TempDB usage review...' -ForegroundColor Cyan
 & $runner -ScriptPath $sqlScript -ServerInstance $ServerInstance -Database $Database -OutputFormat $OutputFormat -OutputPath $OutputPath
 
 

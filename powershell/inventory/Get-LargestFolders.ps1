@@ -2,6 +2,12 @@
 .SYNOPSIS
 Shows the largest folders on a drive, sorted by size.
 
+.NOTES
+ScriptType   : runner
+TargetScope  : single server
+RiskLevel    : SAFE
+Purpose      : Find the largest folders on a drive to identify disk space candidates for cleanup.
+
 .DESCRIPTION
 Scans a drive letter (default: C:) and reports the biggest folders by total size.
 Useful for quickly finding where disk space is being used.
