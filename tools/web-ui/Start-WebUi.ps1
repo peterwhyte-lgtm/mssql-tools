@@ -17,6 +17,7 @@ if (-not $Inline) {
 }
 
 $ErrorActionPreference = 'Stop'
+$Host.UI.RawUI.WindowTitle = "dba-scripts web UI — localhost:$Port"
 $repoRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 
 $script:enrichedCache       = $null
@@ -879,6 +880,10 @@ const SV={
   yes:'green',pass:'green',enabled:'green',ok:'green',healthy:'green',available:'green',
   offline:'red',failed:'red',fail:'red',error:'red',suspect:'red',no:'red',
   missing:'red',critical:'red',unavailable:'red',
+  // backup_status values from Get-BackupCoverage
+  'no_full_backup':'red','stale_full':'orange','full_recovery_no_log':'red','stale_log':'orange',
+  // growth_status values from Get-DatabaseGrowthRisk
+  'at_limit':'red','near_limit':'orange','unlimited':'gray',
   restoring:'orange',warning:'orange',pending:'orange',recovering:'orange',
   disabled:'gray','n/a':'gray',none:'gray',
   'read-only':'blue',writes:'blue'
@@ -928,22 +933,40 @@ async function init(){
   renderTable();
 }
 
+function inferChartDefaults(d){
+  const numCols=d.numericCols, rows=d.rows, labelCol=d.labelCol;
+  // Classify columns by name pattern — drives column preference order
+  const pctCols  = numCols.filter(c=>/pct|percent|ratio/i.test(c));
+  const timeCols = numCols.filter(c=>/_ms$|_sec|elapsed|duration|wait/i.test(c));
+  const sizeCols = numCols.filter(c=>/_mb$|_gb$|_kb$|size|space|bytes/i.test(c));
+  const ageCols  = numCols.filter(c=>/age|_hours$|_days$/i.test(c));
+  const preferCols=(pctCols.length?pctCols:timeCols.length?timeCols:sizeCols.length?sizeCols:ageCols.length?ageCols:numCols).slice(0,4);
+  // Few rows = proportional comparison → doughnut
+  if(rows.length<=3&&numCols.length>=2)
+    return{type:'doughnut',horizontal:false,preferCols,pieCol:preferCols[0]||numCols[0]};
+  // Long labels or many rows → horizontal bar reads better
+  const avgLabelLen=rows.slice(0,10).reduce((s,r)=>s+String(r[labelCol]??'').length,0)/Math.min(rows.length,10);
+  const horiz=avgLabelLen>15||rows.length>12;
+  return{type:'bar',horizontal:horiz,preferCols,pieCol:preferCols[0]||numCols[0]};
+}
+
 function applyHint(){
-  const hint=CHART_HINTS[SCRIPT_NAME];
+  const named=CHART_HINTS[SCRIPT_NAME];
+  const inferred=inferChartDefaults(data);
   active.clear();
   horizontal=false;
-  if(hint){
-    type=hint.type||'bar';
-    horizontal=hint.h||false;
-    const pref=(hint.prefer||[]).map(p=>
-      data.numericCols.find(c=>c.toLowerCase()===p.toLowerCase())
-    ).filter(Boolean);
+  if(named){
+    type=named.type||'bar';
+    horizontal=named.h||false;
+    const pref=(named.prefer||[]).map(p=>data.numericCols.find(c=>c.toLowerCase()===p.toLowerCase())).filter(Boolean);
     const cols=pref.length>0?pref:data.numericCols.slice(0,4);
     cols.slice(0,4).forEach(c=>active.add(c));
     pieCol=(type==='pie'||type==='doughnut')?(cols[0]||data.numericCols[0]||''):(data.numericCols[0]||'');
   } else {
-    pieCol=data.numericCols[0]||'';
-    data.numericCols.slice(0,4).forEach(c=>active.add(c));
+    type=inferred.type;
+    horizontal=inferred.horizontal;
+    inferred.preferCols.forEach(c=>active.add(c));
+    pieCol=inferred.pieCol||data.numericCols[0]||'';
   }
   document.querySelectorAll('.type-btns button').forEach(b=>b.classList.remove('active'));
   const btn=document.getElementById('btn-'+type);
@@ -974,21 +997,70 @@ function setType(t){
   buildControls();renderChart();
 }
 
+// ── Threshold constants — edit here to tune all visual markers ────────────
+const CHART_MAX        = 15;   // chart rows before Others aggregation
+const FULL_BKUP_STALE  = 25;   // full_backup_age_hours → red
+const FULL_BKUP_WARN   = 12;   // full_backup_age_hours → orange
+const LOG_BKUP_STALE   = 4;    // log_backup_age_hours  → red
+const LOG_BKUP_WARN    = 2;    // log_backup_age_hours  → orange
+const LOG_USED_CRIT    = 80;   // log_used_pct %        → red
+const LOG_USED_WARN    = 60;   // log_used_pct %        → orange
+const FREE_SPACE_CRIT  = 10;   // free_pct %            → red  (low free = bad)
+const FREE_SPACE_WARN  = 20;   // free_pct %            → orange
+const FRAG_CRIT        = 30;   // fragmentation %       → red
+const FRAG_WARN        = 10;   // fragmentation %       → orange
+const VLF_CRIT         = 1000; // vlf_count             → red
+const VLF_WARN         = 200;  // vlf_count             → orange
+const LATENCY_CRIT_MS  = 100;  // io latency ms         → red
+const LATENCY_WARN_MS  = 50;   // io latency ms         → orange
+const MOD_PCT_CRIT     = 20;   // modification_pct %    → red  (stale stats)
+const MOD_PCT_WARN     = 10;   // modification_pct %    → orange
+
+function getChartRows(){
+  if(data.rows.length<=CHART_MAX)return{rows:data.rows,capped:false};
+  // Sort by primary active metric descending so "top N" are the most significant
+  const primary=isPie()?pieCol:([...active][0]||data.numericCols[0]||'');
+  const sorted=primary
+    ?[...data.rows].sort((a,b)=>(parseFloat(b[primary])||0)-(parseFloat(a[primary])||0))
+    :data.rows;
+  const top=sorted.slice(0,CHART_MAX);
+  const rest=sorted.slice(CHART_MAX);
+  // Aggregate remainder into a single "Others" row (sum numeric cols)
+  const othersRow={};
+  othersRow[data.labelCol]='Others ('+rest.length+')';
+  for(const col of data.numericCols){
+    othersRow[col]=rest.reduce((s,r)=>s+(parseFloat(r[col])||0),0);
+  }
+  return{rows:[...top,othersRow],capped:true};
+}
+
 function renderChart(){
   if(chart)chart.destroy();
   const ctx=document.getElementById('chart').getContext('2d');
-  const labels=data.rows.map(r=>String(r[data.labelCol]??''));
+  const {rows:chartRows,capped}=getChartRows();
+  // Show/hide the summary note
+  let note=document.getElementById('chart-cap-note');
+  if(capped){
+    if(!note){
+      note=document.createElement('p');
+      note.id='chart-cap-note';
+      note.style.cssText='font-size:.75rem;color:#8b949e;margin-bottom:8px';
+      document.getElementById('chart-panel').insertBefore(note,document.querySelector('.chart-wrap'));
+    }
+    note.textContent='Chart shows top '+CHART_MAX+' of '+data.rows.length+' rows by primary metric — table below shows all results.';
+  } else if(note){ note.remove(); }
+  const labels=chartRows.map(r=>String(r[data.labelCol]??''));
   if(isPie()){
     chart=new Chart(ctx,{type:type,data:{labels,datasets:[{label:pieCol,
-      data:data.rows.map(r=>parseFloat(r[pieCol])||0),
-      backgroundColor:data.rows.map((_,i)=>COLORS[i%COLORS.length]+'cc'),
-      borderColor:data.rows.map((_,i)=>COLORS[i%COLORS.length]),borderWidth:1}]},
+      data:chartRows.map(r=>parseFloat(r[pieCol])||0),
+      backgroundColor:chartRows.map((_,i)=>COLORS[i%COLORS.length]+'cc'),
+      borderColor:chartRows.map((_,i)=>COLORS[i%COLORS.length]),borderWidth:1}]},
       options:{responsive:true,maintainAspectRatio:true,
         plugins:{legend:{position:'right',labels:{color:'#c9d1d9',boxWidth:14,padding:12}}}}});
   } else {
     const datasets=data.numericCols.filter(c=>active.has(c)).map(col=>{
       const i=data.numericCols.indexOf(col);
-      return{label:col,data:data.rows.map(r=>parseFloat(r[col])||0),
+      return{label:col,data:chartRows.map(r=>parseFloat(r[col])||0),
         backgroundColor:COLORS[i%COLORS.length]+'bb',borderColor:COLORS[i%COLORS.length],borderWidth:1};
     });
     const opts={responsive:true,
@@ -1043,8 +1115,50 @@ function fmtCell(val,col){
   }
   const k=s.toLowerCase().trim();
   if(SV[k])return '<span class="sv sv-'+SV[k]+'">'+esc(s)+'</span>';
+  // Prefix-based match for multi-word status columns (autogrowth_status, sizing_status, etc.)
+  if(/_status$/.test(c)){
+    if(k.startsWith('ok'))   return '<span class="sv sv-green">'+esc(s)+'</span>';
+    if(k.startsWith('warn')) return '<span class="sv sv-orange">'+esc(s)+'</span>';
+    if(k.startsWith('info')) return '<span class="sv sv-blue">'+esc(s)+'</span>';
+    if(k.startsWith('pass')) return '<span class="sv sv-green">'+esc(s)+'</span>';
+    if(k.startsWith('fail')||k.startsWith('error')) return '<span class="sv sv-red">'+esc(s)+'</span>';
+  }
   if(/^-?\d+(\.\d+)?$/.test(s.trim())){
     const n=parseFloat(s);
+    // Backup age thresholds — match the same thresholds used in Get-BackupCoverage.sql
+    if(/full_backup_age/.test(c)){
+      const cl=n>FULL_BKUP_STALE?'red':n>FULL_BKUP_WARN?'orange':'green';
+      return '<span class="sv sv-'+cl+'">'+n.toFixed(0)+'h</span>';
+    }
+    if(/log_backup_age/.test(c)){
+      const cl=n>LOG_BKUP_STALE?'red':n>LOG_BKUP_WARN?'orange':'green';
+      return '<span class="sv sv-'+cl+'">'+n.toFixed(0)+'h</span>';
+    }
+    if(/log_used_pct|pct_used|_used_pct/.test(c)){
+      const cl=n>=LOG_USED_CRIT?'red':n>=LOG_USED_WARN?'orange':'';
+      return cl?'<span class="sv sv-'+cl+'">'+n.toFixed(1)+'%</span>':esc(n.toFixed(1)+'%');
+    }
+    if(/free_pct|data_free_pct|log_free_pct/.test(c)){
+      const cl=n<FREE_SPACE_CRIT?'red':n<FREE_SPACE_WARN?'orange':'';
+      return cl?'<span class="sv sv-'+cl+'">'+n.toFixed(1)+'%</span>':esc(n.toFixed(1)+'%');
+    }
+    if(/fragmentation/.test(c)){
+      const cl=n>=FRAG_CRIT?'red':n>=FRAG_WARN?'orange':'';
+      return cl?'<span class="sv sv-'+cl+'">'+n.toFixed(1)+'%</span>':esc(n.toFixed(1)+'%');
+    }
+    if(/vlf_count/.test(c)){
+      const cl=n>=VLF_CRIT?'red':n>=VLF_WARN?'orange':'';
+      return cl?'<span class="sv sv-'+cl+'">'+n.toLocaleString()+'</span>':esc(n.toLocaleString());
+    }
+    if(/latency_ms/.test(c)){
+      const cl=n>=LATENCY_CRIT_MS?'red':n>=LATENCY_WARN_MS?'orange':'';
+      return cl?'<span class="sv sv-'+cl+'">'+Math.round(n).toLocaleString()+'ms</span>':esc(Math.round(n).toLocaleString()+'ms');
+    }
+    if(/modification_pct/.test(c)){
+      const cl=n>=MOD_PCT_CRIT?'red':n>=MOD_PCT_WARN?'orange':'';
+      return cl?'<span class="sv sv-'+cl+'">'+n.toFixed(1)+'%</span>':esc(n.toFixed(1)+'%');
+    }
+    // Generic formatting (no threshold)
     if(/_mb$/.test(c)) return esc(String(Math.round(n)));
     if(/_kb$/.test(c)) return esc(String(Math.round(n)));
     if(/_gb$/.test(c)) return esc(n.toFixed(2));
