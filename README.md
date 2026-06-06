@@ -15,7 +15,7 @@
 
 ## Start Here
 
-Clone the repo and run the setup script. This assumes a local SQL Server — if you have one installed, no flags needed:
+Clone the repo and run the setup script. This assumes a local SQL Server is installed, no flags needed:
 
 ```powershell
 git clone https://github.com/peterwhyte-lgtm/dba-scripts
