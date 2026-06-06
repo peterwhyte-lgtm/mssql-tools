@@ -65,13 +65,13 @@ OUTER APPLY (
 -- Next scheduled run from attached schedules
 OUTER APPLY (
     SELECT TOP 1
-        s.next_run_date, s.next_run_time
+        js.next_run_date, js.next_run_time
     FROM msdb.dbo.sysjobschedules js
     JOIN msdb.dbo.sysschedules    s  ON s.schedule_id = js.schedule_id
     WHERE js.job_id = j.job_id
       AND s.enabled = 1
-      AND (s.next_run_date > 0 OR s.next_run_time > 0)
-    ORDER BY s.next_run_date, s.next_run_time
+      AND (js.next_run_date > 0 OR js.next_run_time > 0)
+    ORDER BY js.next_run_date, js.next_run_time
 ) sch
 
 WHERE j.name LIKE N'DBA - %'

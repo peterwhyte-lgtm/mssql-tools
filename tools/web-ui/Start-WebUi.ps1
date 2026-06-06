@@ -237,6 +237,7 @@ h2{font-size:1rem;font-weight:600;color:#e6edf3;margin:10px 0 14px;padding-botto
 .badge{display:inline-block;font-size:.7rem;padding:1px 7px;border-radius:10px;margin-bottom:4px;font-weight:600}
 .badge-sql{background:#1f3a4a;color:#58a6ff}
 .badge-ps{background:#2d2a4a;color:#a78bfa}
+.badge-top{background:#1a3a2a;color:#3fb950}
 .cat-label{font-size:.75rem;color:#8b949e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;font-weight:600}
 pre{background:#0d1117;border:1px solid #21262d;border-radius:8px;padding:20px;overflow:auto;font-size:.82rem;color:#c9d1d9;tab-size:4;white-space:pre-wrap}
 .code-wrap{position:relative}
@@ -435,8 +436,35 @@ function Build-HomePage {
         $_.RelPath -notmatch '[\\/]lab[\\/]'
     })
 
+    # ── Top scripts for production DBA ────────────────────────────────────────
+    $topDefs = @(
+        [ordered]@{P='sql\performance\Get-WaitStatistics.sql';             Desc='Ranked wait types — first stop for unexplained slowness'}
+        [ordered]@{P='sql\performance\Get-BlockingChains.sql';             Desc='Who is blocking whom — head-blocker tree'}
+        [ordered]@{P='sql\performance\Get-ActiveRequests.sql';             Desc='Queries running right now — incident first look'}
+        [ordered]@{P='sql\performance\Get-TopCpuQueries.sql';              Desc='Highest CPU queries from plan cache'}
+        [ordered]@{P='sql\performance\Get-MissingIndexes.sql';             Desc='High-impact missing index recommendations'}
+        [ordered]@{P='sql\monitoring\Get-DatabaseSizesAndFreeSpace.sql';   Desc='All databases — sizes and free space'}
+        [ordered]@{P='sql\backups\Get-BackupCoverage.sql';                 Desc='Backup currency across all databases'}
+        [ordered]@{P='sql\monitoring\Get-SqlAgentJobFailureSummary.sql';   Desc='Recent job failures and duration outliers'}
+        [ordered]@{P='sql\monitoring\Get-IndexFragmentation.sql';          Desc='Index fragmentation — maintenance candidate list'}
+        [ordered]@{P='sql\monitoring\Get-InstanceConfigurationScore.sql';  Desc='Best-practice configuration score for this instance'}
+    )
+
+    $topCards = ''
+    foreach ($t in $topDefs) {
+        $fp = Join-Path $repoRoot $t.P
+        if (-not (Test-Path -LiteralPath $fp)) { continue }
+        $name = [IO.Path]::GetFileNameWithoutExtension($t.P)
+        $enc  = [Uri]::EscapeDataString($t.P)
+        $topCards += "<div class='card'><span class='badge badge-top'>Top</span><a href='/view?p=$enc'>$(Html-Escape $name)</a><div class='purpose'>$(Html-Escape $t.Desc)</div></div>"
+    }
+    $html = ''
+    if ($topCards) {
+        $html += "<h2>Start here</h2><div class='grid'>$topCards</div><hr class='section-sep' style='margin-bottom:28px'>"
+    }
+
     # ── SQL scripts — collapsible per category, expanded by default ───────────
-    $html = "<h2>SQL Scripts ($($sqlScripts.Count))</h2>"
+    $html += "<h2>SQL Scripts ($($sqlScripts.Count))</h2>"
     foreach ($cat in ($sqlScripts | Group-Object Category | Sort-Object { if ($_.Name -eq 'lab') { 'zzz' } else { $_.Name } })) {
         $count   = $cat.Group.Count
         $catName = Html-Escape $cat.Name

@@ -14,8 +14,9 @@ Usage:
 #>
 [CmdletBinding()]
 param (
-    # SQL Server instance to test connectivity against. Accepts any sqlcmd-style format.
-    [string]$ServerInstance,
+    # SQL Server instance to test connectivity against. Defaults to local (.) — pass a named
+    # instance or remote server to override, e.g. -ServerInstance PROD01\SQL2019
+    [string]$ServerInstance = '.',
 
     # Install missing PowerShell modules (SqlServer, Pester) without prompting.
     [switch]$AutoInstall,
@@ -235,12 +236,15 @@ if ((Test-Path $gitignore) -and (Get-Content $gitignore -Raw) -match 'output-fil
 
 if ($ServerInstance) {
     Write-Host ''
-    Write-Host '  Connectivity' -ForegroundColor DarkGray
+    $connHeader = if ($ServerInstance -in '.','localhost','(local)') { 'Connectivity — local SQL Server' } else { "Connectivity — $ServerInstance" }
+    Write-Host "  $connHeader" -ForegroundColor DarkGray
 
     $connScript = Join-Path $repoRoot 'helpers\local-sql\Test-SqlConnectivity.ps1'
     if (Test-Path $connScript) {
         try {
-            $connOutput = & $connScript -ServerInstance $ServerInstance 2>&1
+            # *>&1 captures Write-Host (Information stream 6) alongside stdout/stderr in PS7.
+            # Tee to terminal so connectivity detail is visible, then collect as strings for parsing.
+            $connOutput = & $connScript -ServerInstance $ServerInstance *>&1 | ForEach-Object { Write-Host $_; "$_" }
             $versionLine = $connOutput | Where-Object { $_ -match 'Version\s+:' } | Select-Object -First 1
             $statusLine  = $connOutput | Where-Object { $_ -match 'Status\s+:' }  | Select-Object -First 1
 
@@ -258,8 +262,11 @@ if ($ServerInstance) {
                     }
                 }
 
-                # Set session default so subsequent helpers use this server
-                $env:DBASCRIPTS_SERVER = $ServerInstance
+                # Set session default — only if none is already active, or the user
+                # explicitly named a non-default server (avoids clobbering PROD01 with '.')
+                if (-not $env:DBASCRIPTS_SERVER -or $ServerInstance -ne '.') {
+                    $env:DBASCRIPTS_SERVER = $ServerInstance
+                }
                 Write-Host ''
                 Write-Host "  Session default set: $ServerInstance" -ForegroundColor DarkGray
             } else {
@@ -317,19 +324,28 @@ if ($fails.Count -eq 0 -and $warns.Count -eq 0) {
 Write-Host ''
 Write-Host '  Next steps' -ForegroundColor DarkGray
 if ($ServerInstance -and ($fails | Where-Object { $_.Label -match 'Connectivity' }).Count -eq 0) {
+    # Connectivity passed — env var is set, so run.ps1 needs no -ServerInstance
+    $serverDisplay = if ($ServerInstance -in '.','localhost','(local)') { "local SQL Server ($ServerInstance)" } else { $ServerInstance }
     Write-Host ''
-    Write-Host '  Run a script                   ' -NoNewline -ForegroundColor DarkGray; Write-Host ".\run.ps1 Get-WaitStatistics" -ForegroundColor White
-    Write-Host '  Full health check              ' -NoNewline -ForegroundColor DarkGray; Write-Host ".\powershell\reporting\Invoke-HealthCheckCollection.ps1 -ServerInstance $ServerInstance" -ForegroundColor White
-    Write-Host '  Review health check findings   ' -NoNewline -ForegroundColor DarkGray; Write-Host '.\powershell\reporting\Review-HealthCheckOutput.ps1' -ForegroundColor White
+    Write-Host "  Server default active: $serverDisplay — run.ps1 will use it automatically" -ForegroundColor Green
+    Write-Host ''
+    Write-Host '  Run a script                   ' -NoNewline -ForegroundColor DarkGray; Write-Host '.\run.ps1 Get-WaitStatistics' -ForegroundColor White
     Write-Host '  Browse all scripts             ' -NoNewline -ForegroundColor DarkGray; Write-Host '.\run.ps1 -List' -ForegroundColor White
-    Write-Host '  Find a script by keyword       ' -NoNewline -ForegroundColor DarkGray; Write-Host '.\helpers\triage\Find-UsefulScript.ps1 -Keyword blocking' -ForegroundColor White
+    Write-Host '  Full health check              ' -NoNewline -ForegroundColor DarkGray; Write-Host '.\powershell\reporting\Invoke-HealthCheckCollection.ps1' -ForegroundColor White
     Write-Host '  Browser UI                     ' -NoNewline -ForegroundColor DarkGray; Write-Host '.\tools\web-ui\Start-WebUi.ps1' -ForegroundColor White
 } else {
+    # Connectivity failed or not yet tested
     Write-Host ''
-    Write-Host '  Set your server                ' -NoNewline -ForegroundColor DarkGray; Write-Host '.\helpers\local-sql\Set-SqlConnection.ps1 -ServerInstance YOURSERVER' -ForegroundColor White
+    if ($ServerInstance -in '.', 'localhost', '(local)') {
+        Write-Host '  No local SQL Server found — target a specific instance:' -ForegroundColor DarkGray
+    } else {
+        Write-Host "  Could not reach $ServerInstance — check instance name and network:" -ForegroundColor DarkGray
+    }
+    Write-Host ''
+    Write-Host '  Set server for this session    ' -NoNewline -ForegroundColor DarkGray; Write-Host '.\helpers\local-sql\Set-SqlConnection.ps1 -ServerInstance YOURSERVER' -ForegroundColor White
     Write-Host '  Re-run with connectivity check ' -NoNewline -ForegroundColor DarkGray; Write-Host '.\Initialize-Environment.ps1 -ServerInstance YOURSERVER' -ForegroundColor White
     Write-Host '  Browse all scripts             ' -NoNewline -ForegroundColor DarkGray; Write-Host '.\run.ps1 -List' -ForegroundColor White
-    Write-Host '  Run a script                   ' -NoNewline -ForegroundColor DarkGray; Write-Host '.\run.ps1 Get-WaitStatistics -ServerInstance YOURSERVER' -ForegroundColor White
+    Write-Host '  Run a script (once server set) ' -NoNewline -ForegroundColor DarkGray; Write-Host '.\run.ps1 Get-WaitStatistics' -ForegroundColor White
     Write-Host '  Browser UI                     ' -NoNewline -ForegroundColor DarkGray; Write-Host '.\tools\web-ui\Start-WebUi.ps1' -ForegroundColor White
 }
 Write-Host ''

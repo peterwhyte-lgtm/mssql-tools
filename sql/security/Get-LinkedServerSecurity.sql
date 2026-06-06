@@ -28,26 +28,26 @@ SELECT
     s.provider,
     s.data_source,
     ISNULL(s.catalog, '')                               AS remote_catalog,
-    ISNULL(ll.local_login_name, '(any login)')          AS local_login,
+    ISNULL(SUSER_SNAME(NULLIF(ll.local_principal_id, 0)), '(any login)')  AS local_login,
     CASE
-        WHEN ll.uses_self_credentials = 1
+        WHEN ll.uses_self_credential = 1
             THEN 'Impersonate — context of the calling login'
-        WHEN ll.remote_name IS NOT NULL AND ll.local_login_name IS NULL
+        WHEN ll.remote_name IS NOT NULL AND ll.local_principal_id = 0
             THEN 'Catch-all mapping → ' + ll.remote_name
         WHEN ll.remote_name IS NOT NULL
             THEN 'Explicit mapping → ' + ll.remote_name
         ELSE '(no mapping — will fail for unmatched logins)'
     END                                                 AS security_context,
-    ll.uses_self_credentials,
+    ll.uses_self_credential,
     ll.remote_name                                      AS remote_login,
     CASE
-        WHEN ll.remote_name IS NOT NULL AND ll.local_login_name IS NULL
+        WHEN ll.remote_name IS NOT NULL AND ll.local_principal_id = 0
             THEN 'HIGH — catch-all with stored credentials'
-        WHEN ll.remote_name IS NOT NULL AND ll.local_login_name IS NOT NULL
+        WHEN ll.remote_name IS NOT NULL AND ll.local_principal_id != 0
             THEN 'HIGH — explicit mapping with stored credentials'
-        WHEN ll.uses_self_credentials = 1
+        WHEN ll.uses_self_credential = 1
             THEN 'MEDIUM — impersonation (caller context)'
-        WHEN ll.remote_name IS NULL AND ll.uses_self_credentials = 0
+        WHEN ll.remote_name IS NULL AND ll.uses_self_credential = 0
             THEN 'LOW — no mapping (access denied for unmatched logins)'
         ELSE 'UNKNOWN'
     END                                                 AS risk_level,
@@ -59,10 +59,10 @@ LEFT JOIN sys.linked_logins ll ON ll.server_id = s.server_id
 WHERE s.is_linked = 1
 ORDER BY
     CASE
-        WHEN ll.remote_name IS NOT NULL AND ll.local_login_name IS NULL THEN 1
-        WHEN ll.remote_name IS NOT NULL                                  THEN 2
-        WHEN ll.uses_self_credentials = 1                               THEN 3
+        WHEN ll.remote_name IS NOT NULL AND ll.local_principal_id = 0 THEN 1
+        WHEN ll.remote_name IS NOT NULL                               THEN 2
+        WHEN ll.uses_self_credential = 1                              THEN 3
         ELSE 4
     END,
     s.name,
-    ll.local_login_name;
+    ll.local_principal_id;

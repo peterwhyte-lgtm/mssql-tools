@@ -68,6 +68,10 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+
+# Respect the session default set by Initialize-Environment or Set-SqlConnection
+if ($ServerInstance -eq '.' -and $env:DBASCRIPTS_SERVER) { $ServerInstance = $env:DBASCRIPTS_SERVER }
+
 $env:DBASCRIPTS_BATCH = '1'  # tells Invoke-RepoSql not to open 19 browser tabs
 
 $repoRoot = Resolve-Path (Join-Path $PSScriptRoot '..\..')
@@ -258,6 +262,10 @@ foreach ($s in $scripts) {
         default   { 'Red' }
     }
     Write-Host ("  [{0,-8}] {1}" -f $status, $s.Label) -ForegroundColor $color
+    if ($status -eq 'FAILED' -and $note) {
+        $shortNote = if ($note.Length -gt 140) { $note.Substring(0, 140) + '…' } else { $note }
+        Write-Host "             $shortNote" -ForegroundColor DarkRed
+    }
 
     $summary.Add([PSCustomObject]@{
         Script  = $s.Label

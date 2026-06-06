@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/sqldba-logo.png" alt="sqldba.blog" width="220">
+  <img src="assets/logo/sqldba-site-logo.png" alt="sqldba.blog" width="220">
 </p>
 
 <h3 align="center">SQL Server diagnostic and operational scripts for production DBAs</h3>
@@ -18,7 +18,8 @@
 ```powershell
 git clone https://github.com/peterwhyte-lgtm/dba-scripts
 cd dba-scripts
-.\Initialize-Environment.ps1 -ServerInstance YOURSERVER
+.\Initialize-Environment.ps1                              # tests local SQL Server by default
+.\Initialize-Environment.ps1 -ServerInstance PROD01\SQL  # or target a specific instance
 ```
 
 <p align="center">

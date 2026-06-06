@@ -31,6 +31,30 @@ if ($List -or -not $ScriptName) {
     Write-Host ('─' * 60) -ForegroundColor DarkCyan
     Write-Host ''
 
+    # ── Top scripts for production DBA ────────────────────────────────────────
+    Write-Host '  Start here' -ForegroundColor Green
+    Write-Host ''
+    $topScripts = @(
+        [PSCustomObject]@{ Name = 'Get-WaitStatistics';             Desc = 'Ranked wait types — first stop for any unexplained slowness' }
+        [PSCustomObject]@{ Name = 'Get-BlockingChains';             Desc = 'Who is blocking whom — head-blocker tree with queries' }
+        [PSCustomObject]@{ Name = 'Get-ActiveRequests';             Desc = 'Queries running right now — incident first look' }
+        [PSCustomObject]@{ Name = 'Get-TopCpuQueries';              Desc = 'Highest CPU queries from plan cache' }
+        [PSCustomObject]@{ Name = 'Get-MissingIndexes';             Desc = 'High-impact missing index recommendations' }
+        [PSCustomObject]@{ Name = 'Get-DatabaseSizesAndFreeSpace';  Desc = 'All databases — data and log sizes with free space' }
+        [PSCustomObject]@{ Name = 'Get-BackupCoverage';             Desc = 'Backup currency across all databases' }
+        [PSCustomObject]@{ Name = 'Get-SqlAgentJobFailureSummary';  Desc = 'Recent job failures and duration outliers' }
+        [PSCustomObject]@{ Name = 'Get-IndexFragmentation';         Desc = 'Fragmentation and page counts for all indexes' }
+        [PSCustomObject]@{ Name = 'Get-InstanceConfigurationScore'; Desc = 'Best-practice configuration score for this instance' }
+    )
+    foreach ($s in $topScripts) {
+        Write-Host ("  {0,-42}" -f $s.Name) -NoNewline -ForegroundColor White
+        Write-Host $s.Desc -ForegroundColor DarkGray
+    }
+    Write-Host ''
+    Write-Host ('─' * 60) -ForegroundColor DarkCyan
+    Write-Host ''
+
+    # ── Full script listing by category ───────────────────────────────────────
     $sqlRoot = Join-Path $repoRoot 'sql'
     foreach ($folder in (Get-ChildItem $sqlRoot -Directory -ErrorAction SilentlyContinue | Sort-Object Name)) {
         $scripts = Get-ChildItem $folder.FullName -Filter '*.sql' -ErrorAction SilentlyContinue | Sort-Object Name
@@ -63,9 +87,20 @@ if ($List -or -not $ScriptName) {
         }
     }
 
-    Write-Host 'Usage:' -ForegroundColor Cyan
-    Write-Host '  .\run.ps1 <ScriptName> [-ServerInstance .] [-OutputFormat Csv]'
-    Write-Host '  .\run.ps1 -List'
+    Write-Host ('─' * 60) -ForegroundColor DarkCyan
+    Write-Host ''
+    Write-Host 'Run a script:' -ForegroundColor Cyan
+    Write-Host '  .\run.ps1 Get-WaitStatistics'
+    Write-Host '  .\run.ps1 Get-WaitStatistics -OutputFormat Csv'
+    Write-Host ''
+    Write-Host 'Set your server once per session (then no -ServerInstance needed):' -ForegroundColor Cyan
+    Write-Host '  .\helpers\local-sql\Set-SqlConnection.ps1 -ServerInstance YOURSERVER'
+    Write-Host ''
+    Write-Host 'Or pass it per-run:' -ForegroundColor Cyan
+    Write-Host '  .\run.ps1 Get-WaitStatistics -ServerInstance YOURSERVER'
+    Write-Host ''
+    Write-Host 'Browser UI (scripts + CSV viewer):' -ForegroundColor Cyan
+    Write-Host '  .\tools\web-ui\Start-WebUi.ps1'
     Write-Host ''
     return
 }
