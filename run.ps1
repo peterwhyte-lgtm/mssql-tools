@@ -91,7 +91,8 @@ if ($List -or -not $ScriptName) {
     Write-Host ''
     Write-Host 'Run a script:' -ForegroundColor Cyan
     Write-Host '  .\run.ps1 Get-WaitStatistics'
-    Write-Host '  .\run.ps1 Get-WaitStatistics -OutputFormat Csv'
+    Write-Host '  Results always saved to output-files/ as CSV.' -ForegroundColor DarkGray
+    Write-Host '  Add -OutputFormat Csv to suppress terminal output (CSV only).' -ForegroundColor DarkGray
     Write-Host ''
     Write-Host 'Set your server once per session (then no -ServerInstance needed):' -ForegroundColor Cyan
     Write-Host '  .\helpers\local-sql\Set-SqlConnection.ps1 -ServerInstance YOURSERVER'

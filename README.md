@@ -2,7 +2,7 @@
   <img src="assets/logo/sqldba-site-logo.png" alt="sqldba.blog" width="220">
 </p>
 
-<h3 align="center">SQL Server diagnostic and operational scripts for production DBAs</h3>
+<h3 align="center">SQL Server Diagnostic & Operational Scripts for Production DBAs</h3>
 
 <p align="center">
   <a href="https://github.com/peterwhyte-lgtm/dba-scripts"><img src="https://img.shields.io/badge/SQL%20Server-2016%2B-CC2927?logo=microsoftsqlserver&logoColor=white" alt="SQL Server"></a>
@@ -13,26 +13,35 @@
 
 ---
 
-## Start here
+## Start Here
+
+Clone the repo and run the setup script. This assumes a local SQL Server — if you have one installed, no flags needed:
 
 ```powershell
 git clone https://github.com/peterwhyte-lgtm/dba-scripts
 cd dba-scripts
-.\Initialize-Environment.ps1                              # tests local SQL Server by default
-.\Initialize-Environment.ps1 -ServerInstance PROD01\SQL  # or target a specific instance
+.\Initialize-Environment.ps1
 ```
+
+This checks PowerShell version, installs the SqlServer module if missing, creates output directories, and verifies the connection. Pass or fail, it tells you exactly what to do next.
 
 <p align="center">
   <img src="assets/screenshots/01-init-terminal.png" alt="Initialize-Environment output" width="720">
-  <br><em>Setup check — verifies PowerShell version, SQL execution tools, and output directories</em>
 </p>
 
-The setup script confirms everything is in place and prints the commands to run next.
-Full prerequisites and troubleshooting: [SETUP.md](SETUP.md)
+To target a remote or named instance instead, pass `-ServerInstance`:
+
+```powershell
+.\Initialize-Environment.ps1 -ServerInstance PROD01\SQL2025
+```
+
+Once setup passes the server is saved for the session, every script picks it up automatically, no `-ServerInstance` flag needed on each run.
+
+> Full prerequisites and troubleshooting: [SETUP.md](SETUP.md)
 
 ---
 
-## What this is
+## What This Is
 
 You're mid-incident. Blocking is taking down an application, a backup question just landed from management, or a migration window opens in two hours and you still need to know what's on the source server. You know what you need to look at — you just need the query in front of you, fast.
 
@@ -42,7 +51,7 @@ Everything is read-only by default. Every script has a header with what permissi
 
 ---
 
-## SQL scripts — open, copy, paste, run
+## SQL Scripts - Open, Copy, Paste, Run
 
 Browse `sql/` and copy directly into SSMS. No parameters, no magic variables, no install. Every script is a single result set.
 
@@ -70,13 +79,13 @@ Full list with descriptions: [docs/script-catalog.md](docs/script-catalog.md)
 The same scripts, callable by name from any directory. No paths, no module dependencies beyond the SqlServer module.
 
 ```powershell
-# Run any script by name — fuzzy match
+# Run any script by name — fuzzy match. Results always saved to output-files/ as CSV.
 .\run.ps1 Get-WaitStatistics
-.\run.ps1 Get-BlockingChains -ServerInstance PROD01\SQL2019
-.\run.ps1 Get-BackupCoverage -OutputFormat Csv
+.\run.ps1 Get-BlockingChains -ServerInstance PROD01\SQL2025
+.\run.ps1 Get-BackupCoverage -OutputFormat Csv  # CSV only, no terminal output
 
 # Set a server once for the session — every script picks it up
-.\helpers\local-sql\Set-SqlConnection.ps1 -ServerInstance PROD01\SQL2019
+.\helpers\local-sql\Set-SqlConnection.ps1 -ServerInstance PROD01\SQL2025
 .\run.ps1 Get-WaitStatistics
 ```
 
@@ -88,7 +97,7 @@ The same scripts, callable by name from any directory. No paths, no module depen
 ### Health check — 27 scripts, one pass
 
 ```powershell
-.\powershell\reporting\Invoke-HealthCheckCollection.ps1 -ServerInstance PROD01\SQL2019
+.\powershell\reporting\Invoke-HealthCheckCollection.ps1 -ServerInstance PROD01\SQL2025
 .\powershell\reporting\Review-HealthCheckOutput.ps1
 ```
 
@@ -102,7 +111,7 @@ Flags: missing or stale backups, databases not online, stale DBCC CHECKDB, suspe
 For a client handover or ownership review, the assessment report generates a scored markdown document:
 
 ```powershell
-.\powershell\reporting\Invoke-AssessmentReport.ps1 -ServerInstance PROD01\SQL2019 -AssessedBy "Your Name"
+.\powershell\reporting\Invoke-AssessmentReport.ps1 -ServerInstance PROD01\SQL2025 -AssessedBy "Your Name"
 ```
 
 ---
@@ -125,10 +134,10 @@ Run against the source server before a migration window:
 
 ```powershell
 # Pre-migration risk scan — HIGH/MEDIUM/INFO findings across compat, features, logins, config
-.\powershell\migration\Invoke-PreMigrationAssessment.ps1 -ServerInstance PROD01\SQL2019
+.\powershell\migration\Invoke-PreMigrationAssessment.ps1 -ServerInstance PROD01\SQL2025
 
 # Capture baseline metrics for before/after comparison
-.\powershell\migration\Export-MigrationBaseline.ps1 -ServerInstance PROD01\SQL2019 -Label pre
+.\powershell\migration\Export-MigrationBaseline.ps1 -ServerInstance PROD01\SQL2025 -Label pre
 ```
 
 Covers: compatibility gaps, deprecated features in active use, edition-only features, linked server dependencies, AG membership, login inventory with migration risk, post-migration validation checklist.
