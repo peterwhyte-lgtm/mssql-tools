@@ -18,7 +18,7 @@ cd dba-scripts
 ```
 
 <p align="center">
-  <img src="../assets/screenshots/01-initialize-environment.png" alt="Initialize-Environment output" width="720">
+  <img src="../assets/screenshots/01-init-terminal.png" alt="Initialize-Environment output" width="720">
   <br><em>Initialize-Environment.ps1 — all checks pass, next steps shown</em>
 </p>
 
@@ -75,8 +75,8 @@ Use `run.ps1` to run any script by name — no paths needed:
 ```
 
 <p align="center">
-  <img src="../assets/screenshots/02-run-wait-statistics.png" alt="run.ps1 Get-WaitStatistics output" width="720">
-  <br><em>.\run.ps1 Get-WaitStatistics — wait type breakdown with filtered benign waits</em>
+  <img src="../assets/screenshots/03-run-ps1-output.png" alt="run.ps1 in action" width="720">
+  <br><em>.\run.ps1 — resolves any script by name, outputs to terminal or CSV</em>
 </p>
 
 Browse all available scripts:
@@ -89,11 +89,6 @@ Browse all available scripts:
 .\helpers\triage\Find-UsefulScript.ps1 -Keyword backup
 ```
 
-<p align="center">
-  <img src="../assets/screenshots/03-run-list.png" alt="run.ps1 -List output" width="720">
-  <br><em>.\run.ps1 -List — all scripts grouped by category</em>
-</p>
-
 ---
 
 ## 4. Run a health check
@@ -101,7 +96,7 @@ Browse all available scripts:
 Collect all key monitoring data in one pass and review the findings:
 
 ```powershell
-# Collect ~27 scripts, save named CSVs to output-files\healthcheck\<server>-<timestamp>\
+# Collect 27 scripts, save named CSVs to output-files\healthcheck\<server>-<timestamp>\
 .\powershell\reporting\Invoke-HealthCheckCollection.ps1 -ServerInstance PROD01\SQL2019
 
 # Review findings — surfaces CRITICAL / WARNING / INFO
@@ -109,13 +104,8 @@ Collect all key monitoring data in one pass and review the findings:
 ```
 
 <p align="center">
-  <img src="../assets/screenshots/04-healthcheck-collection.png" alt="Invoke-HealthCheckCollection output" width="720">
-  <br><em>Invoke-HealthCheckCollection — collecting scripts, saving CSVs</em>
-</p>
-
-<p align="center">
-  <img src="../assets/screenshots/05-healthcheck-review.png" alt="Review-HealthCheckOutput findings" width="720">
-  <br><em>Review-HealthCheckOutput — CRITICAL / WARNING / INFO findings</em>
+  <img src="../assets/screenshots/04-healthcheck-findings.png" alt="Review-HealthCheckOutput findings" width="720">
+  <br><em>Review-HealthCheckOutput — CRITICAL / WARNING / INFO findings across the instance</em>
 </p>
 
 What gets flagged: missing backups, stale DBCC CHECKDB, suspect pages, sa enabled, percent-based autogrowth, unconfigured max server memory, high I/O latency, transaction log pressure, and more.
@@ -139,13 +129,8 @@ An optional local web interface for browsing, running, and visualising script ou
 ```
 
 <p align="center">
-  <img src="../assets/screenshots/06-web-ui-scripts.png" alt="Web UI scripts page" width="720">
-  <br><em>Web UI — scripts page with collapsible categories and one-click run</em>
-</p>
-
-<p align="center">
-  <img src="../assets/screenshots/07-web-ui-csv.png" alt="Web UI CSV output view" width="720">
-  <br><em>Web UI — CSV output with chart, table view, and threshold colouring</em>
+  <img src="../assets/screenshots/05-web-ui-scripts.png" alt="Web UI running in VS Code terminal alongside the browser" width="720">
+  <br><em>VS Code terminal (bottom) running Start-WebUi.ps1, browser UI (top) — browse scripts by category, search, and run against any instance</em>
 </p>
 
 ---

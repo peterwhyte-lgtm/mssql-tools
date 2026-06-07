@@ -51,7 +51,7 @@ Everything is read-only by default. Every script has a header with what permissi
 
 ---
 
-## SQL Scripts - Open, Copy, Paste, Run
+## SQL Scripts — Open, Copy, Paste, Run
 
 Browse `sql/` and copy directly into SSMS. No parameters, no magic variables, no install. Every script is a single result set.
 
@@ -74,7 +74,7 @@ Full list with descriptions: [docs/script-catalog.md](docs/script-catalog.md)
 
 ---
 
-## PowerShell — run from the terminal, save to CSV
+## PowerShell — Run From The Terminal, Save To CSV
 
 The same scripts, callable by name from any directory. No paths, no module dependencies beyond the SqlServer module.
 
@@ -94,7 +94,7 @@ The same scripts, callable by name from any directory. No paths, no module depen
   <br><em>.\run.ps1 — resolves any script by name, outputs to terminal or CSV</em>
 </p>
 
-### Health check — 27 scripts, one pass
+### Health Check — 27 Scripts, One Pass
 
 ```powershell
 .\powershell\reporting\Invoke-HealthCheckCollection.ps1 -ServerInstance PROD01\SQL2025
@@ -116,7 +116,7 @@ For a client handover or ownership review, the assessment report generates a sco
 
 ---
 
-## Operational runbooks
+## Operational Runbooks
 
 `sql-operations/` covers the planned work — the things you need to get right before and during a maintenance window, not the things you're diagnosing in the moment.
 
@@ -128,7 +128,7 @@ For a client handover or ownership review, the assessment report generates a sco
 
 **Change templates** — SQL for TDE, CDC, mirroring, AG configuration, statistics maintenance, DBCC patterns, and patching. Copy the template, fill in the variables, review before executing.
 
-### Migration toolkit
+### Migration Toolkit
 
 Run against the source server before a migration window:
 
@@ -144,7 +144,7 @@ Covers: compatibility gaps, deprecated features in active use, edition-only feat
 
 ---
 
-## Optional: browser UI
+## Optional: Browser UI
 
 A local web interface for browsing and running scripts without the command line. Not required for any workflow — but useful for exploring the toolkit or walking through findings with someone who doesn't live in SSMS.
 
@@ -154,13 +154,8 @@ A local web interface for browsing and running scripts without the command line.
 ```
 
 <p align="center">
-  <img src="assets/screenshots/05-web-ui-scripts.png" alt="Web UI scripts page" width="720">
-  <br><em>Web UI — browse all scripts by category, search, run against any instance</em>
-</p>
-
-<p align="center">
-  <img src="assets/screenshots/06-web-ui-output.png" alt="Web UI CSV output with charts" width="720">
-  <br><em>Web UI — output as table and chart with threshold colouring for backup age, fragmentation, log usage</em>
+  <img src="assets/screenshots/05-web-ui-scripts.png" alt="Web UI running in VS Code terminal alongside the browser" width="720">
+  <br><em>VS Code terminal (bottom) running Start-WebUi.ps1, browser UI (top) — browse scripts by category, search, and run against any instance</em>
 </p>
 
 Runs on `localhost:8787` only. No external dependencies for the server — Chart.js loads from CDN for the chart view.
