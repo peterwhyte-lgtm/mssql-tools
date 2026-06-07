@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Scheduled VLF count collector — appends a daily snapshot to CSV.
 

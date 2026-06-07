@@ -1,4 +1,4 @@
-<#
+﻿<#
 Script Name : MultiServer-GetMaintenanceJobStatus
 Category    : multi-server-scripts/sql
 Purpose     : Checks whether DBA maintenance jobs (DBA - Backup - FULL, DBA - Backup - LOG,

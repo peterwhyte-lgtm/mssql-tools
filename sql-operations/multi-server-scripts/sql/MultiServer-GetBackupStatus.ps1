@@ -1,4 +1,4 @@
-<#
+﻿<#
 Script Name : MultiServer-GetBackupStatus
 Category    : multi-server-scripts/sql
 Purpose     : Check backup coverage across multiple SQL Server instances. Shows last full, diff, and log backup age with coverage status.

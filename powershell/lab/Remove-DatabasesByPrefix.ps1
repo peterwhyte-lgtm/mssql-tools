@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Drops SQL Server databases whose names start with a given prefix.
 

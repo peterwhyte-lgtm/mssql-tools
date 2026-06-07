@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Finds DBA scripts matching a keyword — searches both file names and script content.
 

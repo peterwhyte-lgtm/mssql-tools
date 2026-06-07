@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Summarises plan cache composition and single-use plan pressure.
 

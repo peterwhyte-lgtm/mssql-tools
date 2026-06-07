@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Show patch status for all SQL Server instances and SSMS on this machine.
 

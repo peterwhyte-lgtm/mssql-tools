@@ -1,4 +1,4 @@
-<#
+﻿<#
 Script Name : MultiServer-TestSqlPort
 Category    : multi-server-scripts/powershell
 Purpose     : Test TCP connectivity to SQL Server port 1433 (or custom port) on multiple servers. No WinRM needed.

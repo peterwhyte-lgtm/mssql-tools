@@ -1,4 +1,4 @@
-<#
+﻿<#
 Script Name : MultiServer-GetBlockingSessions
 Category    : multi-server-scripts/sql
 Purpose     : Check for active blocking sessions across multiple SQL Server instances. Zero rows means no blocking.

@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Executes a SQL script from this repo against a local SQL Server instance.
 

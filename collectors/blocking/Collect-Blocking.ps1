@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Scheduled blocking collector — writes to CSV only when blocking is detected.
 

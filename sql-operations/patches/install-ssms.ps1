@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Update SQL Server Management Studio (SSMS) to the latest version.
 

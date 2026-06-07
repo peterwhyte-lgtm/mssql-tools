@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Scheduled index fragmentation collector — weekly snapshot across all user databases.
 

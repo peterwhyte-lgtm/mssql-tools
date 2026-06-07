@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Runs a full instance assessment and generates a structured markdown report.
 

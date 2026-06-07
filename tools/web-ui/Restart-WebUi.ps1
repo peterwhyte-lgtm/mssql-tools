@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Restart the local web UI (Start-WebUi.ps1).
 .DESCRIPTION

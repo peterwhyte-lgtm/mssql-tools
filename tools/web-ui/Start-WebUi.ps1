@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Local web UI for browsing scripts and visualising output CSVs.
 .DESCRIPTION

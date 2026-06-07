@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Apply a SQL Server Cumulative Update (CU) patch silently with pre/post version logging.
 

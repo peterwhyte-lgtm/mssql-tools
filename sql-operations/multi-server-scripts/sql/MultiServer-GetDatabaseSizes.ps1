@@ -1,4 +1,4 @@
-<#
+﻿<#
 Script Name : MultiServer-GetDatabaseSizes
 Category    : multi-server-scripts/sql
 Purpose     : Report data and log file sizes across multiple SQL Server instances. Free space is approximate from sys.master_files.

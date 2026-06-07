@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Runs a pre-migration checklist covering network connectivity, SQL Server version/edition/collation
 compatibility, disk space, and target server configuration.

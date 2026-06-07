@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Scheduled deadlock collector — appends new deadlock events from system_health.
 

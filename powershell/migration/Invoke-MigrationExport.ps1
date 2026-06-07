@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Generates all migration artifacts for a single source SQL Server instance — ready for execution on the target.
 

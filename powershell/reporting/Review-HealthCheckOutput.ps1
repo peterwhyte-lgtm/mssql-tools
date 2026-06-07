@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Reads a health-check output folder and surfaces flagged findings with severity ratings.
 

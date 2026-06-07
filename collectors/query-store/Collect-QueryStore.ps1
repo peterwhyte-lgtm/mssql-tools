@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Scheduled Query Store collector — captures top queries from all QS-enabled databases.
 

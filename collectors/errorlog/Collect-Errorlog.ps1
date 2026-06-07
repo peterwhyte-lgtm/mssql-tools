@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Scheduled SQL Server error log collector — appends new entries to daily CSV.
 

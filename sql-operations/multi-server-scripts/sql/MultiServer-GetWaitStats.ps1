@@ -1,4 +1,4 @@
-<#
+﻿<#
 Script Name : MultiServer-GetWaitStats
 Category    : multi-server-scripts/sql
 Purpose     : Show top wait types ranked by total wait time across multiple SQL Server instances.

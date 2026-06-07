@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Sets, shows, or clears the session-level SQL Server connection defaults.
 

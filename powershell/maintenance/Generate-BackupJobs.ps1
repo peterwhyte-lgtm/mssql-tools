@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Generates SQL Agent job DDL for scheduled database backups: full daily, log every 15 minutes,
 and a cleanup job that removes old backup files based on retention.

@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Generates docs/script-index.md from script headers. Re-run after adding scripts.
 

@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Reviews TempDB file configuration — count, sizing parity, and autogrowth settings.
 

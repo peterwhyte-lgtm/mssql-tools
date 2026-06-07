@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Check today's collector CSVs against thresholds and output CRITICAL/WARNING findings.
 

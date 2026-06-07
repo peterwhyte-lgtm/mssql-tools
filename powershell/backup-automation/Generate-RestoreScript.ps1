@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Generates a RESTORE DATABASE T-SQL script for all online user databases.
 

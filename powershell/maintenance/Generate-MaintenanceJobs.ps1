@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Generates SQL Agent job DDL for routine housekeeping: integrity check (DBCC CHECKDB),
 history cleanup (backup/job/mail history), and error log cycling.

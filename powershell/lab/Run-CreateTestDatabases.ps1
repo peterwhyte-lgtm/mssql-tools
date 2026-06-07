@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Runs the New-TestDatabases SQL script with parameter substitution via sqlcmd.
 

@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Captures a performance and configuration baseline snapshot for pre/post migration comparison.
 

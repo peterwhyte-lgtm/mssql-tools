@@ -1,4 +1,4 @@
-<#
+﻿<#
 Script Name : MultiServer-GetFirewallRules
 Category    : multi-server-scripts/powershell
 Purpose     : List Windows Firewall rules across multiple remote hosts via WinRM.

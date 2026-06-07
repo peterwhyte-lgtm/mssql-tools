@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Generates a transaction log BACKUP T-SQL script for all eligible online user databases.
 

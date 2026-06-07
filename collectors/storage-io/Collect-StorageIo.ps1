@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Scheduled storage I/O collector — appends cumulative file-level I/O snapshots.
 

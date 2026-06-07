@@ -1,4 +1,4 @@
-<#
+﻿<#
 Script Name : MultiServer-GetServiceStatus
 Category    : multi-server-scripts/powershell
 Purpose     : Check Windows service status across multiple remote hosts using Get-Service over RPC.

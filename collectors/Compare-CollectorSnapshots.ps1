@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Computes interval deltas between two adjacent collector snapshots.
 

@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Scheduled AG health collector — captures replica state, queue depths, and lag.
 

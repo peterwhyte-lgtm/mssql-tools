@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Test SQL Server connectivity and print server details.
 

@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Runs the full pre-migration assessment suite and saves each result as a named CSV in a timestamped folder.
 

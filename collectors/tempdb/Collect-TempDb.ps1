@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Scheduled TempDB collector — appends file-level and session-level TempDB snapshots.
 

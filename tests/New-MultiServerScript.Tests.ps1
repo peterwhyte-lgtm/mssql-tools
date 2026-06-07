@@ -1,4 +1,4 @@
-#Requires -Modules Pester
+﻿#Requires -Modules Pester
 
 <#
 Pester tests for helpers/multi-server-query/New-MultiServerScript.ps1

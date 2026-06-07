@@ -1,4 +1,4 @@
-<#
+﻿<#
 Script Name : MultiServer-RestartService
 Category    : multi-server-scripts/powershell
 Purpose     : Restart a named Windows service on multiple remote hosts via WinRM.

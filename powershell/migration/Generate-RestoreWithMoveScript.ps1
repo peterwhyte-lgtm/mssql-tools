@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Generates RESTORE DATABASE scripts with WITH MOVE for all online user databases on the instance.
 

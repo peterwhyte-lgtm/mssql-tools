@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Runs the health check collection across multiple SQL Server instances and surfaces
 aggregated CRITICAL/WARNING findings across the estate.

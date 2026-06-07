@@ -1,4 +1,4 @@
-<#
+﻿<#
 Script Name : MultiServer-GetPatchLevel
 Category    : multi-server-scripts/sql
 Purpose     : Reports SQL Server version, CU level, and edition across multiple instances.

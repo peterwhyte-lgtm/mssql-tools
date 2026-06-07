@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Generates SQL Agent job DDL for index maintenance (rebuild/reorganize) and statistics update
 across all online user databases.

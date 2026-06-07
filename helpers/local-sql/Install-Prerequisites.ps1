@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Checks that the repo's SQL execution dependency is available and offers to install it if not.
 

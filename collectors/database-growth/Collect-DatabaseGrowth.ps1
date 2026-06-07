@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Scheduled database growth collector — point-in-time file size snapshots.
 

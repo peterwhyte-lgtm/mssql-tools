@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Runs a full DBA health-check collection and saves each result as a named CSV in a timestamped folder.
 

@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Generates sp_addlinkedserver + sp_addlinkedsrvlogin DDL for all linked servers on the instance.
 

@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Root launcher for DBA helper scripts. Fuzzy name match against powershell/ and sql/.
 

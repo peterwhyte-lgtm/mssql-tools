@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Deploys the DBA maintenance job framework to one or more SQL Server instances.
 Generates and applies backup jobs, index maintenance jobs, and housekeeping jobs

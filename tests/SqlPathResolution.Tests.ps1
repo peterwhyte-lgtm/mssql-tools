@@ -1,4 +1,4 @@
-#Requires -Modules Pester
+﻿#Requires -Modules Pester
 
 <#
 Pester smoke tests — verify every PowerShell wrapper's referenced SQL path actually exists.

@@ -1,4 +1,4 @@
-<#
+﻿<#
 Script Name : MultiServer-GetRecentEventLogs
 Category    : multi-server-scripts/powershell
 Purpose     : Pull recent Error and Warning events from Windows Event Logs on multiple remote hosts.

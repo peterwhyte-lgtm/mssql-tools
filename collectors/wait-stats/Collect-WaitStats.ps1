@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Scheduled wait stats collector — appends a snapshot to the daily CSV.
 

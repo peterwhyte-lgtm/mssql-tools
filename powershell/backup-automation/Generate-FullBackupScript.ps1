@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Generates a FULL backup T-SQL script for all online user databases.
 
