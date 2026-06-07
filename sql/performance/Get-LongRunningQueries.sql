@@ -1,4 +1,4 @@
-﻿/*
+/*
 Script Name : Get-LongRunningQueries
 Category    : performance-troubleshooting
 Purpose     : Active requests with elapsed and wait details — ordered by elapsed time descending.

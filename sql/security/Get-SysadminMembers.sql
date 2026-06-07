@@ -1,4 +1,4 @@
-﻿/*
+/*
 Script Name : Get-SysadminMembers
 Category    : security-and-permissions
 Purpose     : List members of the sysadmin fixed server role for audits and privilege review.

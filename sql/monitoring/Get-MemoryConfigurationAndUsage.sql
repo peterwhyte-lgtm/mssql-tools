@@ -1,4 +1,4 @@
-﻿/*
+/*
 Script Name : Get-MemoryConfigurationAndUsage
 Category    : configuration-and-environment
 Purpose     : Show configured memory limits alongside current SQL Server memory consumption.

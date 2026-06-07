@@ -1,4 +1,4 @@
-﻿/*
+/*
 Script Name : Get-TopIoQueries
 Category    : performance-troubleshooting
 Purpose     : Top 20 queries by total logical reads since last restart — primary I/O pressure source.

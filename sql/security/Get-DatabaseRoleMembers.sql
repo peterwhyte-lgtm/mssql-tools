@@ -1,4 +1,4 @@
-﻿/*
+/*
 Script Name : Get-DatabaseRoleMembers
 Category    : security-and-permissions
 Purpose     : List database role memberships across all online user databases.

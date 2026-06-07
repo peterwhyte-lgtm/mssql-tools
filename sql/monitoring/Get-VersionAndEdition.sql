@@ -1,4 +1,4 @@
-﻿/*
+/*
 Script Name : Get-VersionAndEdition
 Category    : configuration-and-environment
 Purpose     : Display core instance version, edition, cluster status, and patch level.

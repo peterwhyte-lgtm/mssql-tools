@@ -1,4 +1,4 @@
-﻿/*
+/*
 Script Name : Get-SqlAgentJobFailureSummary
 Category    : configuration-and-environment
 Purpose     : Show SQL Agent job failures from the last 7 days with readable timestamps and error messages.

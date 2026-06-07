@@ -1,4 +1,4 @@
-﻿/*
+/*
 Script Name : Get-DatabaseIntegrityChecks
 Category    : maintenance-and-reliability
 Purpose     : Pre-check database readiness and configuration for integrity validation runs.

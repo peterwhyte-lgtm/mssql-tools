@@ -1,4 +1,4 @@
-﻿/*
+/*
 Script Name : Get-TempdbUsage
 Category    : maintenance-and-reliability
 Purpose     : Show TempDB file sizes, free space, and allocation breakdown per file.

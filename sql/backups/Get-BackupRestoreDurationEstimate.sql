@@ -1,4 +1,4 @@
-﻿/*
+/*
 Script Name : Get-BackupRestoreDurationEstimate
 Category    : backups-and-recovery
 Purpose     : Analyze backup duration and throughput metrics from msdb for performance baseline.

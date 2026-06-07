@@ -1,4 +1,4 @@
-﻿/*
+/*
 Script Name : Get-WeakLoginSettings
 Category    : security-and-permissions
 Purpose     : Identify SQL logins with weak security settings: policy off, expiration off, or sa enabled.

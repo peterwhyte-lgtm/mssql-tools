@@ -1,4 +1,4 @@
-﻿/*
+/*
 Script Name : Get-LoginPermissions
 Category    : security-and-permissions
 Purpose     : Show explicit server-level permissions granted or denied to logins.

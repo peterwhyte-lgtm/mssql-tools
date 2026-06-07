@@ -1,4 +1,4 @@
-﻿/*
+/*
 Script Name : Get-AvailabilityGroupLatency
 Category    : high-availability-and-disaster-recovery
 Purpose     : Display AG replica synchronization timing, queue health, and replication rates.

@@ -1,4 +1,4 @@
-﻿/*
+/*
 Script Name : Get-BackupRestoreProgress
 Category    : performance-troubleshooting
 Purpose     : Show active backup/restore progress and estimated completion for long-running operations.

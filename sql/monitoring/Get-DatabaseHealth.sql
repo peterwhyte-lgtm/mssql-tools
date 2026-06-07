@@ -1,4 +1,4 @@
-﻿/*
+/*
 Script Name : Get-DatabaseHealth
 Category    : maintenance-and-reliability
 Purpose     : Review the health and sizing posture of user databases.

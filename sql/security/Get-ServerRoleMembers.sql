@@ -1,4 +1,4 @@
-﻿/*
+/*
 Script Name : Get-ServerRoleMembers
 Category    : security-and-permissions
 Purpose     : List all members of every fixed and user-defined server role.

@@ -1,4 +1,4 @@
-﻿/*
+/*
 Script Name : Get-ActiveSessions
 Category    : performance-troubleshooting
 Purpose     : Show all active user sessions with current wait type, blocking, elapsed time, and statement.

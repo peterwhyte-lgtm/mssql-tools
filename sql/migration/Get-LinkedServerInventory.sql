@@ -1,4 +1,4 @@
-﻿/*
+/*
 Script Name : Get-LinkedServerInventory
 Category    : migration
 Purpose     : Inventory linked servers for migration and connectivity dependency mapping.

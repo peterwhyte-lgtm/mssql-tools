@@ -1,4 +1,4 @@
-﻿/*
+/*
 Script Name : Get-MissingIndexes
 Category    : performance-troubleshooting
 Purpose     : Missing index candidates from DMVs, ranked by impact score (seeks x cost x impact).

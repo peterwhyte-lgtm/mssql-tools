@@ -1,4 +1,4 @@
-﻿/*
+/*
 Script Name : Get-DatabaseGrowthRisk
 Category    : storage-capacity-management
 Purpose     : Flag databases approaching their configured file size limits.

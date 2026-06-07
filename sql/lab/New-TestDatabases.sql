@@ -1,4 +1,4 @@
-﻿/*
+/*
 Script Name : New-TestDatabases
 Category    : dba-lab
 Purpose     : Create multiple test databases with randomised names for lab and migration scenarios.

@@ -1,4 +1,4 @@
-﻿/*
+/*
 Script Name : Get-DatabaseMailAndXpCmdShell
 Category    : security-and-permissions
 Purpose     : Review whether Database Mail, xp_cmdshell, and CLR are enabled for security audits.

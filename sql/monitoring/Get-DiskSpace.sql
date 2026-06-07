@@ -1,4 +1,4 @@
-﻿/*
+/*
 Script Name : Get-DiskSpace
 Category    : storage-capacity-management
 Purpose     : Show free and used space per volume that hosts SQL Server database files.

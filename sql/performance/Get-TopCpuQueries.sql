@@ -1,4 +1,4 @@
-﻿/*
+/*
 Script Name : Get-TopCpuQueries
 Category    : performance-troubleshooting
 Purpose     : List top 20 CPU-consuming queries with execution counts and timing metrics.

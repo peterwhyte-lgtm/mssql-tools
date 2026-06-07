@@ -1,4 +1,4 @@
-﻿/*
+/*
 Script Name : Get-WorkerThreadsAndActiveSessions
 Category    : performance-troubleshooting
 Purpose     : Active user sessions with CPU, elapsed time, and current worker thread pool usage.

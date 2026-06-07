@@ -1,4 +1,4 @@
-﻿/*
+/*
 Script Name : Get-SlowQueriesFromCache
 Category    : performance-troubleshooting
 Purpose     : Top 20 queries by average elapsed time from the plan cache — identifies habitually slow queries.

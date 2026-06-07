@@ -1,4 +1,4 @@
-﻿/*
+/*
 Script Name : Get-BlockingSummary
 Category    : performance-troubleshooting
 Purpose     : Head blockers with context — who is blocking, how many sessions, and what they are running.

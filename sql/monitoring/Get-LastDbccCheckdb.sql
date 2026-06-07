@@ -1,4 +1,4 @@
-﻿/*
+/*
 Script Name : Get-LastDbccCheckdb
 Category    : maintenance-and-reliability
 Purpose     : Show when each user database last had a successful DBCC CHECKDB run.

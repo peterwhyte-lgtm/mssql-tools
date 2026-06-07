@@ -1,4 +1,4 @@
-﻿/*
+/*
 Script Name : Get-DeadlockSummary
 Category    : performance-troubleshooting
 Purpose     : Show recent deadlock events from the system_health XEvent ring buffer.

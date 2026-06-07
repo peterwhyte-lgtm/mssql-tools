@@ -1,4 +1,4 @@
-﻿/*
+/*
 Script Name : Get-JobInventory
 Category    : migration
 Purpose     : Inventory SQL Agent jobs with owner for migration dependency checks.

@@ -1,4 +1,4 @@
-﻿/*
+/*
 Script Name : Get-MaxdopConfiguration
 Category    : configuration-and-environment
 Purpose     : Show MAXDOP and cost threshold settings alongside current CPU topology.

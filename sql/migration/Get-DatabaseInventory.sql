@@ -1,4 +1,4 @@
-﻿/*
+/*
 Script Name : Get-DatabaseInventory
 Category    : migration
 Purpose     : Inventory user databases for migration readiness — compatibility level, recovery model, state.

@@ -1,4 +1,4 @@
-﻿/*
+/*
 Script Name : Get-IndexUsageStats
 Category    : performance-troubleshooting
 Purpose     : Show how indexes across all user databases are being used — seeks, scans, lookups, updates.

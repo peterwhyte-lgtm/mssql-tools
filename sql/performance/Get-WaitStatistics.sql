@@ -1,4 +1,4 @@
-﻿/*
+/*
 Script Name : Get-WaitStatistics
 Category    : performance-troubleshooting
 Purpose     : Top wait types since last SQL Server restart, filtered to actionable waits only.

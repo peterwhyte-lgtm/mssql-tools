@@ -1,4 +1,4 @@
-﻿/*
+/*
 Script Name : Get-DatabaseBackupHistory
 Category    : backups-and-recovery
 Purpose     : Review detailed backup history for all databases over the last 2 months.

@@ -1,4 +1,4 @@
-﻿/*
+/*
 Script Name : Get-LastDatabaseBackupTimes
 Category    : backups-and-recovery
 Purpose     : Display the latest backup timestamp per type (Full, Differential, Log) per database.

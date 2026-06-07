@@ -1,4 +1,4 @@
-﻿/*
+/*
 Script Name : Get-JobScheduleSummary
 Category    : configuration-and-environment
 Purpose     : Show enabled SQL Agent jobs with their schedules and next scheduled run time.

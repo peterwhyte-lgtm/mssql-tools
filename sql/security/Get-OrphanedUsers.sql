@@ -1,4 +1,4 @@
-﻿/*
+/*
 Script Name : Get-OrphanedUsers
 Category    : security-and-permissions
 Purpose     : Find database users with no matching server login — common after migrations or login drops.

@@ -1,4 +1,4 @@
-﻿/*
+/*
 Script Name : Get-SuspectPages
 Category    : maintenance-and-reliability
 Purpose     : Show any pages recorded in msdb.dbo.suspect_pages — evidence of I/O or corruption errors.

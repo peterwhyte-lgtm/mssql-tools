@@ -1,4 +1,4 @@
-﻿/*
+/*
 Script Name : Get-LinkedServerAndJobInventory
 Category    : configuration-and-environment
 Purpose     : Inventory logins, linked servers, and SQL Agent jobs for pre-migration reviews.

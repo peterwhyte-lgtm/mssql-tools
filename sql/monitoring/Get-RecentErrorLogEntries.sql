@@ -1,4 +1,4 @@
-﻿/*
+/*
 Script Name : Get-RecentErrorLogEntries
 Category    : maintenance-and-reliability
 Purpose     : Show SQL Server error log entries from the last 24 hours, filtering routine noise.

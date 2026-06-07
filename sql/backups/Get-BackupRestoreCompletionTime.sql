@@ -1,4 +1,4 @@
-﻿/*
+/*
 Script Name : Get-BackupRestoreCompletionTime
 Category    : backups-and-recovery
 Purpose     : Monitor active backup and restore operations with estimated completion time.

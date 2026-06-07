@@ -1,4 +1,4 @@
-﻿/*
+/*
 Script Name : Get-BackupCoverage
 Category    : backups-and-recovery
 Purpose     : Review backup coverage per database with a status flag for quick health assessment.

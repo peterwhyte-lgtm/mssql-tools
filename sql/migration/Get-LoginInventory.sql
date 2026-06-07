@@ -1,4 +1,4 @@
-﻿/*
+/*
 Script Name : Get-LoginInventory
 Category    : migration
 Purpose     : Inventory server logins by type and status for migration and access review.

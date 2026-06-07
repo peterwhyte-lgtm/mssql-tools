@@ -1,4 +1,4 @@
-﻿/*
+/*
 Script Name : Get-DatabaseGrowthEvents
 Category    : maintenance-and-reliability
 Purpose     : Show recent autogrowth events from the default trace for capacity planning.

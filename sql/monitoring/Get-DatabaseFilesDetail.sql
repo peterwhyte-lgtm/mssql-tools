@@ -1,4 +1,4 @@
-﻿/*
+/*
 Script Name : Get-DatabaseFilesDetail
 Category    : storage-capacity-management
 Purpose     : Show per-file details for all user databases: path, size, max size, growth settings.

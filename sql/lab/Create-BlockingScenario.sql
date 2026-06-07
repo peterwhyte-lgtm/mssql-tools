@@ -1,4 +1,4 @@
-﻿/*
+/*
 Script Name : Create-BlockingScenario
 Category    : lab
 Purpose     : Controlled blocking scenario for testing Get-BlockingChains, Get-BlockingSessions,

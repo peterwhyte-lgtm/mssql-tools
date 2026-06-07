@@ -1,4 +1,4 @@
-﻿/*
+/*
 Script Name : Get-IndexFragmentationAcrossDatabases
 Category    : performance-troubleshooting
 Purpose     : Check index fragmentation details across all user databases for maintenance planning.

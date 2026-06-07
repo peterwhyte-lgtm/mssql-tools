@@ -1,4 +1,4 @@
-﻿/*
+/*
 Script Name : Get-AvailabilityGroupReplicaState
 Category    : high-availability-and-disaster-recovery
 Purpose     : Show AG replica health, connection state, and synchronization status for failover readiness.
