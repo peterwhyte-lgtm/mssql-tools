@@ -36,7 +36,7 @@
 **Target primary (after failover):** `[SERVERNAME\INSTANCE]`
 
 **Change type:**
-```
+```text
 [ ] Planned manual failover — maintenance on current primary
 [ ] Add new replica to AG
 [ ] Remove replica from AG
@@ -45,7 +45,7 @@
 ```
 
 **Reason:**
-```
+```text
 [Reason — e.g., OS patching on primary, hardware maintenance, server decommission]
 ```
 

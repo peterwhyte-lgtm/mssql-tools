@@ -30,7 +30,7 @@
 
 ## 2. Change Summary
 
-```
+```text
 SQL Server [version] on [SourceServer] is being migrated to [TargetServer].
 SQL Server version on target: [same / upgraded to X]
 
@@ -40,7 +40,7 @@ Databases being migrated: [Count] databases, [X GB] total data
 ```
 
 **Reason for migration:**
-```
+```text
 [ ] Hardware refresh / end of life
 [ ] VM infrastructure migration
 [ ] Data centre relocation

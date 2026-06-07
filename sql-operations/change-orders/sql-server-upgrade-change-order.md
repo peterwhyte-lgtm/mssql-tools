@@ -33,7 +33,7 @@
 ## 2. Change Summary
 
 **What is changing:**
-```
+```text
 SQL Server version upgrade from [Source Version, e.g., SQL Server 2016 SP3 CU15]
 to [Target Version, e.g., SQL Server 2019 CU23] on [Server Name].
 
@@ -44,12 +44,12 @@ Total data size: [X GB]
 ```
 
 **Business justification:**
-```
+```text
 [Reason for upgrade — e.g., end of extended support, new feature requirement, compliance requirement]
 ```
 
 **Affected systems:**
-```
+```text
 Source server:  [SERVERNAME\INSTANCENAME]
 Target server:  [SERVERNAME\INSTANCENAME]  (side-by-side only)
 Applications:   [List application names and owners]
@@ -73,7 +73,7 @@ AG name:        [AG name, or N/A]
 **Overall risk rating:** `[ ] LOW  [ ] MEDIUM  [ ] HIGH`
 
 **Risk justification:**
-```
+```text
 [1-2 sentences explaining the overall risk rating — e.g., "Risk is MEDIUM due to database size
 requiring a 4-hour restore window, limiting rollback time. Mitigated by pre-tested backups and
 application team availability."]

@@ -6,7 +6,7 @@ This document describes the current folder layout and the purpose of each area.
 
 ## Top-level layout
 
-```
+```text
 sql/             Raw SQL scripts — SSMS-ready, paste-and-run
 powershell/      Unique PowerShell scripts: orchestration, automation, DDL generators, OS tools
 wrappers/        Thin PS wrappers — one per SQL script, mirrors sql/ categories

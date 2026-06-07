@@ -157,7 +157,7 @@ If you are unsure whether a trigger has been met: assume it has and begin rollba
 When rollback is initiated, use this communication template:
 
 **Immediate notification (within 2 minutes of rollback decision):**
-```
+```text
 Subject: [URGENT] Migration Rollback Initiated — [ServerName]
 
 The [ServerName] migration is being rolled back due to: [trigger criterion].
@@ -170,7 +170,7 @@ DBA Lead: [Name, Phone]
 ```
 
 **Completion notification:**
-```
+```text
 Subject: [RESOLVED] Migration Rollback Complete — [ServerName]
 
 The [ServerName] migration rollback is complete.

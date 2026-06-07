@@ -8,7 +8,8 @@ Change order template: `../change-orders/server-migration-change-order.md`
 
 ## Pre-Migration — 72 Hours Before
 
-**Assessment**
+### Assessment
+
 - [ ] Run `Invoke-PreMigrationAssessment.ps1` against source server — address all HIGH findings
 - [ ] `login-audit.csv` reviewed — SQL logins scripted with `Generate-LoginScript.ps1`
 - [ ] `backup-coverage.csv` reviewed — all databases have recent full backups
@@ -17,7 +18,8 @@ Change order template: `../change-orders/server-migration-change-order.md`
 - [ ] Startup parameters and trace flags documented
 - [ ] `Export-MigrationBaseline.ps1 -Label pre` run — output folder noted: `___________`
 
-**New Server**
+### New Server
+
 - [ ] New server has sufficient CPU, RAM, and disk (compare against `os-hardware.csv` from assessment)
 - [ ] SQL Server installed on new server (same or newer version/edition)
 - [ ] SQL Server patch level confirmed (same as or higher than source)
@@ -27,7 +29,8 @@ Change order template: `../change-orders/server-migration-change-order.md`
 - [ ] Network connectivity confirmed between source and new server (for backup copy or log shipping)
 - [ ] New server meets firewall and connectivity requirements for applications
 
-**Application**
+### Application
+
 - [ ] Application team notified and available for connectivity testing
 - [ ] DNS alias (CNAME) strategy confirmed: flip alias vs update connection strings
 - [ ] Application connection string owner identified and available during cutover

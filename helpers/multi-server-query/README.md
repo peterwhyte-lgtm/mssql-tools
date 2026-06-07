@@ -4,7 +4,7 @@
 
 ## How it works
 
-```
+```text
 New-MultiServerScript.ps1  →  generates a .ps1  →  you review it  →  you run it
 ```
 

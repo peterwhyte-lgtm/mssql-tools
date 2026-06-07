@@ -222,26 +222,26 @@ Security scripts (`Get-SysadminMembers`, `Get-UserPermissionsAudit`) require `sy
 
 ## Troubleshooting
 
-**Scripts won't run — "execution of scripts is disabled"**
+### Scripts won't run — "execution of scripts is disabled"
 
 ```powershell
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 ```
 
-**Invoke-Sqlcmd not found**
+### Invoke-Sqlcmd not found
 
 ```powershell
 Install-Module -Name SqlServer -Scope CurrentUser -Force
 # Or install SSMS / SQL Server Management Tools which includes sqlcmd.exe
 ```
 
-**Cannot connect to SQL Server**
+### Cannot connect to SQL Server
 
 - Verify port 1433 is reachable: `Test-NetConnection -ComputerName PROD01 -Port 1433`
 - Check SQL Server Browser is running if using named instances
 - Confirm the SQL Server service account has a firewall exception on the target
 
-**Multi-server scripts fail with "Access denied" or "WinRM cannot complete the operation"**
+### Multi-server scripts fail with "Access denied" or "WinRM cannot complete the operation"
 
 ```powershell
 # On each TARGET server (as admin):
@@ -250,13 +250,13 @@ Enable-PSRemoting -Force
 Set-Item WSMan:\localhost\Client\TrustedHosts -Value "MGMT01" -Force
 ```
 
-**Output CSVs are large / output-files/ is filling up**
+### Output CSVs are large / output-files/ is filling up
 
 ```powershell
 .\helpers\maintenance\Clear-OutputFiles.ps1
 ```
 
-**PowerShell 5.1 — parallel switch does nothing**
+### PowerShell 5.1 — parallel switch does nothing
 
 `ForEach-Object -Parallel` requires PowerShell 7+. Install from [aka.ms/powershell](https://aka.ms/powershell) or via winget:
 
@@ -264,7 +264,7 @@ Set-Item WSMan:\localhost\Client\TrustedHosts -Value "MGMT01" -Force
 winget install Microsoft.PowerShell
 ```
 
-**"The file is not digitally signed" on AllSigned policy**
+### "The file is not digitally signed" on AllSigned policy
 
 ```powershell
 # Either change execution policy:

@@ -26,7 +26,7 @@ The preferred AG migration approach adds new replica nodes to the existing AG, f
 
 **Requires:** Enterprise Edition for multi-database AGs on older versions. Standard Edition supports Basic AGs (single-database, SQL 2016+).
 
-```
+```text
 Before:
   [OLDPRI] ──sync──► [OLDSEC1]   ← existing AG
 

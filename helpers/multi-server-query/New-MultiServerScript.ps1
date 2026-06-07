@@ -155,7 +155,7 @@ if ($extension -eq '.sql' -and $scriptContent -match "(?m)^'@") {
 $isSql      = $extension -eq '.sql'
 $serverList = $Servers -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne '' }
 
-if ($serverList.Count -eq 0) {
+if (@($serverList).Count -eq 0) {
     Write-Error "No valid server names found in -Servers. Provide a comma-separated list."
     exit 1
 }

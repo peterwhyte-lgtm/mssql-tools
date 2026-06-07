@@ -7,8 +7,11 @@
   // MD031 — fences blank line : code blocks inside lists and tight prose are fine
   // MD032 — lists blank line  : tight lists inside prose sections are fine
   // MD033 — inline HTML       : used in docs intentionally
+  // MD029 — ol-prefix          : numbered lists split by fenced code blocks are treated as new lists;
+  //                             restructuring to indent all embedded code blocks would damage readability
   // MD041 — first line H1     : YAML frontmatter sits above the first heading
   "default": true,
+  "MD029": false,
   "MD013": false,
   "MD024": { "siblings_only": true },
   "MD025": false,

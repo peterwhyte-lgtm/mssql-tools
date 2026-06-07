@@ -7,19 +7,22 @@ Change order template: `../change-orders/sql-server-upgrade-change-order.md`
 
 ## Pre-Migration — 72 Hours Before
 
-**Assessment**
+### Assessment
+
 - [ ] Run `Invoke-PreMigrationAssessment.ps1` against source server — save output folder path
 - [ ] All **HIGH** findings in `risk-assessment.csv` resolved or formally accepted in change order
 - [ ] `deprecated-features.csv` reviewed — all flagged features tested against target version in non-prod
 - [ ] `compat-level-audit.csv` reviewed — compat level upgrade plan documented
 
-**Backups**
+### Backups
+
 - [ ] All user databases have a full backup completed within the last 24 hours
 - [ ] Backup chain verified: full + differential + log (if FULL recovery model)
 - [ ] Restore tested on non-prod — at least one database restored and `DBCC CHECKDB` passed
 - [ ] Backup storage accessible and sufficient for an additional full backup set
 
-**Environment**
+### Environment
+
 - [ ] Target SQL Server version and edition confirmed (Standard vs Enterprise — check feature usage)
 - [ ] Target server OS and hardware meet SQL Server version requirements
 - [ ] Service accounts documented (SQL Server, SQL Agent, SSAS, SSIS if applicable)
@@ -27,23 +30,27 @@ Change order template: `../change-orders/sql-server-upgrade-change-order.md`
 - [ ] Windows Firewall rules for SQL ports documented
 - [ ] Linked servers documented — connectivity tested from equivalent non-prod server
 
-**Logins and Security**
+### Logins and Security
+
 - [ ] `login-audit.csv` reviewed — all SQL logins to migrate identified
 - [ ] `Generate-LoginScript.ps1` output reviewed and ready to run on target
 - [ ] Windows logins (AD accounts/groups) confirmed accessible from target server's domain/trust
 - [ ] `sa` password documented (stored in vault) or reset plan in place
 
-**Jobs and Agents**
+### Jobs and Agents
+
 - [ ] SQL Agent jobs reviewed — hardcoded server names or paths identified and updated
 - [ ] SQL Agent operators and alerts documented
 - [ ] Job schedules documented — first run times after migration noted
 
-**Application**
+### Application
+
 - [ ] Application owner sign-off obtained
 - [ ] Application connectivity test plan confirmed (test query and expected result)
 - [ ] Application team available during migration window for connectivity confirmation
 
-**Change Management**
+### Change Management
+
 - [ ] Change order approved (CAB or equivalent)
 - [ ] Maintenance window confirmed: `Start: ___________  End: ___________`
 - [ ] Rollback deadline confirmed (must be within maintenance window): `___________`

@@ -8,7 +8,7 @@ Changing the SQL Server edition on a running instance — upgrades (Web → Stan
 
 ## Edition hierarchy and key differences
 
-```
+```text
 Express (free)  →  Web  →  Standard  →  Enterprise
 ```
 
