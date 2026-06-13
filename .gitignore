@@ -2,6 +2,10 @@
 # Never commit runtime output; re-generate from scripts as needed
 output-files/
 
+# ── Personal / blog content — local only, not for the shared DBA toolkit ─────
+blog/
+personal-helpers/
+
 # ── Credentials and secrets — never commit ───────────────────────────────────
 .env
 *.env

@@ -108,7 +108,6 @@ helpers/
 sql-operations/             — change orders, checklists, rollback, change templates, installation, patches
 output-files/               — generated CSVs, healthcheck folders, reviews
 docs/                       — roadmap, quick-start, runbook
-blog/                       — draft blog posts for sqldba.blog (one post per script/workflow)
 ```
 
 ## Running against a remote server
