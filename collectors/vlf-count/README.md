@@ -1,4 +1,4 @@
-# VLF Count Collector
+﻿# VLF Count Collector
 
 Point-in-time snapshot of Virtual Log File counts for all online user databases. High VLF counts slow log backup, recovery, and database startup. Collect daily to catch accumulating databases before they need emergency maintenance.
 
@@ -93,7 +93,7 @@ EXEC msdb.dbo.sp_add_jobstep
     @job_name  = N'DBA - VLF Count Collector',
     @step_name = N'Collect',
     @subsystem = N'CmdExec',
-    @command   = N'pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File "C:\dba-scripts\collectors\vlf-count\Collect-VlfCount.ps1"',
+    @command   = N'pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File "C:\mssql-tools\collectors\vlf-count\Collect-VlfCount.ps1"',
     @on_success_action = 1,
     @on_fail_action    = 2;
 

@@ -1,4 +1,4 @@
-# SQL layer
+﻿# SQL layer
 
 This top-level SQL folder is the canonical home for investigation and reporting queries.
 
@@ -9,4 +9,4 @@ Suggested domains:
 - monitoring/ — health, job, and operational visibility checks
 - migration/ — database, login, job, and linked-server inventory for upgrade and estate moves
 
-The canonical working path is now the top-level sql/ layer, with helper and wrapper scripts in helpers/ and powershell/.
+The canonical working path is now the top-level sql/ layer, with helper and wrapper scripts in tools/ and powershell/.

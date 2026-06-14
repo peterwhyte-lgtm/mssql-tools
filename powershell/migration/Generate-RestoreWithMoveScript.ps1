@@ -50,7 +50,7 @@ Full path for the generated .sql file. Defaults to output-files\migration\restor
 .\powershell\migration\Generate-RestoreWithMoveScript.ps1 -ServerInstance PROD01\SQL2019
 
 .EXAMPLE
-.\helpers\local-sql\Set-SqlConnection.ps1 -ServerInstance PROD01\SQL2019
+.\tools\local-sql\Set-SqlConnection.ps1 -ServerInstance PROD01\SQL2019
 .\powershell\migration\Generate-RestoreWithMoveScript.ps1
 #>
 

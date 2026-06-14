@@ -56,7 +56,7 @@ param(
 $ErrorActionPreference = 'Stop'
 
 $repoRoot  = Resolve-Path (Join-Path $PSScriptRoot '..\..')
-$runner    = Join-Path $repoRoot 'helpers\local-sql\Invoke-RepoSql.ps1'
+$runner    = Join-Path $repoRoot 'tools\local-sql\Invoke-RepoSql.ps1'
 
 $sqlName   = if ($IncludePlan) { 'Get-ActiveRequestsWithPlan.sql' } else { 'Get-ActiveRequests.sql' }
 $sqlScript = Join-Path $repoRoot "sql\performance\$sqlName"

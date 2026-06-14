@@ -41,7 +41,7 @@ Full path for the generated .sql file. Defaults to output-files\migration\user-m
 
 .EXAMPLE
 # Set server once for the session, then run all three generate scripts
-.\helpers\local-sql\Set-SqlConnection.ps1 -ServerInstance PROD01\SQL2019
+.\tools\local-sql\Set-SqlConnection.ps1 -ServerInstance PROD01\SQL2019
 .\powershell\migration\Generate-LoginScript.ps1
 .\powershell\migration\Generate-AgentJobScript.ps1
 .\powershell\migration\Generate-UserMappingScript.ps1

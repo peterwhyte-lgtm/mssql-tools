@@ -1,4 +1,4 @@
-# AG Health Collector
+﻿# AG Health Collector
 
 Snapshots Availability Group replica state, synchronisation health, queue depths, and estimated failover time. Returns a single `NO_AG` row on standalone instances — always succeeds without configuration changes.
 
@@ -89,7 +89,7 @@ EXEC msdb.dbo.sp_add_jobstep
     @job_name  = N'DBA - AG Health Collector',
     @step_name = N'Collect',
     @subsystem = N'CmdExec',
-    @command   = N'pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File "C:\dba-scripts\collectors\ag-health\Collect-AgHealth.ps1"',
+    @command   = N'pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File "C:\mssql-tools\collectors\ag-health\Collect-AgHealth.ps1"',
     @on_success_action = 1,
     @on_fail_action    = 2;
 

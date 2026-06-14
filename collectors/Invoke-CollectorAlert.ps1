@@ -36,7 +36,7 @@ Optional. Write findings to this CSV path (in addition to table output).
 .\collectors\Invoke-CollectorAlert.ps1 -ServerInstance PROD01\SQL2019 -OutputFormat Csv
 
 # SQL Agent job step (CmdExec) — exits 1 on CRITICAL to trigger failure notification:
-# pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File "C:\dba-scripts\collectors\Invoke-CollectorAlert.ps1"
+# pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File "C:\mssql-tools\collectors\Invoke-CollectorAlert.ps1"
 #>
 [CmdletBinding()]
 param(

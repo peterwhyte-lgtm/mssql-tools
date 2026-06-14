@@ -1,13 +1,13 @@
-<p align="center">
+﻿<p align="center">
   <img src="assets/logo/sqldba-site-logo.png" alt="sqldba.blog" width="220">
 </p>
 
 <h3 align="center">SQL Server Diagnostic & Operational Scripts for Production DBAs</h3>
 
 <p align="center">
-  <a href="https://github.com/peterwhyte-lgtm/dba-scripts"><img src="https://img.shields.io/badge/SQL%20Server-2016%2B-CC2927?logo=microsoftsqlserver&logoColor=white" alt="SQL Server"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/github/license/peterwhyte-lgtm/dba-scripts" alt="License"></a>
-  <a href="https://github.com/peterwhyte-lgtm/dba-scripts/commits/main"><img src="https://img.shields.io/github/last-commit/peterwhyte-lgtm/dba-scripts" alt="Last commit"></a>
+  <a href="https://github.com/peterwhyte-lgtm/mssql-tools"><img src="https://img.shields.io/badge/SQL%20Server-2016%2B-CC2927?logo=microsoftsqlserver&logoColor=white" alt="SQL Server"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/peterwhyte-lgtm/mssql-tools" alt="License"></a>
+  <a href="https://github.com/peterwhyte-lgtm/mssql-tools/commits/main"><img src="https://img.shields.io/github/last-commit/peterwhyte-lgtm/mssql-tools" alt="Last commit"></a>
   <a href="https://sqldba.blog"><img src="https://img.shields.io/badge/blog-sqldba.blog-blue" alt="Blog"></a>
 </p>
 
@@ -18,8 +18,8 @@
 Clone the repo and run the setup script. This assumes a local SQL Server is installed, no flags needed:
 
 ```powershell
-git clone https://github.com/peterwhyte-lgtm/dba-scripts
-cd dba-scripts
+git clone https://github.com/peterwhyte-lgtm/mssql-tools
+cd mssql-tools
 .\Initialize-Environment.ps1
 ```
 
@@ -85,7 +85,7 @@ The same scripts, callable by name from any directory. No paths, no module depen
 .\run.ps1 Get-BackupCoverage -OutputFormat Csv  # CSV only, no terminal output
 
 # Set a server once for the session — every script picks it up
-.\helpers\local-sql\Set-SqlConnection.ps1 -ServerInstance PROD01\SQL2025
+.\tools\local-sql\Set-SqlConnection.ps1 -ServerInstance PROD01\SQL2025
 .\run.ps1 Get-WaitStatistics
 ```
 
@@ -118,7 +118,7 @@ For a client handover or ownership review, the assessment report generates a sco
 
 ## Operational Runbooks
 
-`sql-operations/` covers the planned work — the things you need to get right before and during a maintenance window, not the things you're diagnosing in the moment.
+`docs/ops/` covers the planned work — the things you need to get right before and during a maintenance window, not the things you're diagnosing in the moment.
 
 **Change orders** — CAB-ready approval documents for version upgrades, server migrations, and AG failovers. Pre/post checks and rollback criteria included.
 

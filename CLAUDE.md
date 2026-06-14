@@ -1,4 +1,4 @@
-# CLAUDE.md
+﻿# CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
@@ -32,7 +32,7 @@ The three entry points, in order of preference:
 pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\powershell\reporting\Get-WaitStatistics.ps1 -ServerInstance . -OutputFormat Csv
 
 # 3. SQL directly via the repo runner (for SSMS-style results in terminal)
-pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\helpers\local-sql\Invoke-RepoSql.ps1 -ScriptPath .\sql\performance\Get-WaitStatistics.sql -ServerInstance .
+pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\tools\local-sql\Invoke-RepoSql.ps1 -ScriptPath .\sql\performance\Get-WaitStatistics.sql -ServerInstance .
 ```
 
 Full healthcheck workflow:
@@ -49,15 +49,15 @@ Full healthcheck workflow:
 
 Preflight and discovery:
 ```powershell
-.\helpers\triage\Show-RepoOverview.ps1                          # inventory: script counts by category
-.\helpers\triage\Find-UsefulScript.ps1 -Keyword blocking        # find scripts by keyword
-.\helpers\local-sql\Test-SqlConnectivity.ps1 -ServerInstance .  # verify SQL connectivity
-.\helpers\maintenance\Clear-OutputFiles.ps1                     # wipe output-files\ before a fresh run
+.\tools\triage\Show-RepoOverview.ps1                          # inventory: script counts by category
+.\tools\triage\Find-UsefulScript.ps1 -Keyword blocking        # find scripts by keyword
+.\tools\local-sql\Test-SqlConnectivity.ps1 -ServerInstance .  # verify SQL connectivity
+.\tools\maintenance\Clear-OutputFiles.ps1                     # wipe output-files\ before a fresh run
 ```
 
-## Layout — canonical vs legacy
+## Layout
 
-**Use `sql/`, `powershell/`, or `wrappers/` for all new work.** The `categories/` folder is a legacy compatibility copy; it is stale, not maintained, and exists only so old references don't break.
+**Use `sql/`, `powershell/`, or `wrappers/` for all new work.**
 
 ```text
 sql/
@@ -82,6 +82,7 @@ powershell/
                         Generate-RestoreScript, Get-BackupAge
   inventory/          — Get-LargestFolders, Get-DiskSpaceSummary, Get-OldestBackupFolderFiles,
                         Get-InstanceSnapshot, Get-InstanceHealthSummary
+  multi-server/       — MultiServer-Get*.ps1 scripts (disk, wait stats, patch level, blocking, etc.)
   lab/                — lab and test database scripts (dev/test only)
 
 wrappers/             — thin PS wrappers: one per SQL script, mirrors sql/ category structure.
@@ -99,15 +100,23 @@ collectors/
   Output: appends timestamped rows to daily CSV files for trend analysis and post-incident review.
   Collectors: ag-health, blocking, database-growth, deadlocks, perfmon, storage-io, tempdb, wait-stats
 
-helpers/
-  local-sql/    — Invoke-RepoSql.ps1 (the core runner), Test-SqlConnectivity.ps1
+web-ui/               — browser UI: Start-WebUi.ps1, Restart-WebUi.ps1, Generate-ScriptIndex.ps1
+
+tools/
+  local-sql/    — Invoke-RepoSql.ps1 (the core runner), Set-SqlConnection.ps1, Test-SqlConnectivity.ps1
   triage/       — Show-RepoOverview.ps1, Find-UsefulScript.ps1, Quick-TaskRouter.ps1
-  scaffolding/  — Generate-NextPowerShell.ps1 (stub new wrappers quickly)
+  scaffolding/  — Generate-NextPowerShell.ps1, New-MultiServerScript.ps1
   maintenance/  — Clear-OutputFiles.ps1, update-powershell.ps1
 
-sql-operations/             — change orders, checklists, rollback, change templates, installation, patches
-output-files/               — generated CSVs, healthcheck folders, reviews
-docs/                       — roadmap, quick-start, runbook
+admin/
+  installation/ — SQL Server install, configure, validate, uninstall
+  patching/     — CU updates (install-cu.ps1), SSMS updates, patch summary
+
+docs/
+  quick-start.md, roadmap.md, runbook.md
+  ops/          — change orders, checklists, runbooks, rollback playbooks, change-templates
+
+output-files/         — generated CSVs, healthcheck folders, reviews
 ```
 
 ## Running against a remote server
@@ -116,19 +125,19 @@ All scripts that call `Invoke-RepoSql.ps1` honour three session-level environmen
 
 ```powershell
 # Set remote server for this session (Windows auth)
-.\helpers\local-sql\Set-SqlConnection.ps1 -ServerInstance PROD01\SQL2019
+.\tools\local-sql\Set-SqlConnection.ps1 -ServerInstance PROD01\SQL2019
 
 # SQL auth (prompts for password)
-.\helpers\local-sql\Set-SqlConnection.ps1 -ServerInstance PROD01 -Username sa
+.\tools\local-sql\Set-SqlConnection.ps1 -ServerInstance PROD01 -Username sa
 
 # Named instance with non-default port
-.\helpers\local-sql\Set-SqlConnection.ps1 -ServerInstance "PROD01\INST01,14330"
+.\tools\local-sql\Set-SqlConnection.ps1 -ServerInstance "PROD01\INST01,14330"
 
 # See what is currently active
-.\helpers\local-sql\Set-SqlConnection.ps1 -Show
+.\tools\local-sql\Set-SqlConnection.ps1 -Show
 
 # Reset to local (.) Windows auth
-.\helpers\local-sql\Set-SqlConnection.ps1 -Clear
+.\tools\local-sql\Set-SqlConnection.ps1 -Clear
 ```
 
 Or pass `-ServerInstance` directly on any individual call:
@@ -146,7 +155,7 @@ Env vars used internally: `$env:DBASCRIPTS_SERVER`, `$env:DBASCRIPTS_USER`, `$en
 
 ```powershell
 # Migration: generate all three scripts from source server
-.\helpers\local-sql\Set-SqlConnection.ps1 -ServerInstance PROD01\SQL2019
+.\tools\local-sql\Set-SqlConnection.ps1 -ServerInstance PROD01\SQL2019
 .\powershell\migration\Generate-LoginScript.ps1
 .\powershell\migration\Generate-AgentJobScript.ps1
 .\powershell\migration\Generate-UserMappingScript.ps1
@@ -155,15 +164,15 @@ Env vars used internally: `$env:DBASCRIPTS_SERVER`, `$env:DBASCRIPTS_USER`, `$en
 
 ## How PowerShell wrappers work
 
-Every script in `powershell/**/*.ps1` (except helpers and orchestrators) is a thin wrapper:
+Every script in `powershell/**/*.ps1` (except utility scripts and orchestrators) is a thin wrapper:
 
 1. Resolves `$repoRoot` as two levels up from `$PSScriptRoot`
 2. Builds `$sqlScript = Join-Path $repoRoot 'sql\<category>\<Name>.sql'`
-3. Delegates to `helpers\local-sql\Invoke-RepoSql.ps1` with `-ScriptPath`, `-ServerInstance`, `-Database`, `-OutputFormat`, `-OutputPath`
+3. Delegates to `tools\local-sql\Invoke-RepoSql.ps1` with `-ScriptPath`, `-ServerInstance`, `-Database`, `-OutputFormat`, `-OutputPath`
 
 `Invoke-RepoSql.ps1` tries `Invoke-Sqlcmd` first (SqlServer module), falls back to `sqlcmd.exe`. Always writes a CSV to `output-files\reviews\<category>\<scriptname>-<timestamp>.csv` and prints a table preview. If neither tool is available it throws.
 
-`run.ps1` → `helpers\Run-Helper.ps1` → resolves script by name fuzzy match → `& $target @Arguments`. It searches `helpers/`, `sql/`, `powershell/`, `wrappers/`, `tools/` recursively. Throws if more than one match — callers must be specific.
+`run.ps1` resolves script by name fuzzy match → `& $target @Arguments`. It searches `powershell/`, `wrappers/`, `tools/`, `sql/` recursively. Throws if more than one match — callers must be specific.
 
 **PowerShell script rules:**
 - Classify script type in `.NOTES`: `runner` / `automation` / `hybrid`

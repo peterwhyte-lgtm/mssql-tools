@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Audits all server-level principals that need to be migrated, with risk level and action per login type.
 
@@ -47,7 +47,7 @@ if ($ServerInstance -eq '.' -and $env:DBASCRIPTS_SERVER) { $ServerInstance = $en
 
 $repoRoot  = Resolve-Path (Join-Path $PSScriptRoot '..\..')
 $sqlScript = Join-Path $repoRoot 'sql\migration\Get-MigrationLoginAudit.sql'
-$runner    = Join-Path $repoRoot 'helpers\local-sql\Invoke-RepoSql.ps1'
+$runner    = Join-Path $repoRoot 'tools\local-sql\Invoke-RepoSql.ps1'
 
 if (-not (Test-Path -LiteralPath $sqlScript)) { throw "Script not found: $sqlScript" }
 if (-not (Test-Path -LiteralPath $runner))    { throw "Runner not found: $runner" }

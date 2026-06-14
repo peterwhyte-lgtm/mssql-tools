@@ -75,7 +75,7 @@ if ($ServerInstance -eq '.' -and $env:DBASCRIPTS_SERVER) { $ServerInstance = $en
 $env:DBASCRIPTS_BATCH = '1'  # tells Invoke-RepoSql not to open 19 browser tabs
 
 $repoRoot = Resolve-Path (Join-Path $PSScriptRoot '..\..')
-$runner   = Join-Path $repoRoot 'helpers\local-sql\Invoke-RepoSql.ps1'
+$runner   = Join-Path $repoRoot 'tools\local-sql\Invoke-RepoSql.ps1'
 
 if (-not (Test-Path -LiteralPath $runner)) { throw "Runner not found: $runner" }
 

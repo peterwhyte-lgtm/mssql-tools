@@ -42,7 +42,7 @@ Full path for the generated .sql file. Defaults to output-files\migration\agent-
 
 .EXAMPLE
 # Set server once for the session, then run
-.\helpers\local-sql\Set-SqlConnection.ps1 -ServerInstance PROD01\SQL2019
+.\tools\local-sql\Set-SqlConnection.ps1 -ServerInstance PROD01\SQL2019
 .\powershell\migration\Generate-AgentJobScript.ps1
 
 .EXAMPLE

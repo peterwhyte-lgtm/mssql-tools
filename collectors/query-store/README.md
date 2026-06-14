@@ -1,4 +1,4 @@
-# Query Store Collector
+﻿# Query Store Collector
 
 Captures the top 50 queries by average CPU time from the most recently completed runtime stats interval, for every database with Query Store enabled. Build a timestamped history to detect plan regressions and query performance trends over time.
 
@@ -75,7 +75,7 @@ EXEC msdb.dbo.sp_add_jobstep
     @job_name  = N'DBA - Query Store Collector',
     @step_name = N'Collect',
     @subsystem = N'CmdExec',
-    @command   = N'pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File "C:\dba-scripts\collectors\query-store\Collect-QueryStore.ps1"',
+    @command   = N'pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File "C:\mssql-tools\collectors\query-store\Collect-QueryStore.ps1"',
     @on_success_action = 1,
     @on_fail_action    = 2;
 

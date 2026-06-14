@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Lists all tables with no clustered index (heaps) across all online user databases.
 
@@ -46,7 +46,7 @@ if ($ServerInstance -eq '.' -and $env:DBASCRIPTS_SERVER) { $ServerInstance = $en
 
 $repoRoot  = Resolve-Path (Join-Path $PSScriptRoot '..\..')
 $sqlScript = Join-Path $repoRoot 'sql\performance\Get-Heaps.sql'
-$runner    = Join-Path $repoRoot 'helpers\local-sql\Invoke-RepoSql.ps1'
+$runner    = Join-Path $repoRoot 'tools\local-sql\Invoke-RepoSql.ps1'
 
 if (-not (Test-Path -LiteralPath $sqlScript)) { throw "Script not found: $sqlScript" }
 if (-not (Test-Path -LiteralPath $runner))    { throw "Runner not found: $runner" }

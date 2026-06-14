@@ -1,4 +1,4 @@
-# DBA Runbook
+﻿# DBA Runbook
 
 ## Quick triage commands
 
@@ -13,7 +13,7 @@
 .\run.ps1 Get-LongRunningQueries
 
 # Preflight
-.\helpers\local-sql\Test-SqlConnectivity.ps1 -ServerInstance .
+.\tools\local-sql\Test-SqlConnectivity.ps1 -ServerInstance .
 .\run.ps1 -List
 ```
 
@@ -233,19 +233,19 @@ HADR_SYNC_COMMIT spike in wait-stats delta
 
 ```powershell
 # Check backup coverage across all SQL instances
-.\sql-operations\multi-server-scripts\sql\MultiServer-GetBackupStatus.ps1 -Servers "SVR01,SVR02,SVR03" -Parallel
+.\powershell\multi-server\sql\MultiServer-GetBackupStatus.ps1 -Servers "SVR01,SVR02,SVR03" -Parallel
 
 # Check for active blocking across all instances right now
-.\sql-operations\multi-server-scripts\sql\MultiServer-GetBlockingSessions.ps1 -Servers "SVR01,SVR02,SVR03"
+.\powershell\multi-server\sql\MultiServer-GetBlockingSessions.ps1 -Servers "SVR01,SVR02,SVR03"
 
 # Disk space across all Windows servers
-.\sql-operations\multi-server-scripts\powershell\MultiServer-GetDiskSpace.ps1 -Servers "SVR01,SVR02,SVR03" -WarnBelowPctFree 15
+.\powershell\multi-server\powershell\MultiServer-GetDiskSpace.ps1 -Servers "SVR01,SVR02,SVR03" -WarnBelowPctFree 15
 
 # Test SQL port reachability across estate
-.\sql-operations\multi-server-scripts\powershell\MultiServer-TestSqlPort.ps1 -Servers "SVR01,SVR02,SVR03,SVR04,SVR05" -Parallel
+.\powershell\multi-server\powershell\MultiServer-TestSqlPort.ps1 -Servers "SVR01,SVR02,SVR03,SVR04,SVR05" -Parallel
 
 # Generate a custom multi-server wrapper for any SQL script
-.\helpers\multi-server-query\New-MultiServerScript.ps1 `
+.\tools\multi-server-query\New-MultiServerScript.ps1 `
     -ScriptPath sql\performance\Get-WaitStatistics.sql `
     -Servers "SVR01,SVR02,SVR03" `
     -OutputFile C:\Temp\run-waits.ps1
@@ -301,7 +301,7 @@ SELECT COUNT(*) AS vlf_count FROM sys.dm_db_log_info(DB_ID('YourDatabase'));
 ### Clear output files before a fresh assessment run
 
 ```powershell
-.\helpers\maintenance\Clear-OutputFiles.ps1
+.\tools\maintenance\Clear-OutputFiles.ps1
 ```
 
 ---
@@ -343,4 +343,4 @@ SELECT COUNT(*) AS vlf_count FROM sys.dm_db_log_info(DB_ID('YourDatabase'));
 | `output-files\assessment\<server>-<timestamp>.md` | Assessment reports |
 | `output-files\migration\*.sql` | Generated DDL scripts (logins, jobs, user mappings) |
 
-Clear all generated output: `.\helpers\maintenance\Clear-OutputFiles.ps1`
+Clear all generated output: `.\tools\maintenance\Clear-OutputFiles.ps1`

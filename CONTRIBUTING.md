@@ -1,4 +1,4 @@
-# Contributing
+﻿# Contributing
 
 Bug reports, fixes, and improvements to existing scripts are welcome. This is a production DBA toolkit, so the bar for changes is correctness and safety — not feature completeness.
 
@@ -62,7 +62,7 @@ Wrappers follow a thin-wrapper pattern — SQL logic stays in external `.sql` fi
 # Standard wrapper shape
 $repoRoot  = Resolve-Path (Join-Path $PSScriptRoot '..\..')
 $sqlScript = Join-Path $repoRoot 'sql\<category>\Get-Something.sql'
-$runner    = Join-Path $repoRoot 'helpers\local-sql\Invoke-RepoSql.ps1'
+$runner    = Join-Path $repoRoot 'tools\local-sql\Invoke-RepoSql.ps1'
 & $runner -ScriptPath $sqlScript -ServerInstance $ServerInstance -Database $Database -OutputFormat $OutputFormat -OutputPath $OutputPath
 ```
 
@@ -75,8 +75,8 @@ Required `.NOTES` fields: `ScriptType` (runner / automation / hybrid), `TargetSc
 | New SQL diagnostic or monitoring script | `sql/<category>/Get-Something.sql` |
 | New PowerShell wrapper for a SQL script | `wrappers/<category>/Get-Something.ps1` |
 | New unique PowerShell script (orchestration, automation) | `powershell/<subfolder>/` |
-| New change order template | `sql-operations/change-orders/` |
-| New operational checklist | `sql-operations/checklists/` |
+| New change order template | `docs/ops/change-orders/` |
+| New operational checklist | `docs/ops/checklists/` |
 
 If the right category doesn't exist, open an issue first rather than creating a new top-level folder.
 

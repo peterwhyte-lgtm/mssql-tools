@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Returns sessions involved in blocking chains with wait type, timing, and current statement.
 
@@ -39,7 +39,7 @@ $ErrorActionPreference = 'Stop'
 
 $repoRoot  = Resolve-Path (Join-Path $PSScriptRoot '..\..')
 $sqlScript = Join-Path $repoRoot 'sql\performance\Get-BlockingSessions.sql'
-$runner    = Join-Path $repoRoot 'helpers\local-sql\Invoke-RepoSql.ps1'
+$runner    = Join-Path $repoRoot 'tools\local-sql\Invoke-RepoSql.ps1'
 
 Write-Host 'Running blocking-sessions review...' -ForegroundColor Cyan
 & $runner -ScriptPath $sqlScript -ServerInstance $ServerInstance -Database $Database -OutputFormat $OutputFormat -OutputPath $OutputPath

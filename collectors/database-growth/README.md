@@ -1,4 +1,4 @@
-# Database Growth Collector
+﻿# Database Growth Collector
 
 Point-in-time snapshot of every database file's size, autogrowth settings, space to growth limit, and a growth risk flag. No delta calculation needed — each snapshot is standalone.
 
@@ -73,7 +73,7 @@ EXEC msdb.dbo.sp_add_jobstep
     @job_name  = N'DBA - Database Growth Collector',
     @step_name = N'Collect',
     @subsystem = N'CmdExec',
-    @command   = N'pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File "C:\dba-scripts\collectors\database-growth\Collect-DatabaseGrowth.ps1"',
+    @command   = N'pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File "C:\mssql-tools\collectors\database-growth\Collect-DatabaseGrowth.ps1"',
     @on_success_action = 1,
     @on_fail_action    = 2;
 

@@ -23,11 +23,11 @@ param(
 
 $repoRoot = Resolve-Path $PSScriptRoot
 
-& (Join-Path $repoRoot 'helpers\local-sql\Install-Prerequisites.ps1')
+& (Join-Path $repoRoot 'tools\local-sql\Install-Prerequisites.ps1')
 
 if ($List -or -not $ScriptName) {
     Write-Host ''
-    Write-Host 'DBA Scripts — available scripts' -ForegroundColor Cyan
+    Write-Host 'mssql-tools — available scripts' -ForegroundColor Cyan
     Write-Host ('─' * 60) -ForegroundColor DarkCyan
     Write-Host ''
 
@@ -95,13 +95,13 @@ if ($List -or -not $ScriptName) {
     Write-Host '  Add -OutputFormat Csv to suppress terminal output (CSV only).' -ForegroundColor DarkGray
     Write-Host ''
     Write-Host 'Set your server once per session (then no -ServerInstance needed):' -ForegroundColor Cyan
-    Write-Host '  .\helpers\local-sql\Set-SqlConnection.ps1 -ServerInstance YOURSERVER'
+    Write-Host '  .\tools\local-sql\Set-SqlConnection.ps1 -ServerInstance YOURSERVER'
     Write-Host ''
     Write-Host 'Or pass it per-run:' -ForegroundColor Cyan
     Write-Host '  .\run.ps1 Get-WaitStatistics -ServerInstance YOURSERVER'
     Write-Host ''
     Write-Host 'Browser UI (scripts + CSV viewer):' -ForegroundColor Cyan
-    Write-Host '  .\tools\web-ui\Start-WebUi.ps1'
+    Write-Host '  .\web-ui\Start-WebUi.ps1'
     Write-Host ''
     return
 }
@@ -111,9 +111,8 @@ if ($List -or -not $ScriptName) {
 $searchRoots = @(
     (Join-Path $repoRoot 'powershell'),
     (Join-Path $repoRoot 'wrappers'),
-    (Join-Path $repoRoot 'helpers'),
-    (Join-Path $repoRoot 'sql'),
-    (Join-Path $repoRoot 'tools')
+    (Join-Path $repoRoot 'tools'),
+    (Join-Path $repoRoot 'sql')
 )
 
 $candidates = @()
@@ -137,7 +136,7 @@ $exact = $unique | Where-Object { $_.BaseName -eq $ScriptName }
 if ($exact.Count -eq 1) { $unique = $exact }
 if ($unique.Count -eq 0) {
     Write-Host "No script matched '$ScriptName'." -ForegroundColor Yellow
-    Write-Host "  Try: .\helpers\triage\Find-UsefulScript.ps1 -Keyword $ScriptName" -ForegroundColor DarkGray
+    Write-Host "  Try: .\tools\triage\Find-UsefulScript.ps1 -Keyword $ScriptName" -ForegroundColor DarkGray
     Write-Host ''
     return
 }
@@ -152,7 +151,7 @@ $target = $unique[0].FullName
 
 # SQL files go through Invoke-RepoSql; PS files are called directly.
 if ($target -like '*.sql') {
-    $runner = Join-Path $repoRoot 'helpers\local-sql\Invoke-RepoSql.ps1'
+    $runner = Join-Path $repoRoot 'tools\local-sql\Invoke-RepoSql.ps1'
     $target = $runner
     $Arguments = @('-ScriptPath', $unique[0].FullName) + $Arguments
 }

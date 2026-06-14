@@ -1,4 +1,4 @@
-# Quick start
+﻿# Quick start
 
 Get from a fresh clone to running diagnostics against a SQL Server instance in five minutes.
 
@@ -7,8 +7,8 @@ Get from a fresh clone to running diagnostics against a SQL Server instance in f
 ## 1. Clone and initialise
 
 ```powershell
-git clone https://github.com/peterwhyte-lgtm/dba-scripts
-cd dba-scripts
+git clone https://github.com/peterwhyte-lgtm/mssql-tools
+cd mssql-tools
 
 # Checks PowerShell version, SQL execution tools, and creates output directories
 .\Initialize-Environment.ps1
@@ -32,16 +32,16 @@ Set the server once for the session — every script picks it up automatically:
 
 ```powershell
 # Windows auth (recommended)
-.\helpers\local-sql\Set-SqlConnection.ps1 -ServerInstance PROD01\SQL2019
+.\tools\local-sql\Set-SqlConnection.ps1 -ServerInstance PROD01\SQL2019
 
 # SQL auth
-.\helpers\local-sql\Set-SqlConnection.ps1 -ServerInstance PROD01 -Username sa
+.\tools\local-sql\Set-SqlConnection.ps1 -ServerInstance PROD01 -Username sa
 
 # Check what is currently set
-.\helpers\local-sql\Set-SqlConnection.ps1 -Show
+.\tools\local-sql\Set-SqlConnection.ps1 -Show
 
 # Verify connectivity
-.\helpers\local-sql\Test-SqlConnectivity.ps1
+.\tools\local-sql\Test-SqlConnectivity.ps1
 ```
 
 To persist the connection across sessions:
@@ -85,8 +85,8 @@ Browse all available scripts:
 .\run.ps1 -List
 
 # Find scripts by keyword
-.\helpers\triage\Find-UsefulScript.ps1 -Keyword blocking
-.\helpers\triage\Find-UsefulScript.ps1 -Keyword backup
+.\tools\triage\Find-UsefulScript.ps1 -Keyword blocking
+.\tools\triage\Find-UsefulScript.ps1 -Keyword backup
 ```
 
 ---
@@ -152,9 +152,9 @@ Every script in `sql/` is paste-and-run in SSMS. No PowerShell needed:
 | Need | Resource |
 |------|----------|
 | Full script list with descriptions | [docs/script-catalog.md](script-catalog.md) |
-| Repo folder layout | [docs/dba-scripts-repo-structure.md](dba-scripts-repo-structure.md) |
+| Repo folder layout | [docs/mssql-tools-repo-structure.md](mssql-tools-repo-structure.md) |
 | Prerequisites, permissions, troubleshooting | [SETUP.md](../SETUP.md) |
 | Migration workflow | `powershell/migration/Invoke-PreMigrationAssessment.ps1` |
-| Change orders and runbooks | `sql-operations/` |
+| Change orders and runbooks | `docs/ops/` |
 | Scheduled trend collection | `collectors/` |
-| Multi-server operations | `sql-operations/multi-server-scripts/` |
+| Multi-server operations | `powershell/multi-server/` |

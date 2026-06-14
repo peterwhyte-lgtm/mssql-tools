@@ -239,7 +239,7 @@ if ($ServerInstance) {
     $connHeader = if ($ServerInstance -in '.','localhost','(local)') { 'Connectivity — local SQL Server' } else { "Connectivity — $ServerInstance" }
     Write-Host "  $connHeader" -ForegroundColor DarkGray
 
-    $connScript = Join-Path $repoRoot 'helpers\local-sql\Test-SqlConnectivity.ps1'
+    $connScript = Join-Path $repoRoot 'tools\local-sql\Test-SqlConnectivity.ps1'
     if (Test-Path $connScript) {
         try {
             # *>&1 captures Write-Host (Information stream 6) alongside stdout/stderr in PS7.
@@ -290,7 +290,7 @@ if ($ServerInstance) {
         $line = "`$env:DBASCRIPTS_SERVER = '$ServerInstance'"
 
         if ($profileContent -notmatch [regex]::Escape('DBASCRIPTS_SERVER')) {
-            Add-Content -Path $profilePath -Value "`n# dba-scripts default server`n$line"
+            Add-Content -Path $profilePath -Value "`n# mssql-tools default server`n$line"
             Add-Check 'Profile persistence' 'OK' "Added to $profilePath — survives session restarts"
         } else {
             Add-Check 'Profile persistence' 'SKIP' 'DBASCRIPTS_SERVER already in profile — update manually if needed'
@@ -342,7 +342,7 @@ if ($ServerInstance -and ($fails | Where-Object { $_.Label -match 'Connectivity'
         Write-Host "  Could not reach $ServerInstance — check instance name and network:" -ForegroundColor DarkGray
     }
     Write-Host ''
-    Write-Host '  Set server for this session    ' -NoNewline -ForegroundColor DarkGray; Write-Host '.\helpers\local-sql\Set-SqlConnection.ps1 -ServerInstance YOURSERVER' -ForegroundColor White
+    Write-Host '  Set server for this session    ' -NoNewline -ForegroundColor DarkGray; Write-Host '.\tools\local-sql\Set-SqlConnection.ps1 -ServerInstance YOURSERVER' -ForegroundColor White
     Write-Host '  Re-run with connectivity check ' -NoNewline -ForegroundColor DarkGray; Write-Host '.\Initialize-Environment.ps1 -ServerInstance YOURSERVER' -ForegroundColor White
     Write-Host '  Browse all scripts             ' -NoNewline -ForegroundColor DarkGray; Write-Host '.\run.ps1 -List' -ForegroundColor White
     Write-Host '  Run a script (once server set) ' -NoNewline -ForegroundColor DarkGray; Write-Host '.\run.ps1 Get-WaitStatistics' -ForegroundColor White

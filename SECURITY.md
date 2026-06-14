@@ -1,4 +1,4 @@
-# Security Policy
+﻿# Security Policy
 
 - This repository contains read-only diagnostics and operational templates by default.
 - Never include secrets, connection strings, or private hostnames in issues or PRs.
@@ -12,7 +12,7 @@ We aim for compatibility with:
 ## Reporting a vulnerability
 
 Please email security disclosures to: <peterwhyte.mail@gmail.com>  
-Subject: `[dba-scripts] Security`
+Subject: `[mssql-tools] Security`
 
 Include: what you found, which file(s) are affected, and steps to reproduce. Response within 48 hours.
 
@@ -28,7 +28,7 @@ Include: what you found, which file(s) are affected, and steps to reproduce. Res
 - Passwords are never written to log files, CSV output, or committed files
 - A warning is printed when SQL auth is activated
 
-**Answer file templates** (`sql-operations/installation/templates/*.ini`) contain no real credentials. `SAPWD` is always supplied at runtime via `-SAPassword` parameter — never stored in INI files.
+**Answer file templates** (`admin\installation\templates/*.ini`) contain no real credentials. `SAPWD` is always supplied at runtime via `-SAPassword` parameter — never stored in INI files.
 
 ## What is in scope
 

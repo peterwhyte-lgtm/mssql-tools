@@ -1,4 +1,4 @@
-# Errorlog Collector
+﻿# Errorlog Collector
 
 Reads new entries from the SQL Server error log and appends only novel entries (by timestamp) to the daily CSV. Builds a searchable history of SQL Server errors over time without duplicating entries on back-to-back runs.
 
@@ -63,7 +63,7 @@ EXEC msdb.dbo.sp_add_jobstep
     @job_name  = N'DBA - Errorlog Collector',
     @step_name = N'Collect',
     @subsystem = N'CmdExec',
-    @command   = N'pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File "C:\dba-scripts\collectors\errorlog\Collect-Errorlog.ps1"',
+    @command   = N'pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File "C:\mssql-tools\collectors\errorlog\Collect-Errorlog.ps1"',
     @on_success_action = 1,
     @on_fail_action    = 2;
 

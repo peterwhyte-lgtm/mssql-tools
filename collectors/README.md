@@ -1,4 +1,4 @@
-# Collectors
+﻿# Collectors
 
 Scheduled data collection scripts that build historical records for trend analysis and
 post-incident investigation. Each collector appends timestamped snapshots to daily CSV files.
@@ -39,7 +39,7 @@ output-files/
 
 ```powershell
 # Point at a server for the session
-.\helpers\local-sql\Set-SqlConnection.ps1 -ServerInstance PROD01\SQL2019
+.\tools\local-sql\Set-SqlConnection.ps1 -ServerInstance PROD01\SQL2019
 
 # Run any collector
 .\collectors\wait-stats\Collect-WaitStats.ps1

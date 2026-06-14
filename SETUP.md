@@ -1,4 +1,4 @@
-# Environment Setup
+﻿# Environment Setup
 
 Everything you need to go from a fresh clone to running your first query. Run the setup script for an automated check, or follow the manual steps below.
 
@@ -8,8 +8,8 @@ Everything you need to go from a fresh clone to running your first query. Run th
 
 ```powershell
 # Clone the repo
-git clone https://github.com/peterwhyte-lgtm/dba-scripts
-cd dba-scripts
+git clone https://github.com/peterwhyte-lgtm/mssql-tools
+cd mssql-tools
 
 # Run the setup script — checks prerequisites and creates output directories
 .\Initialize-Environment.ps1
@@ -62,22 +62,22 @@ Set the session default once — all scripts pick it up automatically:
 
 ```powershell
 # Windows auth (recommended when on the same domain)
-.\helpers\local-sql\Set-SqlConnection.ps1 -ServerInstance PROD01\SQL2019
+.\tools\local-sql\Set-SqlConnection.ps1 -ServerInstance PROD01\SQL2019
 
 # SQL auth (prompts for password)
-.\helpers\local-sql\Set-SqlConnection.ps1 -ServerInstance PROD01 -Username sa
+.\tools\local-sql\Set-SqlConnection.ps1 -ServerInstance PROD01 -Username sa
 
 # Local instance (. = default local instance)
-.\helpers\local-sql\Set-SqlConnection.ps1 -ServerInstance .
+.\tools\local-sql\Set-SqlConnection.ps1 -ServerInstance .
 
 # Show what is currently set
-.\helpers\local-sql\Set-SqlConnection.ps1 -Show
+.\tools\local-sql\Set-SqlConnection.ps1 -Show
 ```
 
 Test that it works:
 
 ```powershell
-.\helpers\local-sql\Test-SqlConnectivity.ps1
+.\tools\local-sql\Test-SqlConnectivity.ps1
 ```
 
 ### Making the connection survive session restarts
@@ -113,8 +113,8 @@ Or let the setup script do it: `.\Initialize-Environment.ps1 -ServerInstance PRO
 # Output goes to: output-files\reviews\performance\Get-WaitStatistics-<timestamp>.csv
 
 # Find scripts by keyword
-.\helpers\triage\Find-UsefulScript.ps1 -Keyword blocking
-.\helpers\triage\Find-UsefulScript.ps1 -Keyword backup
+.\tools\triage\Find-UsefulScript.ps1 -Keyword blocking
+.\tools\triage\Find-UsefulScript.ps1 -Keyword backup
 ```
 
 ---
@@ -155,7 +155,7 @@ No external dependencies for the server itself. Chart.js is loaded from CDN on t
 
 ## Multi-server scripts
 
-Scripts in `sql-operations/multi-server-scripts/` run operations across multiple servers simultaneously. They have two extra requirements:
+Scripts in `powershell/multi-server/` run operations across multiple servers simultaneously. They have two extra requirements:
 
 **For PowerShell remoting scripts** (GetDiskSpace, GetFirewallRules, GetRecentEventLogs, RestartService):
 
@@ -171,7 +171,7 @@ Enable-PSRemoting -Force
 .\tools\multi-server-scripts\sql\MultiServer-GetBackupStatus.ps1 -Servers "SVR01,SVR02,SVR03"
 
 # Generate a custom multi-server wrapper from any SQL file
-.\helpers\multi-server-query\New-MultiServerScript.ps1 `
+.\tools\multi-server-query\New-MultiServerScript.ps1 `
     -ScriptPath sql\performance\Get-WaitStatistics.sql `
     -Servers "SVR01,SVR02,SVR03" `
     -OutputFile C:\Temp\run-waits.ps1
@@ -253,7 +253,7 @@ Set-Item WSMan:\localhost\Client\TrustedHosts -Value "MGMT01" -Force
 ### Output CSVs are large / output-files/ is filling up
 
 ```powershell
-.\helpers\maintenance\Clear-OutputFiles.ps1
+.\tools\maintenance\Clear-OutputFiles.ps1
 ```
 
 ### PowerShell 5.1 — parallel switch does nothing

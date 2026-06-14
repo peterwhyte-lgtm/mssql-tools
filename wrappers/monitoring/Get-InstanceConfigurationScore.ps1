@@ -32,7 +32,7 @@ $ErrorActionPreference = 'Stop'
 
 $repoRoot  = Resolve-Path (Join-Path $PSScriptRoot '..\..')
 $sqlScript = Join-Path $repoRoot 'sql\monitoring\Get-InstanceConfigurationScore.sql'
-$runner    = Join-Path $repoRoot 'helpers\local-sql\Invoke-RepoSql.ps1'
+$runner    = Join-Path $repoRoot 'tools\local-sql\Invoke-RepoSql.ps1'
 
 if (-not (Test-Path -LiteralPath $sqlScript)) { throw "SQL script not found: $sqlScript" }
 if (-not (Test-Path -LiteralPath $runner))    { throw "Runner not found: $runner" }

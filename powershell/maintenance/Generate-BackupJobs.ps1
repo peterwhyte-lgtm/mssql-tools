@@ -37,7 +37,7 @@ Full path for the generated .sql file. Defaults to output-files\maintenance\back
 .\powershell\maintenance\Generate-BackupJobs.ps1 -ServerInstance PROD01\SQL2019
 
 .EXAMPLE
-.\helpers\local-sql\Set-SqlConnection.ps1 -ServerInstance PROD01
+.\tools\local-sql\Set-SqlConnection.ps1 -ServerInstance PROD01
 .\powershell\maintenance\Generate-BackupJobs.ps1
 #>
 

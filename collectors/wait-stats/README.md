@@ -1,4 +1,4 @@
-# Wait Stats Collector
+﻿# Wait Stats Collector
 
 Captures timestamped snapshots of `sys.dm_os_wait_stats` on a schedule. Builds a historical
 record that can be diffed to see what SQL Server was waiting on during any given interval.
@@ -70,7 +70,7 @@ or roughly 5,000–15,000 rows per day. A daily CSV stays under 2 MB.
 .\collectors\wait-stats\Collect-WaitStats.ps1 -ServerInstance PROD01\SQL2019
 
 # Set session default, then run
-.\helpers\local-sql\Set-SqlConnection.ps1 -ServerInstance PROD01\SQL2019
+.\tools\local-sql\Set-SqlConnection.ps1 -ServerInstance PROD01\SQL2019
 .\collectors\wait-stats\Collect-WaitStats.ps1
 ```
 
@@ -104,7 +104,7 @@ EXEC msdb.dbo.sp_add_jobstep
     @job_name          = N'DBA - Wait Stats Collector',
     @step_name         = N'Collect',
     @subsystem         = N'CmdExec',
-    @command           = N'pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File "C:\dba-scripts\collectors\wait-stats\Collect-WaitStats.ps1"',
+    @command           = N'pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File "C:\mssql-tools\collectors\wait-stats\Collect-WaitStats.ps1"',
     @on_success_action = 1,   -- quit with success
     @on_fail_action    = 2;   -- quit with failure
 

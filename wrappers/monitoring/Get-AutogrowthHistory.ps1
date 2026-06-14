@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Reads autogrowth events from the SQL Server default trace.
 Frequent or business-hours autogrowth events indicate undersized files or a growth
@@ -39,7 +39,7 @@ $ErrorActionPreference = 'Stop'
 
 $repoRoot  = Resolve-Path (Join-Path $PSScriptRoot '..\..')
 $sqlScript = Join-Path $repoRoot 'sql\monitoring\Get-AutogrowthHistory.sql'
-$runner    = Join-Path $repoRoot 'helpers\local-sql\Invoke-RepoSql.ps1'
+$runner    = Join-Path $repoRoot 'tools\local-sql\Invoke-RepoSql.ps1'
 
 if (-not (Test-Path -LiteralPath $sqlScript)) { throw "SQL script not found: $sqlScript" }
 if (-not (Test-Path -LiteralPath $runner))    { throw "Runner not found: $runner" }
