@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Reports virtual log file (VLF) count per database transaction log, ranked by severity.
 High VLF counts degrade recovery time, log backup performance, and AG redo queue processing.
@@ -21,10 +21,10 @@ Output mode: 'Table' (default) or 'Csv'.
 Optional file path to save the output.
 
 .EXAMPLE
-.\database-admin\powershell-scripts\inventory\Get-VlfCount.ps1
+.\powershell\inventory\Get-VlfCount.ps1
 
 .EXAMPLE
-.\database-admin\powershell-scripts\inventory\Get-VlfCount.ps1 -ServerInstance PROD01 -OutputFormat Csv
+.\powershell\inventory\Get-VlfCount.ps1 -ServerInstance PROD01 -OutputFormat Csv
 #>
 
 param(
@@ -37,7 +37,7 @@ param(
 $ErrorActionPreference = 'Stop'
 
 $repoRoot  = Resolve-Path (Join-Path $PSScriptRoot '..\..\..')
-$sqlScript = Join-Path $repoRoot 'database-admin\sql-scripts\monitoring\Get-VlfCount.sql'
+$sqlScript = Join-Path $repoRoot 'sql\monitoring\Get-VlfCount.sql'
 $runner    = Join-Path $repoRoot 'tools\local-sql\Invoke-RepoSql.ps1'
 
 if (-not (Test-Path -LiteralPath $sqlScript)) { throw "SQL script not found: $sqlScript" }

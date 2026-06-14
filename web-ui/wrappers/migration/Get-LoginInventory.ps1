@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Inventories server logins by type and status for migration and access review.
 
@@ -34,7 +34,7 @@ param(
 $ErrorActionPreference = 'Stop'
 
 $repoRoot  = Resolve-Path (Join-Path $PSScriptRoot '..\..\..')
-$sqlScript = Join-Path $repoRoot 'database-admin\migration\sql\Get-LoginInventory.sql'
+$sqlScript = Join-Path $repoRoot 'sql\migration\Get-LoginInventory.sql'
 $runner    = Join-Path $repoRoot 'tools\local-sql\Invoke-RepoSql.ps1'
 
 if (-not (Test-Path -LiteralPath $sqlScript)) { throw "SQL script not found: $sqlScript" }

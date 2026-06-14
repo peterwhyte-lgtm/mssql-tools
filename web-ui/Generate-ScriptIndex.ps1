@@ -44,7 +44,7 @@ $null = $sb.AppendLine('')
 $null = $sb.AppendLine('Run directly in SSMS / Azure Data Studio, or via `.\run.ps1 <ScriptName>`.')
 $null = $sb.AppendLine('')
 
-$sqlDirs = Get-ChildItem -Path (Join-Path $repoRoot 'database-admin\sql-scripts') -Directory |
+$sqlDirs = Get-ChildItem -Path (Join-Path $repoRoot 'sql') -Directory |
     Where-Object { $_.Name -ne 'lab' } |
     Sort-Object Name
 
@@ -65,7 +65,7 @@ foreach ($dir in $sqlDirs) {
 }
 
 # ── Migration SQL scripts ─────────────────────────────────────────────────────
-$migrationSqlPath = Join-Path $repoRoot 'database-admin\migration\sql'
+$migrationSqlPath = Join-Path $repoRoot 'sql\migration'
 $migrationFiles   = Get-ChildItem -Path $migrationSqlPath -File -Filter '*.sql' -ErrorAction SilentlyContinue |
     Where-Object { $_.Name -ne 'README.md' } | Sort-Object Name
 if ($migrationFiles) {
@@ -86,7 +86,7 @@ $null = $sb.AppendLine('')
 $null = $sb.AppendLine('Wrappers and orchestrators. Run via `.\run.ps1 <ScriptName>` or directly.')
 $null = $sb.AppendLine('')
 
-$psDirs = Get-ChildItem -Path (Join-Path $repoRoot 'database-admin\powershell-scripts') -Directory |
+$psDirs = Get-ChildItem -Path (Join-Path $repoRoot 'powershell') -Directory |
     Where-Object { $_.Name -ne 'lab' } |
     Sort-Object Name
 

@@ -1,11 +1,11 @@
-# DBA Runbook
+﻿# DBA Runbook
 
 ## Quick triage commands
 
 ```powershell
 # Full healthcheck — collect 27 scripts, review findings
-.\database-admin\powershell-scripts\reporting\Invoke-HealthCheckCollection.ps1 -ServerInstance . -Quiet
-.\database-admin\powershell-scripts\reporting\Review-HealthCheckOutput.ps1
+.\powershell\reporting\Invoke-HealthCheckCollection.ps1 -ServerInstance . -Quiet
+.\powershell\reporting\Review-HealthCheckOutput.ps1
 
 # Live triage — what is happening right now
 .\run.ps1 Get-ActiveSessions
@@ -23,8 +23,8 @@
 
 Run once per shift / once per day:
 
-1. **Healthcheck collection** — `.\database-admin\powershell-scripts\reporting\Invoke-HealthCheckCollection.ps1 -Quiet`
-2. **Review findings** — `.\database-admin\powershell-scripts\reporting\Review-HealthCheckOutput.ps1`
+1. **Healthcheck collection** — `.\powershell\reporting\Invoke-HealthCheckCollection.ps1 -Quiet`
+2. **Review findings** — `.\powershell\reporting\Review-HealthCheckOutput.ps1`
 3. **Check thresholds in the review output:**
 
 | Severity | Rule | Action |
@@ -233,20 +233,20 @@ HADR_SYNC_COMMIT spike in wait-stats delta
 
 ```powershell
 # Check backup coverage across all SQL instances
-.\database-admin\powershell-scripts\multi-server\MultiServer-GetBackupStatus.ps1 -Servers "SVR01,SVR02,SVR03" -Parallel
+.\powershell\reporting\multi-server\MultiServer-GetBackupStatus.ps1 -Servers "SVR01,SVR02,SVR03" -Parallel
 
 # Check for active blocking across all instances right now
-.\database-admin\powershell-scripts\multi-server\MultiServer-GetBlockingSessions.ps1 -Servers "SVR01,SVR02,SVR03"
+.\powershell\reporting\multi-server\MultiServer-GetBlockingSessions.ps1 -Servers "SVR01,SVR02,SVR03"
 
 # Disk space across all Windows servers
-.\database-admin\powershell-scripts\multi-server\MultiServer-GetDiskSpace.ps1 -Servers "SVR01,SVR02,SVR03" -WarnBelowPctFree 15
+.\powershell\reporting\multi-server\MultiServer-GetDiskSpace.ps1 -Servers "SVR01,SVR02,SVR03" -WarnBelowPctFree 15
 
 # Test SQL port reachability across estate
-.\database-admin\powershell-scripts\multi-server\MultiServer-TestSqlPort.ps1 -Servers "SVR01,SVR02,SVR03,SVR04,SVR05" -Parallel
+.\powershell\reporting\multi-server\MultiServer-TestSqlPort.ps1 -Servers "SVR01,SVR02,SVR03,SVR04,SVR05" -Parallel
 
 # Generate a custom multi-server wrapper for any SQL script
 .\tools\scaffolding\New-MultiServerScript.ps1 `
-    -ScriptPath database-admin\sql-scripts\performance\Get-WaitStatistics.sql `
+    -ScriptPath sql\performance\Get-WaitStatistics.sql `
     -Servers "SVR01,SVR02,SVR03" `
     -OutputFile C:\Temp\run-waits.ps1
 # Review the generated script, then: pwsh -File C:\Temp\run-waits.ps1

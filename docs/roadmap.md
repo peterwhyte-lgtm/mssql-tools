@@ -1,8 +1,8 @@
-# DBA Scripts Roadmap
+﻿# DBA Scripts Roadmap
 
 ## Current state (updated 2026-06-14)
 
-Fully functional production DBA toolkit. The repo underwent a full structural reorganisation on 2026-06-14, consolidating all DBA operational content under `database-admin/` and relocating wrappers into `web-ui/wrappers/` as the explicit browser UI entry point. All 338 internal path references were updated and 9 runtime bugs resolved.
+Fully functional production DBA toolkit. The repo has a category-first layout: `sql/` for SQL scripts, `powershell/` for orchestrators and automation, `web-ui/wrappers/` for the browser UI entry point, and `docs/ops/` for operational runbooks and change templates.
 
 **What is complete:**
 - SQL diagnostic layer — 80+ scripts across monitoring, performance, ha-dr, backups, security, maintenance, migration
@@ -22,7 +22,7 @@ Fully functional production DBA toolkit. The repo underwent a full structural re
 
 ### Phase 3 — Per-script documentation (not started)
 
-For each SQL script in `database-admin/sql-scripts/`: add an inline `README` or blog entry covering:
+For each SQL script in `sql/`: add an inline `README` or blog entry covering:
 - Purpose in operational terms (not just what the columns are)
 - Example output interpretation — what does a bad result look like?
 - When **not** to use it
@@ -56,7 +56,7 @@ For each SQL script in `database-admin/sql-scripts/`: add an inline `README` or 
 
 | Date | Item |
 |------|------|
-| 2026-06-14 | Full repo restructure — `database-admin/` layout, `web-ui/wrappers/` colocated with browser UI, `ha-dr/` category rename, `database-admin/migration/` split, all path references updated (338 files), 9 runtime bugs fixed |
+| 2026-06-14 | Repo restructure — category-first layout: `sql/`, `powershell/`, `web-ui/wrappers/`, `docs/ops/`; all path references updated across 132+ files |
 | 2026-06-05 | `wrappers/` top-level folder — 81 thin PS wrappers separated from `powershell/`, mirrors `sql/` category structure |
 | 2026-06-05 | Phase 2 PS standards — `.NOTES` block (ScriptType, TargetScope, RiskLevel, Purpose) added to all remaining non-compliant PS scripts |
 | 2026-06-05 | 7 new PS wrappers — Get-Heaps, Get-UnusedIndexes, Get-CompatibilityLevelAudit, Get-MigrationLoginAudit, Get-PostMigrationValidation, Generate-LinkedServerScript, Generate-RestoreWithMoveScript |

@@ -27,9 +27,8 @@ function Resolve-RepoScript {
     $candidates = @()
     $searchRoots = @(
         (Join-Path $repoRoot 'tools'),
-        (Join-Path $repoRoot 'database-admin\sql-scripts'),
-        (Join-Path $repoRoot 'database-admin\powershell-scripts'),
-        (Join-Path $repoRoot 'database-admin\migration\powershell'),
+        (Join-Path $repoRoot 'sql'),
+        (Join-Path $repoRoot 'powershell'),
         (Join-Path $repoRoot 'web-ui\wrappers')
     )
 

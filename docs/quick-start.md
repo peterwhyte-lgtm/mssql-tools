@@ -1,4 +1,4 @@
-# Quick start
+﻿# Quick start
 
 Get from a fresh clone to running diagnostics against a SQL Server instance in five minutes.
 
@@ -97,10 +97,10 @@ Collect all key monitoring data in one pass and review the findings:
 
 ```powershell
 # Collect 27 scripts, save named CSVs to output-files\healthcheck\<server>-<timestamp>\
-.\database-admin\powershell-scripts\reporting\Invoke-HealthCheckCollection.ps1 -ServerInstance PROD01\SQL2019
+.\powershell\reporting\Invoke-HealthCheckCollection.ps1 -ServerInstance PROD01\SQL2019
 
 # Review findings — surfaces CRITICAL / WARNING / INFO
-.\database-admin\powershell-scripts\reporting\Review-HealthCheckOutput.ps1
+.\powershell\reporting\Review-HealthCheckOutput.ps1
 ```
 
 <p align="center">
@@ -113,7 +113,7 @@ What gets flagged: missing backups, stale DBCC CHECKDB, suspect pages, sa enable
 For a scored client report:
 
 ```powershell
-.\database-admin\powershell-scripts\reporting\Invoke-AssessmentReport.ps1 -ServerInstance PROD01\SQL2019 -AssessedBy "Peter Whyte"
+.\powershell\reporting\Invoke-AssessmentReport.ps1 -ServerInstance PROD01\SQL2019 -AssessedBy "Peter Whyte"
 # Output: output-files\assessment\<server>-<timestamp>.md
 ```
 
@@ -137,11 +137,11 @@ An optional local web interface for browsing, running, and visualising script ou
 
 ## 6. Run SQL directly in SSMS
 
-Every script in `database-admin/sql-scripts/` is paste-and-run in SSMS. No PowerShell needed:
+Every script in `sql/` is paste-and-run in SSMS. No PowerShell needed:
 
 ```sql
--- Open any .sql file from database-admin/sql-scripts/ and paste directly into SSMS
--- Example: database-admin\sql-scripts\performance\Get-WaitStatistics.sql
+-- Open any .sql file from sql/ and paste directly into SSMS
+-- Example: sql\performance\Get-WaitStatistics.sql
 -- All scripts: read-only, SET NOCOUNT ON, no USE database statement
 ```
 
@@ -154,7 +154,7 @@ Every script in `database-admin/sql-scripts/` is paste-and-run in SSMS. No Power
 | Full script list with descriptions | [docs/script-catalog.md](script-catalog.md) |
 | Repo folder layout | [docs/mssql-tools-repo-structure.md](mssql-tools-repo-structure.md) |
 | Prerequisites, permissions, troubleshooting | [SETUP.md](../SETUP.md) |
-| Migration workflow | `database-admin/migration/powershell/Invoke-PreMigrationAssessment.ps1` |
-| Change orders and runbooks | `database-admin/change-templates/` |
-| Scheduled trend collection | `database-admin/collectors/` |
-| Multi-server operations | `database-admin/powershell-scripts/multi-server/` |
+| Migration workflow | `powershell/migration/Invoke-PreMigrationAssessment.ps1` |
+| Change orders and runbooks | `docs/ops/` |
+| Scheduled trend collection | `powershell/collectors/` |
+| Multi-server operations | `powershell/reporting/multi-server/` |

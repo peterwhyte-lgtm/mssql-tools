@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Shows index usage statistics across all user databases — seeks, scans, lookups, and updates.
 
@@ -28,10 +28,10 @@ Output mode: 'Table' (default) or 'Csv'.
 Optional file path to save the output.
 
 .EXAMPLE
-pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\database-admin\powershell-scripts\reporting\Get-IndexUsageStats.ps1
+pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\powershell\reporting\Get-IndexUsageStats.ps1
 
 .EXAMPLE
-pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\database-admin\powershell-scripts\reporting\Get-IndexUsageStats.ps1 -OutputFormat Csv -OutputPath .\output-files\index-usage.csv
+pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\powershell\reporting\Get-IndexUsageStats.ps1 -OutputFormat Csv -OutputPath .\output-files\index-usage.csv
 #>
 
 param(
@@ -45,7 +45,7 @@ param(
 $ErrorActionPreference = 'Stop'
 
 $repoRoot  = Resolve-Path (Join-Path $PSScriptRoot '..\..\..')
-$sqlScript = Join-Path $repoRoot 'database-admin\sql-scripts\performance\Get-IndexUsageStats.sql'
+$sqlScript = Join-Path $repoRoot 'sql\performance\Get-IndexUsageStats.sql'
 $runner    = Join-Path $repoRoot 'tools\local-sql\Invoke-RepoSql.ps1'
 
 if (-not (Test-Path -LiteralPath $sqlScript)) { throw "SQL script not found: $sqlScript" }

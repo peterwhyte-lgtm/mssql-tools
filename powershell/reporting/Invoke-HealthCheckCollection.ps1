@@ -1,0 +1,308 @@
+﻿<#
+.SYNOPSIS
+Runs a full DBA health-check collection and saves each result as a named CSV in a timestamped folder.
+
+.NOTES
+ScriptType   : PowerShell-only
+TargetScope  : single server
+RiskLevel    : SAFE
+Purpose      : Collect all key health-check data in one pass for offline review or archiving.
+
+.DESCRIPTION
+Orchestrates the core monitoring and inventory SQL scripts against a single SQL Server instance.
+Each script's output is saved as a named CSV under output-files\healthcheck\<server>-<timestamp>\.
+
+Run this first, then pass the output folder to Review-HealthCheckOutput.ps1 to surface findings.
+
+Scripts collected:
+  server-info           - SQL version, edition, instance name
+  os-hardware           - OS release, CPU count, RAM, uptime
+  database-health       - database state, recovery model, auto-shrink flags
+  database-sizes        - data/log sizes and free space per database
+  database-files        - per-file paths, sizes, growth settings
+  backup-times          - last full/diff/log backup per database
+  backup-coverage       - databases with missing or stale backups (with status flag)
+  tlog-usage            - transaction log size and space used
+  memory-config         - max server memory, current committed, buffer pool
+  wait-stats            - top wait types since last restart (benign waits filtered)
+  active-sessions       - currently connected users and requests
+  tempdb-usage          - tempdb file usage per file with free space
+  job-failures          - SQL Agent job failures from the last 7 days
+  recent-errors         - error log entries from the last 24 hours
+  dbcc-checkdb          - last successful DBCC CHECKDB per database
+  suspect-pages         - any pages in msdb.dbo.suspect_pages
+  io-usage              - per-database I/O totals with read/write latency
+  disk-space            - volume mount points with total/used/free GB (SQL-hosting drives only)
+  growth-risk           - databases flagged OK / NEAR_LIMIT / AT_LIMIT vs configured file limits
+  security-surface-area - xp_cmdshell, CLR, Database Mail enabled state
+  weak-logins           - SQL logins with policy/expiration off or sa enabled
+  missing-indexes       - top missing index candidates ranked by DMV impact score (resets on restart)
+  tempdb-config         - TempDB file count, sizing parity, and autogrowth type
+  plan-cache            - plan cache composition — single-use plan ratio and ad-hoc bloat
+  linked-server-security - linked server login mappings with risk level assessment
+  vlf-count             - virtual log file count per database (high counts degrade recovery)
+  maintenance-jobs      - DBA maintenance job deployment and last-run status
+
+.PARAMETER ServerInstance
+SQL Server instance to query. Defaults to '.'.
+
+.PARAMETER OutputRoot
+Parent folder for healthcheck output folders. Defaults to output-files\healthcheck under the repo root.
+
+.EXAMPLE
+pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\powershell\reporting\Invoke-HealthCheckCollection.ps1
+
+.EXAMPLE
+pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\powershell\reporting\Invoke-HealthCheckCollection.ps1 -ServerInstance MYSERVER\INST01
+
+.EXAMPLE
+# Collect then immediately review
+$folder = pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\powershell\reporting\Invoke-HealthCheckCollection.ps1 -ServerInstance . 6>&1 | Select-String 'Output folder' | ForEach-Object { $_.Line -replace '.*: ' }
+pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\powershell\reporting\Review-HealthCheckOutput.ps1 -FolderPath $folder
+#>
+
+param(
+    [string]$ServerInstance = '.',
+    [string]$OutputRoot,
+    [switch]$Quiet
+)
+
+$ErrorActionPreference = 'Stop'
+
+# Respect the session default set by Initialize-Environment or Set-SqlConnection
+if ($ServerInstance -eq '.' -and $env:DBASCRIPTS_SERVER) { $ServerInstance = $env:DBASCRIPTS_SERVER }
+
+$repoRoot = Resolve-Path (Join-Path $PSScriptRoot '..\..')
+$runner   = Join-Path $repoRoot 'tools\local-sql\Invoke-RepoSql.ps1'
+
+if (-not (Test-Path -LiteralPath $runner)) { throw "Runner not found: $runner" }
+
+$env:DBASCRIPTS_BATCH = '1'  # tells Invoke-RepoSql not to open 19 browser tabs
+
+if (-not $OutputRoot) {
+    $OutputRoot = Join-Path $repoRoot 'output-files\healthcheck'
+}
+
+$safeName  = ($ServerInstance -replace '[\\/:*?"<>|]', '-').Trim('-')
+$timestamp = Get-Date -Format 'yyyyMMdd-HHmmss'
+$outFolder = Join-Path $OutputRoot "$safeName-$timestamp"
+New-Item -ItemType Directory -Path $outFolder -Force | Out-Null
+
+try {
+
+Write-Host ''
+Write-Host '============================================' -ForegroundColor Cyan
+Write-Host '  DBA Health Check Collection' -ForegroundColor Cyan
+Write-Host '============================================' -ForegroundColor Cyan
+Write-Host "  Server : $ServerInstance"
+Write-Host "  Output : $outFolder"
+Write-Host "  Time   : $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
+Write-Host '--------------------------------------------'
+Write-Host ''
+
+# Each entry: Label (becomes CSV filename) and relative path to the SQL script.
+# Paths are tried in order — first match wins, remaining are skipped.
+$scripts = @(
+    [PSCustomObject]@{
+        Label = 'server-info'
+        Paths = @('sql\monitoring\Get-VersionAndEdition.sql')
+    }
+    [PSCustomObject]@{
+        Label = 'os-hardware'
+        Paths = @('sql\monitoring\Get-OsAndHardwareInfo.sql')
+    }
+    [PSCustomObject]@{
+        Label = 'database-health'
+        Paths = @('sql\monitoring\Get-DatabaseHealth.sql')
+    }
+    [PSCustomObject]@{
+        Label = 'database-sizes'
+        Paths = @('sql\monitoring\Get-DatabaseSizesAndFreeSpace.sql')
+    }
+    [PSCustomObject]@{
+        Label = 'database-files'
+        Paths = @('sql\monitoring\Get-DatabaseFilesDetail.sql')
+    }
+    [PSCustomObject]@{
+        Label = 'backup-times'
+        Paths = @('sql\backups\Get-LastDatabaseBackupTimes.sql')
+    }
+    [PSCustomObject]@{
+        Label = 'backup-coverage'
+        Paths = @('sql\backups\Get-BackupCoverage.sql')
+    }
+    [PSCustomObject]@{
+        Label = 'tlog-usage'
+        Paths = @('sql\monitoring\Get-TransactionLogSizeAndUsage.sql')
+    }
+    [PSCustomObject]@{
+        Label = 'memory-config'
+        Paths = @('sql\monitoring\Get-MemoryConfigurationAndUsage.sql')
+    }
+    [PSCustomObject]@{
+        Label = 'wait-stats'
+        Paths = @('sql\performance\Get-WaitStatistics.sql')
+    }
+    [PSCustomObject]@{
+        Label = 'active-sessions'
+        Paths = @('sql\performance\Get-ActiveSessions.sql')
+    }
+    [PSCustomObject]@{
+        Label = 'tempdb-usage'
+        Paths = @('sql\monitoring\Get-TempdbUsage.sql')
+    }
+    [PSCustomObject]@{
+        Label = 'job-failures'
+        Paths = @('sql\monitoring\Get-SqlAgentJobFailureSummary.sql')
+    }
+    [PSCustomObject]@{
+        Label = 'recent-errors'
+        Paths = @('sql\monitoring\Get-RecentErrorLogEntries.sql')
+    }
+    [PSCustomObject]@{
+        Label = 'dbcc-checkdb'
+        Paths = @('sql\monitoring\Get-LastDbccCheckdb.sql')
+    }
+    [PSCustomObject]@{
+        Label = 'suspect-pages'
+        Paths = @('sql\monitoring\Get-SuspectPages.sql')
+    }
+    [PSCustomObject]@{
+        Label = 'io-usage'
+        Paths = @('sql\performance\Get-DatabaseIoUsage.sql')
+    }
+    [PSCustomObject]@{
+        Label = 'disk-space'
+        Paths = @('sql\monitoring\Get-DiskSpace.sql')
+    }
+    [PSCustomObject]@{
+        Label = 'growth-risk'
+        Paths = @('sql\monitoring\Get-DatabaseGrowthRisk.sql')
+    }
+    [PSCustomObject]@{
+        Label = 'security-surface-area'
+        Paths = @('sql\security\Get-DatabaseMailAndXpCmdShell.sql')
+    }
+    [PSCustomObject]@{
+        Label = 'weak-logins'
+        Paths = @('sql\security\Get-WeakLoginSettings.sql')
+    }
+    [PSCustomObject]@{
+        Label = 'missing-indexes'
+        Paths = @('sql\performance\Get-MissingIndexes.sql')
+    }
+    [PSCustomObject]@{
+        Label = 'tempdb-config'
+        Paths = @('sql\monitoring\Get-TempDbConfiguration.sql')
+    }
+    [PSCustomObject]@{
+        Label = 'plan-cache'
+        Paths = @('sql\performance\Get-PlanCacheHealth.sql')
+    }
+    [PSCustomObject]@{
+        Label = 'linked-server-security'
+        Paths = @('sql\security\Get-LinkedServerSecurity.sql')
+    }
+    [PSCustomObject]@{
+        Label = 'vlf-count'
+        Paths = @('sql\monitoring\Get-VlfCount.sql')
+    }
+    [PSCustomObject]@{
+        Label    = 'maintenance-jobs'
+        Paths    = @('sql\maintenance\Get-MaintenanceJobStatus.sql')
+        Database = 'msdb'
+    }
+)
+
+$summary = [System.Collections.Generic.List[PSObject]]::new()
+
+foreach ($s in $scripts) {
+    $resolvedSql = $null
+    foreach ($p in $s.Paths) {
+        $candidate = Join-Path $repoRoot $p
+        if (Test-Path -LiteralPath $candidate) {
+            $resolvedSql = $candidate
+            break
+        }
+    }
+
+    $csvPath = Join-Path $outFolder "$($s.Label).csv"
+    $status  = 'OK'
+    $note    = ''
+    $db      = if ($s.PSObject.Properties['Database'] -and $s.Database) { $s.Database } else { 'master' }
+
+    if (-not $resolvedSql) {
+        $status = 'SKIPPED'
+        $note   = 'SQL file not found'
+    }
+    else {
+        try {
+            if ($Quiet) {
+                & $runner -ScriptPath $resolvedSql `
+                          -ServerInstance $ServerInstance `
+                          -Database $db `
+                          -OutputFormat 'Csv' `
+                          -OutputPath $csvPath *>$null
+            }
+            else {
+                & $runner -ScriptPath $resolvedSql `
+                          -ServerInstance $ServerInstance `
+                          -Database $db `
+                          -OutputFormat 'Csv' `
+                          -OutputPath $csvPath
+            }
+        }
+        catch {
+            $status = 'FAILED'
+            $note   = $_.Exception.Message -replace "`r?`n", ' '
+        }
+    }
+
+    $color = switch ($status) {
+        'OK'      { 'Green' }
+        'SKIPPED' { 'Yellow' }
+        default   { 'Red' }
+    }
+    Write-Host ("  [{0,-8}] {1}" -f $status, $s.Label) -ForegroundColor $color
+    if ($status -eq 'FAILED' -and $note) {
+        $shortNote = if ($note.Length -gt 140) { $note.Substring(0, 140) + '…' } else { $note }
+        Write-Host "             $shortNote" -ForegroundColor DarkRed
+    }
+
+    $summary.Add([PSCustomObject]@{
+        Script  = $s.Label
+        Status  = $status
+        CsvFile = if ($status -eq 'OK') { Split-Path -Leaf $csvPath } else { '' }
+        Note    = $note
+    })
+}
+
+Write-Host ''
+Write-Host '--------------------------------------------'
+$ok      = @($summary | Where-Object Status -eq 'OK').Count
+$failed  = @($summary | Where-Object Status -eq 'FAILED').Count
+$skipped = @($summary | Where-Object Status -eq 'SKIPPED').Count
+Write-Host "  OK: $ok  |  Failed: $failed  |  Skipped: $skipped" -ForegroundColor Cyan
+Write-Host ''
+
+$uiUp = $false
+try { $tcp = [System.Net.Sockets.TcpClient]::new('localhost', 8787); $tcp.Close(); $uiUp = $true } catch { $null = $_ }
+$folderEnc  = [Uri]::EscapeDataString($outFolder)
+$reviewUrl  = "http://localhost:8787/review?folder=$folderEnc"
+
+Write-Host ('─' * 64) -ForegroundColor DarkCyan
+Write-Host "  Folder  : $outFolder" -ForegroundColor Green
+if ($uiUp) {
+    Write-Host "  Dashboard: $reviewUrl" -ForegroundColor Cyan
+} else {
+    Write-Host "  Dashboard: $reviewUrl" -ForegroundColor DarkGray
+    Write-Host "             (web UI not running — start with: .\web-ui\Start-WebUi.ps1)" -ForegroundColor DarkGray
+}
+Write-Host ''
+Write-Host "  CLI review: .\powershell\reporting\Review-HealthCheckOutput.ps1" -ForegroundColor DarkGray
+Write-Host ('─' * 64) -ForegroundColor DarkCyan
+Write-Host ''
+
+} finally {
+    Remove-Item Env:DBASCRIPTS_BATCH -ErrorAction SilentlyContinue
+}

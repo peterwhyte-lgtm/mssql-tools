@@ -1,4 +1,4 @@
-<p align="center">
+﻿<p align="center">
   <img src="assets/logo/sqldba-site-logo.png" alt="sqldba.blog" width="220">
 </p>
 
@@ -53,22 +53,22 @@ Everything is read-only by default. Every script has a header with what permissi
 
 ## SQL Scripts — Open, Copy, Paste, Run
 
-Browse `database-admin/sql-scripts/` and copy directly into SSMS. No parameters, no magic variables, no install. Every script is a single result set.
+Browse `sql/` and copy directly into SSMS. No parameters, no magic variables, no install. Every script is a single result set.
 
 <p align="center">
   <img src="assets/screenshots/02-ssms-paste-run.png" alt="SQL script in SSMS" width="720">
-  <br><em>Open any script from database-admin/sql-scripts/ — paste into SSMS — run</em>
+  <br><em>Open any script from sql/ — paste into SSMS — run</em>
 </p>
 
 | Category | What you get |
 |----------|-------------|
-| [`database-admin/sql-scripts/performance/`](database-admin/sql-scripts/performance/) | Wait stats, blocking chains, active requests, long queries, missing indexes, deadlocks, plan cache, heaps, unused indexes |
-| [`database-admin/sql-scripts/monitoring/`](database-admin/sql-scripts/monitoring/) | Instance config score, database health, TempDB, memory, MAXDOP, SQL Agent jobs, disk, VLF count, autogrowth history |
-| [`database-admin/sql-scripts/backups/`](database-admin/sql-scripts/backups/) | Coverage by database, history, backup age, encryption status, restore duration estimates |
-| [`database-admin/sql-scripts/security/`](database-admin/sql-scripts/security/) | Sysadmin members, login audit, orphaned users, weak logins, linked server security, database permissions |
-| [`database-admin/migration/sql/`](database-admin/migration/sql/) | Risk assessment, compatibility audit, deprecated features, login inventory, DDL generators |
-| [`database-admin/sql-scripts/ha-dr/`](database-admin/sql-scripts/ha-dr/) | AG replica health, sync state, latency, readable secondary usage |
-| [`database-admin/sql-scripts/maintenance/`](database-admin/sql-scripts/maintenance/) | Generate backup jobs, index maintenance jobs, housekeeping DDL, maintenance job status |
+| [`sql/performance/`](sql/performance/) | Wait stats, blocking chains, active requests, long queries, missing indexes, deadlocks, plan cache, heaps, unused indexes |
+| [`sql/monitoring/`](sql/monitoring/) | Instance config score, database health, TempDB, memory, MAXDOP, SQL Agent jobs, disk, VLF count, autogrowth history |
+| [`sql/backups/`](sql/backups/) | Coverage by database, history, backup age, encryption status, restore duration estimates |
+| [`sql/security/`](sql/security/) | Sysadmin members, login audit, orphaned users, weak logins, linked server security, database permissions |
+| [`sql/migration/`](sql/migration/) | Risk assessment, compatibility audit, deprecated features, login inventory, DDL generators |
+| [`sql/ha-dr/`](sql/ha-dr/) | AG replica health, sync state, latency, readable secondary usage |
+| [`sql/maintenance/`](sql/maintenance/) | Generate backup jobs, index maintenance jobs, housekeeping DDL, maintenance job status |
 
 Full list with descriptions: [docs/script-catalog.md](docs/script-catalog.md)
 
@@ -97,8 +97,8 @@ The same scripts, callable by name from any directory. No paths, no module depen
 ### Health Check — 27 Scripts, One Pass
 
 ```powershell
-.\database-admin\powershell-scripts\reporting\Invoke-HealthCheckCollection.ps1 -ServerInstance PROD01\SQL2025
-.\database-admin\powershell-scripts\reporting\Review-HealthCheckOutput.ps1
+.\powershell\reporting\Invoke-HealthCheckCollection.ps1 -ServerInstance PROD01\SQL2025
+.\powershell\reporting\Review-HealthCheckOutput.ps1
 ```
 
 <p align="center">
@@ -111,14 +111,14 @@ Flags: missing or stale backups, databases not online, stale DBCC CHECKDB, suspe
 For a client handover or ownership review, the assessment report generates a scored markdown document:
 
 ```powershell
-.\database-admin\powershell-scripts\reporting\Invoke-AssessmentReport.ps1 -ServerInstance PROD01\SQL2025 -AssessedBy "Your Name"
+.\powershell\reporting\Invoke-AssessmentReport.ps1 -ServerInstance PROD01\SQL2025 -AssessedBy "Your Name"
 ```
 
 ---
 
 ## Operational Runbooks
 
-`database-admin/change-templates/` covers the planned work — the things you need to get right before and during a maintenance window, not the things you're diagnosing in the moment.
+`docs/ops/` covers the planned work — the things you need to get right before and during a maintenance window, not the things you're diagnosing in the moment.
 
 **Change orders** — CAB-ready approval documents for version upgrades, server migrations, and AG failovers. Pre/post checks and rollback criteria included.
 
@@ -134,10 +134,10 @@ Run against the source server before a migration window:
 
 ```powershell
 # Pre-migration risk scan — HIGH/MEDIUM/INFO findings across compat, features, logins, config
-.\database-admin\migration\powershell\Invoke-PreMigrationAssessment.ps1 -ServerInstance PROD01\SQL2025
+.\powershell\migration\Invoke-PreMigrationAssessment.ps1 -ServerInstance PROD01\SQL2025
 
 # Capture baseline metrics for before/after comparison
-.\database-admin\migration\powershell\Export-MigrationBaseline.ps1 -ServerInstance PROD01\SQL2025 -Label pre
+.\powershell\migration\Export-MigrationBaseline.ps1 -ServerInstance PROD01\SQL2025 -Label pre
 ```
 
 Covers: compatibility gaps, deprecated features in active use, edition-only features, linked server dependencies, AG membership, login inventory with migration risk, post-migration validation checklist.

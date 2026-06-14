@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Pre-CHECKDB readiness: database states, recovery models, and last backup times.
 
@@ -34,7 +34,7 @@ param(
 $ErrorActionPreference = 'Stop'
 
 $repoRoot  = Resolve-Path (Join-Path $PSScriptRoot '..\..\..')
-$sqlScript = Join-Path $repoRoot 'database-admin\sql-scripts\monitoring\Get-DatabaseIntegrityChecks.sql'
+$sqlScript = Join-Path $repoRoot 'sql\monitoring\Get-DatabaseIntegrityChecks.sql'
 $runner    = Join-Path $repoRoot 'tools\local-sql\Invoke-RepoSql.ps1'
 
 if (-not (Test-Path -LiteralPath $sqlScript)) { throw "SQL script not found: $sqlScript" }

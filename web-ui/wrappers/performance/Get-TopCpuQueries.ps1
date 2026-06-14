@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Lists the top 20 CPU-consuming queries since the last SQL Server restart.
 
@@ -21,10 +21,10 @@ Output mode: 'Table' (default) or 'Csv'.
 Optional file path to save the output.
 
 .EXAMPLE
-pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\database-admin\powershell-scripts\reporting\Get-TopCpuQueries.ps1
+pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\powershell\reporting\Get-TopCpuQueries.ps1
 
 .EXAMPLE
-pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\database-admin\powershell-scripts\reporting\Get-TopCpuQueries.ps1 -ServerInstance MYSERVER -OutputFormat Csv -OutputPath .\output-files\top-cpu.csv
+pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\powershell\reporting\Get-TopCpuQueries.ps1 -ServerInstance MYSERVER -OutputFormat Csv -OutputPath .\output-files\top-cpu.csv
 #>
 
 param(
@@ -38,7 +38,7 @@ param(
 $ErrorActionPreference = 'Stop'
 
 $repoRoot  = Resolve-Path (Join-Path $PSScriptRoot '..\..\..')
-$sqlScript = Join-Path $repoRoot 'database-admin\sql-scripts\performance\Get-TopCpuQueries.sql'
+$sqlScript = Join-Path $repoRoot 'sql\performance\Get-TopCpuQueries.sql'
 $runner    = Join-Path $repoRoot 'tools\local-sql\Invoke-RepoSql.ps1'
 
 if (-not (Test-Path -LiteralPath $sqlScript)) { throw "SQL script not found: $sqlScript" }

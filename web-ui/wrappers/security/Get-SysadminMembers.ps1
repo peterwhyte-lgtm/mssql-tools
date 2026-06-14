@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Lists all members of the sysadmin fixed server role.
 
@@ -18,10 +18,10 @@ Output mode: 'Table' (default) or 'Csv'.
 Optional file path to save the output.
 
 .EXAMPLE
-pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\database-admin\powershell-scripts\security\Get-SysadminMembers.ps1
+pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\powershell\security\Get-SysadminMembers.ps1
 
 .EXAMPLE
-pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\database-admin\powershell-scripts\security\Get-SysadminMembers.ps1 -OutputFormat Csv -OutputPath .\output-files\sysadmins.csv
+pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\powershell\security\Get-SysadminMembers.ps1 -OutputFormat Csv -OutputPath .\output-files\sysadmins.csv
 #>
 
 param(
@@ -35,7 +35,7 @@ param(
 $ErrorActionPreference = 'Stop'
 
 $repoRoot  = Resolve-Path (Join-Path $PSScriptRoot '..\..\..')
-$sqlScript = Join-Path $repoRoot 'database-admin\sql-scripts\security\Get-SysadminMembers.sql'
+$sqlScript = Join-Path $repoRoot 'sql\security\Get-SysadminMembers.sql'
 $runner    = Join-Path $repoRoot 'tools\local-sql\Invoke-RepoSql.ps1'
 
 if (-not (Test-Path -LiteralPath $sqlScript)) { throw "SQL script not found: $sqlScript" }

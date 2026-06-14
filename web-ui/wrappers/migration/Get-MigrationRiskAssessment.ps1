@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Runs the migration risk assessment to surface databases, logins, and configuration
 items that need attention before migration. Returns a prioritised list of findings
@@ -22,10 +22,10 @@ Output mode: 'Table' (default) or 'Csv'.
 Optional file path to save the output.
 
 .EXAMPLE
-.\database-admin\migration\powershell\Get-MigrationRiskAssessment.ps1
+.\powershell\migration\Get-MigrationRiskAssessment.ps1
 
 .EXAMPLE
-.\database-admin\migration\powershell\Get-MigrationRiskAssessment.ps1 -ServerInstance PROD01 -OutputFormat Csv
+.\powershell\migration\Get-MigrationRiskAssessment.ps1 -ServerInstance PROD01 -OutputFormat Csv
 #>
 
 param(
@@ -38,7 +38,7 @@ param(
 $ErrorActionPreference = 'Stop'
 
 $repoRoot  = Resolve-Path (Join-Path $PSScriptRoot '..\..\..')
-$sqlScript = Join-Path $repoRoot 'database-admin\migration\sql\Get-MigrationRiskAssessment.sql'
+$sqlScript = Join-Path $repoRoot 'sql\migration\Get-MigrationRiskAssessment.sql'
 $runner    = Join-Path $repoRoot 'tools\local-sql\Invoke-RepoSql.ps1'
 
 if (-not (Test-Path -LiteralPath $sqlScript)) { throw "SQL script not found: $sqlScript" }

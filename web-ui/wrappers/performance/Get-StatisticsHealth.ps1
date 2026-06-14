@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Identifies stale, low-sample, and never-updated statistics in a user database.
 
@@ -8,7 +8,7 @@ TargetScope  : single server
 RiskLevel    : SAFE
 
 .DESCRIPTION
-Wraps database-admin\sql-scripts\performance\Get-StatisticsHealth.sql. Statistics are per-database — pass
+Wraps sql\performance\Get-StatisticsHealth.sql. Statistics are per-database — pass
 -Database with the name of the user database you want to analyse.
 
 Health statuses returned:
@@ -36,10 +36,10 @@ Output mode: 'Table' (default) or 'Csv'.
 Optional file path to save the output.
 
 .EXAMPLE
-.\database-admin\powershell-scripts\reporting\Get-StatisticsHealth.ps1 -Database AdventureWorks
+.\powershell\reporting\Get-StatisticsHealth.ps1 -Database AdventureWorks
 
 .EXAMPLE
-.\database-admin\powershell-scripts\reporting\Get-StatisticsHealth.ps1 -ServerInstance PROD01\SQL2019 -Database MyAppDb -OutputFormat Csv
+.\powershell\reporting\Get-StatisticsHealth.ps1 -ServerInstance PROD01\SQL2019 -Database MyAppDb -OutputFormat Csv
 #>
 
 param(
@@ -53,7 +53,7 @@ param(
 $ErrorActionPreference = 'Stop'
 
 $repoRoot  = Resolve-Path (Join-Path $PSScriptRoot '..\..\..')
-$sqlScript = Join-Path $repoRoot 'database-admin\sql-scripts\performance\Get-StatisticsHealth.sql'
+$sqlScript = Join-Path $repoRoot 'sql\performance\Get-StatisticsHealth.sql'
 $runner    = Join-Path $repoRoot 'tools\local-sql\Invoke-RepoSql.ps1'
 
 if (-not (Test-Path -LiteralPath $sqlScript)) { throw "SQL script not found: $sqlScript" }

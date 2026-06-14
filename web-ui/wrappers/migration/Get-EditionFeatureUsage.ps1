@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Audits Enterprise-only features in use on this SQL Server instance. Run before any edition downgrade.
 
@@ -19,10 +19,10 @@ Output mode: 'Table' (default) or 'Csv'.
 Optional file path to save the output.
 
 .EXAMPLE
-pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\database-admin\migration\powershell\Get-EditionFeatureUsage.ps1
+pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\powershell\migration\Get-EditionFeatureUsage.ps1
 
 .EXAMPLE
-pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\database-admin\migration\powershell\Get-EditionFeatureUsage.ps1 -OutputFormat Csv -OutputPath .\output-files\edition-features.csv
+pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\powershell\migration\Get-EditionFeatureUsage.ps1 -OutputFormat Csv -OutputPath .\output-files\edition-features.csv
 #>
 
 param(
@@ -35,7 +35,7 @@ param(
 $ErrorActionPreference = 'Stop'
 
 $repoRoot  = Resolve-Path (Join-Path $PSScriptRoot '..\..\..')
-$sqlScript = Join-Path $repoRoot 'database-admin\migration\sql\Get-EditionFeatureUsage.sql'
+$sqlScript = Join-Path $repoRoot 'sql\migration\Get-EditionFeatureUsage.sql'
 $runner    = Join-Path $repoRoot 'tools\local-sql\Invoke-RepoSql.ps1'
 
 if (-not (Test-Path -LiteralPath $sqlScript)) { throw "SQL script not found: $sqlScript" }

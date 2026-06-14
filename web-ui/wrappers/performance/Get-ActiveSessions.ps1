@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Shows all active user sessions with wait type, blocking chain, elapsed time, and current statement.
 
@@ -26,10 +26,10 @@ Output mode: 'Table' (default) or 'Csv'.
 Optional file path to save the output.
 
 .EXAMPLE
-pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\database-admin\powershell-scripts\reporting\Get-ActiveSessions.ps1
+pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\powershell\reporting\Get-ActiveSessions.ps1
 
 .EXAMPLE
-pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\database-admin\powershell-scripts\reporting\Get-ActiveSessions.ps1 -ServerInstance . -OutputFormat Csv -OutputPath .\output-files\sessions.csv
+pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\powershell\reporting\Get-ActiveSessions.ps1 -ServerInstance . -OutputFormat Csv -OutputPath .\output-files\sessions.csv
 #>
 
 param(
@@ -43,7 +43,7 @@ param(
 $ErrorActionPreference = 'Stop'
 
 $repoRoot  = Resolve-Path (Join-Path $PSScriptRoot '..\..\..')
-$sqlScript = Join-Path $repoRoot 'database-admin\sql-scripts\performance\Get-ActiveSessions.sql'
+$sqlScript = Join-Path $repoRoot 'sql\performance\Get-ActiveSessions.sql'
 $runner    = Join-Path $repoRoot 'tools\local-sql\Invoke-RepoSql.ps1'
 
 if (-not (Test-Path -LiteralPath $sqlScript)) { throw "SQL script not found: $sqlScript" }

@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Runs post-migration validation checks and produces a summary result set for comparison between source and target.
 
@@ -31,11 +31,11 @@ Optional file path to save the output.
 
 .EXAMPLE
 # Run on source
-pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\database-admin\migration\powershell\Get-PostMigrationValidation.ps1 -ServerInstance SOURCE -OutputFormat Csv -OutputPath .\output-files\migration\source-validation.csv
+pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\powershell\migration\Get-PostMigrationValidation.ps1 -ServerInstance SOURCE -OutputFormat Csv -OutputPath .\output-files\migration\source-validation.csv
 
 .EXAMPLE
 # Run on target
-pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\database-admin\migration\powershell\Get-PostMigrationValidation.ps1 -ServerInstance TARGET -OutputFormat Csv -OutputPath .\output-files\migration\target-validation.csv
+pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\powershell\migration\Get-PostMigrationValidation.ps1 -ServerInstance TARGET -OutputFormat Csv -OutputPath .\output-files\migration\target-validation.csv
 #>
 
 param(
@@ -51,7 +51,7 @@ $ErrorActionPreference = 'Stop'
 if ($ServerInstance -eq '.' -and $env:DBASCRIPTS_SERVER) { $ServerInstance = $env:DBASCRIPTS_SERVER }
 
 $repoRoot  = Resolve-Path (Join-Path $PSScriptRoot '..\..\..')
-$sqlScript = Join-Path $repoRoot 'database-admin\migration\sql\Get-PostMigrationValidation.sql'
+$sqlScript = Join-Path $repoRoot 'sql\migration\Get-PostMigrationValidation.sql'
 $runner    = Join-Path $repoRoot 'tools\local-sql\Invoke-RepoSql.ps1'
 
 if (-not (Test-Path -LiteralPath $sqlScript)) { throw "Script not found: $sqlScript" }

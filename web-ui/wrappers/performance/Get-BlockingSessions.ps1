@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Returns sessions involved in blocking chains with wait type, timing, and current statement.
 
@@ -21,7 +21,7 @@ Output mode: 'Table' (default) or 'Csv'.
 Optional file path to save the output.
 
 .EXAMPLE
-pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\database-admin\powershell-scripts\reporting\Get-BlockingSessions.ps1
+pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\powershell\reporting\Get-BlockingSessions.ps1
 
 .EXAMPLE
 .\run.ps1 Get-BlockingSessions -ServerInstance MYSERVER\INST01
@@ -38,7 +38,7 @@ param(
 $ErrorActionPreference = 'Stop'
 
 $repoRoot  = Resolve-Path (Join-Path $PSScriptRoot '..\..\..')
-$sqlScript = Join-Path $repoRoot 'database-admin\sql-scripts\performance\Get-BlockingSessions.sql'
+$sqlScript = Join-Path $repoRoot 'sql\performance\Get-BlockingSessions.sql'
 $runner    = Join-Path $repoRoot 'tools\local-sql\Invoke-RepoSql.ps1'
 
 Write-Host 'Running blocking-sessions review...' -ForegroundColor Cyan

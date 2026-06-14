@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Lists all members of every fixed and user-defined server role.
 
@@ -23,10 +23,10 @@ Output mode: 'Table' (default) or 'Csv'.
 Optional file path to save the output.
 
 .EXAMPLE
-pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\database-admin\powershell-scripts\security\Get-ServerRoleMembers.ps1
+pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\powershell\security\Get-ServerRoleMembers.ps1
 
 .EXAMPLE
-pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\database-admin\powershell-scripts\security\Get-ServerRoleMembers.ps1 -OutputFormat Csv -OutputPath .\output-files\server-roles.csv
+pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\powershell\security\Get-ServerRoleMembers.ps1 -OutputFormat Csv -OutputPath .\output-files\server-roles.csv
 #>
 
 param(
@@ -40,7 +40,7 @@ param(
 $ErrorActionPreference = 'Stop'
 
 $repoRoot  = Resolve-Path (Join-Path $PSScriptRoot '..\..\..')
-$sqlScript = Join-Path $repoRoot 'database-admin\sql-scripts\security\Get-ServerRoleMembers.sql'
+$sqlScript = Join-Path $repoRoot 'sql\security\Get-ServerRoleMembers.sql'
 $runner    = Join-Path $repoRoot 'tools\local-sql\Invoke-RepoSql.ps1'
 
 if (-not (Test-Path -LiteralPath $sqlScript)) { throw "SQL script not found: $sqlScript" }

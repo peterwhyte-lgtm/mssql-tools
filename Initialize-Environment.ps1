@@ -177,7 +177,7 @@ Write-Host '  Output directories' -ForegroundColor DarkGray
 # Verify key repo folders are present
 Write-Host ''
 Write-Host '  Repo structure' -ForegroundColor DarkGray
-foreach ($folder in @('database-admin\sql-scripts', 'database-admin\powershell-scripts', 'database-admin\collectors', 'web-ui\wrappers', 'tools')) {
+foreach ($folder in @('sql', 'powershell', 'powershell\collectors', 'web-ui\wrappers', 'tools')) {
     $full = Join-Path $repoRoot $folder
     if (Test-Path $full) {
         Add-Check "$folder/" 'OK' ''
@@ -331,7 +331,7 @@ if ($ServerInstance -and ($fails | Where-Object { $_.Label -match 'Connectivity'
     Write-Host ''
     Write-Host '  Run a script                   ' -NoNewline -ForegroundColor DarkGray; Write-Host '.\run.ps1 Get-WaitStatistics' -ForegroundColor White
     Write-Host '  Browse all scripts             ' -NoNewline -ForegroundColor DarkGray; Write-Host '.\run.ps1 -List' -ForegroundColor White
-    Write-Host '  Full health check              ' -NoNewline -ForegroundColor DarkGray; Write-Host '.\database-admin\powershell-scripts\reporting\Invoke-HealthCheckCollection.ps1' -ForegroundColor White
+    Write-Host '  Full health check              ' -NoNewline -ForegroundColor DarkGray; Write-Host '.\powershell\reporting\Invoke-HealthCheckCollection.ps1' -ForegroundColor White
     Write-Host '  Browser UI                     ' -NoNewline -ForegroundColor DarkGray; Write-Host '.\web-ui\Start-WebUi.ps1' -ForegroundColor White
 } else {
     # Connectivity failed or not yet tested

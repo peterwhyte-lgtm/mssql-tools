@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Lists missing index candidates from DMVs, ranked by impact score.
 
@@ -26,10 +26,10 @@ Output mode: 'Table' (default) or 'Csv'.
 Optional file path to save the output.
 
 .EXAMPLE
-pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\database-admin\powershell-scripts\reporting\Get-MissingIndexes.ps1
+pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\powershell\reporting\Get-MissingIndexes.ps1
 
 .EXAMPLE
-pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\database-admin\powershell-scripts\reporting\Get-MissingIndexes.ps1 -OutputFormat Csv -OutputPath .\output-files\missing-indexes.csv
+pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\powershell\reporting\Get-MissingIndexes.ps1 -OutputFormat Csv -OutputPath .\output-files\missing-indexes.csv
 #>
 
 param(
@@ -43,7 +43,7 @@ param(
 $ErrorActionPreference = 'Stop'
 
 $repoRoot  = Resolve-Path (Join-Path $PSScriptRoot '..\..\..')
-$sqlScript = Join-Path $repoRoot 'database-admin\sql-scripts\performance\Get-MissingIndexes.sql'
+$sqlScript = Join-Path $repoRoot 'sql\performance\Get-MissingIndexes.sql'
 $runner    = Join-Path $repoRoot 'tools\local-sql\Invoke-RepoSql.ps1'
 
 if (-not (Test-Path -LiteralPath $sqlScript)) { throw "SQL script not found: $sqlScript" }

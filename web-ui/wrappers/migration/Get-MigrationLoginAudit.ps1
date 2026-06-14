@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Audits all server-level principals that need to be migrated, with risk level and action per login type.
 
@@ -27,10 +27,10 @@ Output mode: 'Table' (default) or 'Csv'.
 Optional file path to save the output.
 
 .EXAMPLE
-pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\database-admin\migration\powershell\Get-MigrationLoginAudit.ps1
+pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\powershell\migration\Get-MigrationLoginAudit.ps1
 
 .EXAMPLE
-pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\database-admin\migration\powershell\Get-MigrationLoginAudit.ps1 -ServerInstance PROD01\SQL2019 -OutputFormat Csv
+pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\powershell\migration\Get-MigrationLoginAudit.ps1 -ServerInstance PROD01\SQL2019 -OutputFormat Csv
 #>
 
 param(
@@ -46,7 +46,7 @@ $ErrorActionPreference = 'Stop'
 if ($ServerInstance -eq '.' -and $env:DBASCRIPTS_SERVER) { $ServerInstance = $env:DBASCRIPTS_SERVER }
 
 $repoRoot  = Resolve-Path (Join-Path $PSScriptRoot '..\..\..')
-$sqlScript = Join-Path $repoRoot 'database-admin\migration\sql\Get-MigrationLoginAudit.sql'
+$sqlScript = Join-Path $repoRoot 'sql\migration\Get-MigrationLoginAudit.sql'
 $runner    = Join-Path $repoRoot 'tools\local-sql\Invoke-RepoSql.ps1'
 
 if (-not (Test-Path -LiteralPath $sqlScript)) { throw "Script not found: $sqlScript" }

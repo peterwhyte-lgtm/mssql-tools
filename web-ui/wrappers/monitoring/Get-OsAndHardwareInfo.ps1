@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Returns OS version, hardware specs, and SQL Server uptime for the target instance.
 
@@ -26,10 +26,10 @@ Output mode: 'Table' (default) or 'Csv'.
 Optional file path to save the output.
 
 .EXAMPLE
-pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\database-admin\powershell-scripts\inventory\Get-OsAndHardwareInfo.ps1
+pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\powershell\inventory\Get-OsAndHardwareInfo.ps1
 
 .EXAMPLE
-pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\database-admin\powershell-scripts\inventory\Get-OsAndHardwareInfo.ps1 -ServerInstance MYSERVER\INST01 -OutputFormat Csv -OutputPath .\output-files\os-hardware.csv
+pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\powershell\inventory\Get-OsAndHardwareInfo.ps1 -ServerInstance MYSERVER\INST01 -OutputFormat Csv -OutputPath .\output-files\os-hardware.csv
 #>
 
 param(
@@ -43,7 +43,7 @@ param(
 $ErrorActionPreference = 'Stop'
 
 $repoRoot  = Resolve-Path (Join-Path $PSScriptRoot '..\..\..')
-$sqlScript = Join-Path $repoRoot 'database-admin\sql-scripts\monitoring\Get-OsAndHardwareInfo.sql'
+$sqlScript = Join-Path $repoRoot 'sql\monitoring\Get-OsAndHardwareInfo.sql'
 $runner    = Join-Path $repoRoot 'tools\local-sql\Invoke-RepoSql.ps1'
 
 if (-not (Test-Path -LiteralPath $sqlScript)) { throw "SQL script not found: $sqlScript" }

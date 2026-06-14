@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Prints a descriptive overview of the DBA scripts repo — intended as the first
 thing a new user runs to understand what's here and how to get started.
@@ -74,8 +74,8 @@ Write-Host "  Set a target server once for the whole session:" -ForegroundColor 
 Write-Host "    .\tools\local-sql\Set-SqlConnection.ps1 -ServerInstance PROD01" -ForegroundColor White
 
 # ── Category tables ──────────────────────────────────────────────────────────
-Show-CategoryTable -Label 'SQL Scripts'        -RootPath (Join-Path $repoRoot 'database-admin\sql-scripts')        -Extension 'sql' -Descriptions $sqlDesc
-Show-CategoryTable -Label 'PowerShell Scripts' -RootPath (Join-Path $repoRoot 'database-admin\powershell-scripts') -Extension 'ps1' -Descriptions $psDesc
+Show-CategoryTable -Label 'SQL Scripts'        -RootPath (Join-Path $repoRoot 'sql')        -Extension 'sql' -Descriptions $sqlDesc
+Show-CategoryTable -Label 'PowerShell Scripts' -RootPath (Join-Path $repoRoot 'powershell') -Extension 'ps1' -Descriptions $psDesc
 
 # ── Recommended next steps ───────────────────────────────────────────────────
 Write-Host ""
@@ -87,8 +87,8 @@ Write-Host "  [1]  Verify you can connect to SQL Server" -ForegroundColor Green
 Write-Host "       .\tools\local-sql\Test-SqlConnectivity.ps1 -ServerInstance ." -ForegroundColor White
 Write-Host ""
 Write-Host "  [2]  Run a full healthcheck (collects 19 scripts, surfaces CRITICAL/WARNING)" -ForegroundColor Green
-Write-Host "       .\database-admin\powershell-scripts\reporting\Invoke-HealthCheckCollection.ps1 -ServerInstance ." -ForegroundColor White
-Write-Host "       .\database-admin\powershell-scripts\reporting\Review-HealthCheckOutput.ps1" -ForegroundColor White
+Write-Host "       .\powershell\reporting\Invoke-HealthCheckCollection.ps1 -ServerInstance ." -ForegroundColor White
+Write-Host "       .\powershell\reporting\Review-HealthCheckOutput.ps1" -ForegroundColor White
 Write-Host ""
 Write-Host "  [3]  Quick performance diagnostics" -ForegroundColor Green
 Write-Host "       .\run.ps1 Get-WaitStatistics" -ForegroundColor White
@@ -99,9 +99,9 @@ Write-Host "  [4]  Find scripts by keyword" -ForegroundColor Green
 Write-Host "       .\tools\triage\Find-UsefulScript.ps1 -Keyword blocking" -ForegroundColor White
 Write-Host ""
 Write-Host "  [5]  Browse the full structure" -ForegroundColor Green
-Write-Host "       database-admin/sql-scripts/        — SSMS-ready diagnostic queries (run directly or via .\run.ps1)" -ForegroundColor White
-Write-Host "       database-admin/powershell-scripts/ — wrappers, healthcheck collection, automation" -ForegroundColor White
-Write-Host "       database-admin/migration/          — migration DDL generators and assessment scripts" -ForegroundColor White
-Write-Host "       database-admin/change-templates/    — change orders, runbooks, checklists, rollback playbooks" -ForegroundColor White
+Write-Host "       sql/        — SSMS-ready diagnostic queries (run directly or via .\run.ps1)" -ForegroundColor White
+Write-Host "       powershell/ — wrappers, healthcheck collection, automation" -ForegroundColor White
+Write-Host "       powershell/migration/               — migration DDL generators and assessment scripts" -ForegroundColor White
+Write-Host "       docs/ops/    — change orders, runbooks, checklists, rollback playbooks" -ForegroundColor White
 Write-Host "       docs/        — structure notes, standards, roadmap" -ForegroundColor White
 Write-Host ""

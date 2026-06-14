@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Shows a summary of current blocking chains — head blockers and all waiting sessions.
 
@@ -21,10 +21,10 @@ Output mode: 'Table' (default) or 'Csv'.
 Optional file path to save the output.
 
 .EXAMPLE
-pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\database-admin\powershell-scripts\reporting\Get-BlockingSummary.ps1
+pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\powershell\reporting\Get-BlockingSummary.ps1
 
 .EXAMPLE
-pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\database-admin\powershell-scripts\reporting\Get-BlockingSummary.ps1 -ServerInstance MYSERVER\INST01
+pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\powershell\reporting\Get-BlockingSummary.ps1 -ServerInstance MYSERVER\INST01
 #>
 
 param(
@@ -38,7 +38,7 @@ param(
 $ErrorActionPreference = 'Stop'
 
 $repoRoot  = Resolve-Path (Join-Path $PSScriptRoot '..\..\..')
-$sqlScript = Join-Path $repoRoot 'database-admin\sql-scripts\performance\Get-BlockingSummary.sql'
+$sqlScript = Join-Path $repoRoot 'sql\performance\Get-BlockingSummary.sql'
 $runner    = Join-Path $repoRoot 'tools\local-sql\Invoke-RepoSql.ps1'
 
 if (-not (Test-Path -LiteralPath $sqlScript)) { throw "SQL script not found: $sqlScript" }

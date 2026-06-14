@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Active user sessions with CPU/elapsed time and current worker thread pool utilisation.
 
@@ -34,7 +34,7 @@ param(
 $ErrorActionPreference = 'Stop'
 
 $repoRoot  = Resolve-Path (Join-Path $PSScriptRoot '..\..\..')
-$sqlScript = Join-Path $repoRoot 'database-admin\sql-scripts\performance\Get-WorkerThreadsAndActiveSessions.sql'
+$sqlScript = Join-Path $repoRoot 'sql\performance\Get-WorkerThreadsAndActiveSessions.sql'
 $runner    = Join-Path $repoRoot 'tools\local-sql\Invoke-RepoSql.ps1'
 
 if (-not (Test-Path -LiteralPath $sqlScript)) { throw "SQL script not found: $sqlScript" }

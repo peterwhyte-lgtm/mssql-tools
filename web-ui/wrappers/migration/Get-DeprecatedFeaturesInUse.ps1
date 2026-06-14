@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Reports deprecated SQL Server features with active usage since last restart.
 Use before a version upgrade to identify features that will generate errors or break
@@ -23,10 +23,10 @@ Output mode: 'Table' (default) or 'Csv'.
 Optional file path to save the output.
 
 .EXAMPLE
-.\database-admin\migration\powershell\Get-DeprecatedFeaturesInUse.ps1
+.\powershell\migration\Get-DeprecatedFeaturesInUse.ps1
 
 .EXAMPLE
-.\database-admin\migration\powershell\Get-DeprecatedFeaturesInUse.ps1 -ServerInstance PROD01 -OutputFormat Csv
+.\powershell\migration\Get-DeprecatedFeaturesInUse.ps1 -ServerInstance PROD01 -OutputFormat Csv
 #>
 
 param(
@@ -39,7 +39,7 @@ param(
 $ErrorActionPreference = 'Stop'
 
 $repoRoot  = Resolve-Path (Join-Path $PSScriptRoot '..\..\..')
-$sqlScript = Join-Path $repoRoot 'database-admin\migration\sql\Get-DeprecatedFeaturesInUse.sql'
+$sqlScript = Join-Path $repoRoot 'sql\migration\Get-DeprecatedFeaturesInUse.sql'
 $runner    = Join-Path $repoRoot 'tools\local-sql\Invoke-RepoSql.ps1'
 
 if (-not (Test-Path -LiteralPath $sqlScript)) { throw "SQL script not found: $sqlScript" }

@@ -13,8 +13,7 @@ Run from repo root:
 $repoRoot = (Resolve-Path "$PSScriptRoot\..")
 
 $wrappers = @(
-    Get-ChildItem "$repoRoot\database-admin\powershell-scripts" -Recurse -Filter '*.ps1' -File
-    Get-ChildItem "$repoRoot\database-admin\migration\powershell" -Recurse -Filter '*.ps1' -File
+    Get-ChildItem "$repoRoot\powershell" -Recurse -Filter '*.ps1' -File
     Get-ChildItem "$repoRoot\web-ui\wrappers" -Recurse -Filter '*.ps1' -File
 )
 
@@ -22,7 +21,7 @@ $allPairs = @(
     foreach ($w in $wrappers) {
         $content = Get-Content $w.FullName -Raw -ErrorAction SilentlyContinue
         if (-not $content) { continue }
-        $sqlRefs = [regex]::Matches($content, "database-admin\\[\w\-\\]+\.sql")
+        $sqlRefs = [regex]::Matches($content, "sql\\[\w\-\\]+\.sql")
         foreach ($m in $sqlRefs) {
             [PSCustomObject]@{
                 Wrapper    = $w.FullName.Replace($repoRoot.Path + '\', '')

@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 CPU topology, NUMA, scheduler summary, and parallelism config in one row.
 
@@ -34,7 +34,7 @@ param(
 $ErrorActionPreference = 'Stop'
 
 $repoRoot  = Resolve-Path (Join-Path $PSScriptRoot '..\..\..')
-$sqlScript = Join-Path $repoRoot 'database-admin\sql-scripts\monitoring\Get-SqlServerCpuTopologyAndSchedulerDetails.sql'
+$sqlScript = Join-Path $repoRoot 'sql\monitoring\Get-SqlServerCpuTopologyAndSchedulerDetails.sql'
 $runner    = Join-Path $repoRoot 'tools\local-sql\Invoke-RepoSql.ps1'
 
 if (-not (Test-Path -LiteralPath $sqlScript)) { throw "SQL script not found: $sqlScript" }

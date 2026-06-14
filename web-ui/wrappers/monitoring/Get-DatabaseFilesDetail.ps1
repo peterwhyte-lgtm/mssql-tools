@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Returns per-file details for all user databases: path, size, max size, and growth settings.
 
@@ -26,10 +26,10 @@ Output mode: 'Table' (default) or 'Csv'.
 Optional file path to save the output.
 
 .EXAMPLE
-pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\database-admin\powershell-scripts\inventory\Get-DatabaseFilesDetail.ps1
+pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\powershell\inventory\Get-DatabaseFilesDetail.ps1
 
 .EXAMPLE
-pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\database-admin\powershell-scripts\inventory\Get-DatabaseFilesDetail.ps1 -ServerInstance . -OutputFormat Csv -OutputPath .\output-files\db-files.csv
+pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\powershell\inventory\Get-DatabaseFilesDetail.ps1 -ServerInstance . -OutputFormat Csv -OutputPath .\output-files\db-files.csv
 #>
 
 param(
@@ -43,7 +43,7 @@ param(
 $ErrorActionPreference = 'Stop'
 
 $repoRoot  = Resolve-Path (Join-Path $PSScriptRoot '..\..\..')
-$sqlScript = Join-Path $repoRoot 'database-admin\sql-scripts\monitoring\Get-DatabaseFilesDetail.sql'
+$sqlScript = Join-Path $repoRoot 'sql\monitoring\Get-DatabaseFilesDetail.sql'
 $runner    = Join-Path $repoRoot 'tools\local-sql\Invoke-RepoSql.ps1'
 
 if (-not (Test-Path -LiteralPath $sqlScript)) { throw "SQL script not found: $sqlScript" }

@@ -1,4 +1,4 @@
-# Helpers
+﻿# Helpers
 
 This folder is the quick-access layer for the DBA repo during day-to-day operations, local validation, and AI-assisted troubleshooting.
 It is the first place to go when you want to run, inspect, or route a script without digging through the full repo tree.
@@ -23,7 +23,7 @@ You can also call the helper directly:
 
 ```powershell
 .\tools\Run-Helper.ps1 -ScriptName Get-WaitStatistics
-.\tools\Run-Helper.ps1 -ScriptPath .\database-admin\powershell-scripts\reporting\Get-WaitStatistics.ps1
+.\tools\Run-Helper.ps1 -ScriptPath .\powershell\reporting\Get-WaitStatistics.ps1
 ```
 
 ## Helper layout

@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Shows AG replica health, connection state, and synchronisation status.
 
@@ -34,7 +34,7 @@ param(
 $ErrorActionPreference = 'Stop'
 
 $repoRoot  = Resolve-Path (Join-Path $PSScriptRoot '..\..\..')
-$sqlScript = Join-Path $repoRoot 'database-admin\sql-scripts\ha-dr\Get-AvailabilityGroupReplicaState.sql'
+$sqlScript = Join-Path $repoRoot 'sql\ha-dr\Get-AvailabilityGroupReplicaState.sql'
 $runner    = Join-Path $repoRoot 'tools\local-sql\Invoke-RepoSql.ps1'
 
 if (-not (Test-Path -LiteralPath $sqlScript)) { throw "SQL script not found: $sqlScript" }

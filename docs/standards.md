@@ -1,4 +1,4 @@
-# Script standards
+﻿# Script standards
 
 Authoritative reference for SQL and PowerShell script standards in this repo. `CONTRIBUTING.md` links here. `CLAUDE.md` has a condensed version — this file has the reasoning.
 
@@ -38,7 +38,7 @@ The `-- SAFE:` and `-- IMPACT:` annotations on lines after the block comment are
 
 ### Rules
 
-- **Single result set** — multi-result-set scripts cannot be exported as a single CSV via `Invoke-RepoSql.ps1`. If a script genuinely needs multiple result sets, it belongs in `database-admin/migration/` with its own orchestrator, not in `database-admin/sql-scripts/`.
+- **Single result set** — multi-result-set scripts cannot be exported as a single CSV via `Invoke-RepoSql.ps1`. If a script genuinely needs multiple result sets, it belongs in `sql/migration/` with its own orchestrator in `powershell/migration/`, not in `sql/`.
 - **No `USE database; GO`** — pass `-Database` at execution time. `Invoke-Sqlcmd` does not support `GO` batch separators.
 - **No `WITH (NOLOCK)`** without a comment explaining the risk. If you must use it, add `-- NOLOCK: <reason>` on the same line.
 - **Modern DMVs only** — `sys.objects` not `sys.sysobjects`, `sys.server_principals` not `sys.syslogins`, `sys.dm_exec_sessions` not `sys.sysprocesses`.
@@ -50,15 +50,15 @@ The `-- SAFE:` and `-- IMPACT:` annotations on lines after the block comment are
 
 | Category | Folder |
 |----------|--------|
-| Health, memory, jobs, TempDB, DBCC, config | `database-admin/sql-scripts/monitoring/` |
-| Waits, blocking, queries, indexes, I/O | `database-admin/sql-scripts/performance/` |
-| AG health and latency | `database-admin/sql-scripts/ha-dr/` |
-| Backup coverage, history, DR | `database-admin/sql-scripts/backups/` |
-| Roles, logins, permissions, surface area | `database-admin/sql-scripts/security/` |
-| Maintenance job generation and status | `database-admin/sql-scripts/maintenance/` |
-| Migration assessment and DDL generation | `database-admin/migration/sql/` |
+| Health, memory, jobs, TempDB, DBCC, config | `sql/monitoring/` |
+| Waits, blocking, queries, indexes, I/O | `sql/performance/` |
+| AG health and latency | `sql/ha-dr/` |
+| Backup coverage, history, DR | `sql/backups/` |
+| Roles, logins, permissions, surface area | `sql/security/` |
+| Maintenance job generation and status | `sql/maintenance/` |
+| Migration assessment and DDL generation | `sql/migration/` |
 
-Every SQL script in `database-admin/sql-scripts/` must have a matching wrapper in `web-ui/wrappers/<same-category>/` — this is what makes it runnable from the web UI and `run.ps1`.
+Every SQL script in `sql/` must have a matching wrapper in `web-ui/wrappers/<same-category>/` — this is what makes it runnable from the web UI and `run.ps1`.
 
 ---
 
@@ -78,7 +78,7 @@ param(
 $ErrorActionPreference = 'Stop'
 
 $repoRoot  = Resolve-Path (Join-Path $PSScriptRoot '..\..\..')   # web-ui/wrappers/<cat>/ is 3 levels deep
-$sqlScript = Join-Path $repoRoot 'database-admin\sql-scripts\<category>\Get-Something.sql'
+$sqlScript = Join-Path $repoRoot 'sql\<category>\Get-Something.sql'
 $runner    = Join-Path $repoRoot 'tools\local-sql\Invoke-RepoSql.ps1'
 
 if (-not (Test-Path -LiteralPath $sqlScript)) { throw "SQL script not found: $sqlScript" }
@@ -91,7 +91,7 @@ Write-Host 'Running...' -ForegroundColor Cyan
 
 **Key points:**
 - `$PSScriptRoot '..\..\..'` — wrappers sit at `web-ui/wrappers/<category>/`, three levels from root.
-- Migration script wrappers use `database-admin\migration\sql\` instead of `database-admin\sql-scripts\<category>\`.
+- Migration script wrappers use `sql\migration\` instead of `sql\<category>\`.
 - Always validate with `Test-Path` before invoking — gives a clear error instead of a cryptic PS exception.
 
 Required `.NOTES` fields:
@@ -114,7 +114,7 @@ Purpose      : One-line description.
 
 ## PowerShell orchestrators
 
-Scripts in `database-admin/powershell-scripts/` have real logic — they are not thin wrappers. Same `.NOTES` fields apply. Resolve repo root with `$PSScriptRoot '..\..\..'` (also three levels deep).
+Scripts in `powershell/` have real logic — they are not thin wrappers. Same `.NOTES` fields apply. Resolve repo root with `$PSScriptRoot '..\..\..'` (also three levels deep).
 
 ---
 

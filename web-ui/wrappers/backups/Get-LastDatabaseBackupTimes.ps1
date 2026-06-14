@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Shows the latest full, diff, and log backup timestamp and age per database.
 
@@ -34,7 +34,7 @@ param(
 $ErrorActionPreference = 'Stop'
 
 $repoRoot  = Resolve-Path (Join-Path $PSScriptRoot '..\..\..')
-$sqlScript = Join-Path $repoRoot 'database-admin\sql-scripts\backups\Get-LastDatabaseBackupTimes.sql'
+$sqlScript = Join-Path $repoRoot 'sql\backups\Get-LastDatabaseBackupTimes.sql'
 $runner    = Join-Path $repoRoot 'tools\local-sql\Invoke-RepoSql.ps1'
 
 if (-not (Test-Path -LiteralPath $sqlScript)) { throw "SQL script not found: $sqlScript" }

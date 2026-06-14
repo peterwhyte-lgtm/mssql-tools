@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Pre-upgrade readiness summary for SQL Server version upgrades — version info, compat level matrix,
 configuration review, and database sizing for window planning.
@@ -21,10 +21,10 @@ Output mode: 'Table' (default) or 'Csv'.
 Optional file path to save the output.
 
 .EXAMPLE
-pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\database-admin\migration\powershell\Get-VersionUpgradeReadiness.ps1
+pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\powershell\migration\Get-VersionUpgradeReadiness.ps1
 
 .EXAMPLE
-pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\database-admin\migration\powershell\Get-VersionUpgradeReadiness.ps1 -OutputFormat Csv -OutputPath .\output-files\upgrade-readiness.csv
+pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\powershell\migration\Get-VersionUpgradeReadiness.ps1 -OutputFormat Csv -OutputPath .\output-files\upgrade-readiness.csv
 #>
 
 param(
@@ -37,7 +37,7 @@ param(
 $ErrorActionPreference = 'Stop'
 
 $repoRoot  = Resolve-Path (Join-Path $PSScriptRoot '..\..\..')
-$sqlScript = Join-Path $repoRoot 'database-admin\migration\sql\Get-VersionUpgradeReadiness.sql'
+$sqlScript = Join-Path $repoRoot 'sql\migration\Get-VersionUpgradeReadiness.sql'
 $runner    = Join-Path $repoRoot 'tools\local-sql\Invoke-RepoSql.ps1'
 
 if (-not (Test-Path -LiteralPath $sqlScript)) { throw "SQL script not found: $sqlScript" }

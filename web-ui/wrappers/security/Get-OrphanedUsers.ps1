@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Finds database users with no matching server login across all user databases.
 
@@ -24,10 +24,10 @@ Output mode: 'Table' (default) or 'Csv'.
 Optional file path to save the output.
 
 .EXAMPLE
-pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\database-admin\powershell-scripts\security\Get-OrphanedUsers.ps1
+pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\powershell\security\Get-OrphanedUsers.ps1
 
 .EXAMPLE
-pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\database-admin\powershell-scripts\security\Get-OrphanedUsers.ps1 -OutputFormat Csv -OutputPath .\output-files\orphaned-users.csv
+pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\powershell\security\Get-OrphanedUsers.ps1 -OutputFormat Csv -OutputPath .\output-files\orphaned-users.csv
 #>
 
 param(
@@ -41,7 +41,7 @@ param(
 $ErrorActionPreference = 'Stop'
 
 $repoRoot  = Resolve-Path (Join-Path $PSScriptRoot '..\..\..')
-$sqlScript = Join-Path $repoRoot 'database-admin\sql-scripts\security\Get-OrphanedUsers.sql'
+$sqlScript = Join-Path $repoRoot 'sql\security\Get-OrphanedUsers.sql'
 $runner    = Join-Path $repoRoot 'tools\local-sql\Invoke-RepoSql.ps1'
 
 if (-not (Test-Path -LiteralPath $sqlScript)) { throw "SQL script not found: $sqlScript" }

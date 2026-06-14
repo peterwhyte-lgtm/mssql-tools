@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Shows explicit server-level permissions granted or denied directly to logins.
 
@@ -18,10 +18,10 @@ Output mode: 'Table' (default) or 'Csv'.
 Optional file path to save the output.
 
 .EXAMPLE
-pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\database-admin\powershell-scripts\security\Get-LoginPermissions.ps1
+pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\powershell\security\Get-LoginPermissions.ps1
 
 .EXAMPLE
-pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\database-admin\powershell-scripts\security\Get-LoginPermissions.ps1 -OutputFormat Csv -OutputPath .\output-files\login-permissions.csv
+pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\powershell\security\Get-LoginPermissions.ps1 -OutputFormat Csv -OutputPath .\output-files\login-permissions.csv
 #>
 
 param(
@@ -35,7 +35,7 @@ param(
 $ErrorActionPreference = 'Stop'
 
 $repoRoot  = Resolve-Path (Join-Path $PSScriptRoot '..\..\..')
-$sqlScript = Join-Path $repoRoot 'database-admin\sql-scripts\security\Get-LoginPermissions.sql'
+$sqlScript = Join-Path $repoRoot 'sql\security\Get-LoginPermissions.sql'
 $runner    = Join-Path $repoRoot 'tools\local-sql\Invoke-RepoSql.ps1'
 
 if (-not (Test-Path -LiteralPath $sqlScript)) { throw "SQL script not found: $sqlScript" }

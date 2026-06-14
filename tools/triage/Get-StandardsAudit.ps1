@@ -45,8 +45,8 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $repoRoot    = Resolve-Path (Join-Path $PSScriptRoot '..\..')
-$sqlRoot     = Join-Path $repoRoot 'database-admin\sql-scripts'
-$migrationRoot = Join-Path $repoRoot 'database-admin\migration\sql'
+$sqlRoot     = Join-Path $repoRoot 'sql'
+$migrationRoot = Join-Path $repoRoot 'sql\migration'
 
 # Required header fields
 $requiredFields = @('Script Name', 'Category', 'Purpose', 'Author', 'Safe', 'Impact')
@@ -85,7 +85,7 @@ if (-not $sqlFiles) {
 $results = foreach ($file in $sqlFiles) {
     $content = [System.IO.File]::ReadAllText($file.FullName, [System.Text.Encoding]::UTF8)
     $rel     = $file.FullName.Substring($repoRoot.Path.Length + 1).Replace('\', '/')
-    $cat     = if ($rel -match 'migration/sql/') { 'migration' } else { $file.Directory.Name }
+    $cat     = if ($rel -match 'sql/migration/') { 'migration' } else { $file.Directory.Name }
 
     $fails = [System.Collections.Generic.List[string]]::new()
     $warns = [System.Collections.Generic.List[string]]::new()

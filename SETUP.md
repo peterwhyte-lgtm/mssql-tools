@@ -123,10 +123,10 @@ Or let the setup script do it: `.\Initialize-Environment.ps1 -ServerInstance PRO
 
 ```powershell
 # Run 27 scripts against an instance — saves named CSVs
-.\database-admin\powershell-scripts\reporting\Invoke-HealthCheckCollection.ps1 -ServerInstance PROD01\SQL2019
+.\powershell\reporting\Invoke-HealthCheckCollection.ps1 -ServerInstance PROD01\SQL2019
 
 # Review the output — surfaces CRITICAL / WARNING / INFO findings
-.\database-admin\powershell-scripts\reporting\Review-HealthCheckOutput.ps1
+.\powershell\reporting\Review-HealthCheckOutput.ps1
 ```
 
 What it flags: offline databases, missing backups, stale DBCC CHECKDB, suspect pages, sa enabled, percent-based autogrowth, weak SQL logins, I/O latency above threshold, memory not configured, transaction log pressure, and more.
@@ -134,7 +134,7 @@ What it flags: offline databases, missing backups, stale DBCC CHECKDB, suspect p
 For a client handover or ownership review:
 
 ```powershell
-.\database-admin\powershell-scripts\reporting\Invoke-AssessmentReport.ps1 -ServerInstance PROD01\SQL2019 -AssessedBy "Peter Whyte"
+.\powershell\reporting\Invoke-AssessmentReport.ps1 -ServerInstance PROD01\SQL2019 -AssessedBy "Peter Whyte"
 # Output: output-files\assessment\<server>-<timestamp>.md
 ```
 

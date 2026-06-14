@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Lists all explicit object- and schema-level permissions in the target database.
 
@@ -29,7 +29,7 @@ Output mode: 'Table' (default) or 'Csv'.
 Optional file path to save the output.
 
 .EXAMPLE
-pwsh -File .\database-admin\powershell-scripts\security\Get-DatabasePermissions.ps1 -Database Orders -OutputFormat Csv
+pwsh -File .\powershell\security\Get-DatabasePermissions.ps1 -Database Orders -OutputFormat Csv
 #>
 
 param(
@@ -43,7 +43,7 @@ param(
 $ErrorActionPreference = 'Stop'
 
 $repoRoot  = Resolve-Path (Join-Path $PSScriptRoot '..\..\..')
-$sqlScript = Join-Path $repoRoot 'database-admin\sql-scripts\security\Get-DatabasePermissions.sql'
+$sqlScript = Join-Path $repoRoot 'sql\security\Get-DatabasePermissions.sql'
 $runner    = Join-Path $repoRoot 'tools\local-sql\Invoke-RepoSql.ps1'
 
 if (-not (Test-Path -LiteralPath $sqlScript)) { throw "SQL script not found: $sqlScript" }

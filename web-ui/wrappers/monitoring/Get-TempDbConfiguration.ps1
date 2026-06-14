@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Reviews TempDB file configuration — count, sizing parity, and autogrowth settings.
 
@@ -33,7 +33,7 @@ param(
 $ErrorActionPreference = 'Stop'
 
 $repoRoot  = Resolve-Path (Join-Path $PSScriptRoot '..\..\..')
-$sqlScript = Join-Path $repoRoot 'database-admin\sql-scripts\monitoring\Get-TempDbConfiguration.sql'
+$sqlScript = Join-Path $repoRoot 'sql\monitoring\Get-TempDbConfiguration.sql'
 $runner    = Join-Path $repoRoot 'tools\local-sql\Invoke-RepoSql.ps1'
 
 if (-not (Test-Path -LiteralPath $sqlScript)) { throw "SQL script not found: $sqlScript" }

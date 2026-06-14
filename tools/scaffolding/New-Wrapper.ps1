@@ -1,9 +1,9 @@
-<#
+﻿<#
 .SYNOPSIS
 Generates a thin PS wrapper for a SQL script in web-ui/wrappers/.
 
 .DESCRIPTION
-Given a path to a .sql file in database-admin/sql-scripts/ or database-admin/migration/sql/,
+Given a path to a .sql file in sql/ or sql/migration/,
 generates the matching wrapper PS1 in web-ui/wrappers/<category>/ and opens it for review.
 
 The wrapper follows the repo standard: resolves repoRoot three levels up, builds the SQL
@@ -16,10 +16,10 @@ Relative or absolute path to the .sql file. Category is inferred from the path.
 Overwrite an existing wrapper without prompting.
 
 .EXAMPLE
-.\tools\scaffolding\New-Wrapper.ps1 -SqlPath database-admin\sql-scripts\monitoring\Get-Something.sql
+.\tools\scaffolding\New-Wrapper.ps1 -SqlPath sql\monitoring\Get-Something.sql
 
 .EXAMPLE
-.\tools\scaffolding\New-Wrapper.ps1 -SqlPath database-admin\migration\sql\Get-MigrationThing.sql
+.\tools\scaffolding\New-Wrapper.ps1 -SqlPath sql\migration\Get-MigrationThing.sql
 
 .NOTES
 Type      : runner
@@ -50,13 +50,13 @@ $sqlFile = Get-Item -LiteralPath $absPath
 $relPath = $sqlFile.FullName.Replace($repoRoot.Path + '\', '').Replace('\', '/')
 
 # ── Determine category and sql-path string for the wrapper body ───────────────
-$isMigration = $relPath -match '^database-admin/migration/sql/'
+$isMigration = $relPath -match '^sql/migration/'
 $category    = if ($isMigration) {
     'migration'
-} elseif ($relPath -match '^database-admin/sql-scripts/([^/]+)/') {
+} elseif ($relPath -match '^sql/([^/]+)/') {
     $Matches[1]
 } else {
-    throw "Cannot determine category from path: $relPath`nExpected: database-admin/sql-scripts/<cat>/ or database-admin/migration/sql/"
+    throw "Cannot determine category from path: $relPath`nExpected: sql/<cat>/ or sql/migration/"
 }
 
 $sqlRelForBody = $relPath.Replace('/', '\')   # backslash for Join-Path in the wrapper

@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Reports top fragmented indexes across all user databases on the instance.
 
@@ -9,7 +9,7 @@ RiskLevel    : SAFE
 Purpose      : Identify indexes needing REBUILD or REORGANIZE across every user database.
 
 .DESCRIPTION
-Wrapper for database-admin\sql-scripts\monitoring\Get-IndexFragmentation.sql. Scans all online user databases
+Wrapper for sql\monitoring\Get-IndexFragmentation.sql. Scans all online user databases
 in one pass using LIMITED mode and returns a single ranked result set.
 
 Runtime is proportional to instance size — expect 30 seconds to several minutes on
@@ -42,7 +42,7 @@ param(
 $ErrorActionPreference = 'Stop'
 
 $repoRoot  = Resolve-Path (Join-Path $PSScriptRoot '..\..\..')
-$sqlScript = Join-Path $repoRoot 'database-admin\sql-scripts\monitoring\Get-IndexFragmentation.sql'
+$sqlScript = Join-Path $repoRoot 'sql\monitoring\Get-IndexFragmentation.sql'
 $runner    = Join-Path $repoRoot 'tools\local-sql\Invoke-RepoSql.ps1'
 
 if (-not (Test-Path -LiteralPath $sqlScript)) { throw "SQL script not found: $sqlScript" }

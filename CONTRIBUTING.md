@@ -1,4 +1,4 @@
-# Contributing
+﻿# Contributing
 
 Bug reports, fixes, and improvements to existing scripts are welcome. This is a production DBA toolkit, so the bar for changes is correctness and safety — not feature completeness.
 
@@ -61,7 +61,7 @@ Wrappers follow a thin-wrapper pattern — SQL logic stays in external `.sql` fi
 ```powershell
 # Standard wrapper shape — lives at web-ui/wrappers/<category>/, three levels from root
 $repoRoot  = Resolve-Path (Join-Path $PSScriptRoot '..\..\..')
-$sqlScript = Join-Path $repoRoot 'database-admin\sql-scripts\<category>\Get-Something.sql'
+$sqlScript = Join-Path $repoRoot 'sql\<category>\Get-Something.sql'
 $runner    = Join-Path $repoRoot 'tools\local-sql\Invoke-RepoSql.ps1'
 & $runner -ScriptPath $sqlScript -ServerInstance $ServerInstance -Database $Database -OutputFormat $OutputFormat -OutputPath $OutputPath
 ```
@@ -74,11 +74,11 @@ Required `.NOTES` fields: `ScriptType` (runner / automation / hybrid), `TargetSc
 
 | Type | Location |
 |------|----------|
-| New SQL diagnostic or monitoring script | `database-admin/sql-scripts/<category>/Get-Something.sql` |
+| New SQL diagnostic or monitoring script | `sql/<category>/Get-Something.sql` |
 | New PowerShell wrapper for a SQL script | `web-ui/wrappers/<category>/Get-Something.ps1` (required for web UI) |
-| New unique PowerShell script (orchestration, automation) | `database-admin/powershell-scripts/<subfolder>/` |
-| New change order template | `database-admin/change-templates/change-orders/` |
-| New operational checklist | `database-admin/change-templates/checklists/` |
+| New unique PowerShell script (orchestration, automation) | `powershell/<subfolder>/` |
+| New change order template | `docs/ops/change-orders/` |
+| New operational checklist | `docs/ops/checklists/` |
 
 If the right category doesn't exist, open an issue first rather than creating a new top-level folder.
 

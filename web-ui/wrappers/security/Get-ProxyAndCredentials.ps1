@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Lists SQL Agent proxies and server-level credentials with security context.
 
@@ -19,7 +19,7 @@ Output mode: 'Table' (default) or 'Csv'.
 Optional file path to save the output.
 
 .EXAMPLE
-pwsh -File .\database-admin\powershell-scripts\security\Get-ProxyAndCredentials.ps1 -OutputFormat Csv
+pwsh -File .\powershell\security\Get-ProxyAndCredentials.ps1 -OutputFormat Csv
 #>
 
 param(
@@ -33,7 +33,7 @@ param(
 $ErrorActionPreference = 'Stop'
 
 $repoRoot  = Resolve-Path (Join-Path $PSScriptRoot '..\..\..')
-$sqlScript = Join-Path $repoRoot 'database-admin\sql-scripts\security\Get-ProxyAndCredentials.sql'
+$sqlScript = Join-Path $repoRoot 'sql\security\Get-ProxyAndCredentials.sql'
 $runner    = Join-Path $repoRoot 'tools\local-sql\Invoke-RepoSql.ps1'
 
 if (-not (Test-Path -LiteralPath $sqlScript)) { throw "SQL script not found: $sqlScript" }

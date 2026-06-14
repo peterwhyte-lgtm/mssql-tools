@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Unified contention summary — lock waits, latch waits, TempDB allocation pressure, and spinlocks.
 
@@ -17,10 +17,10 @@ Output mode: 'Table' (default) or 'Csv'.
 Optional file path to save the output.
 
 .EXAMPLE
-.\database-admin\powershell-scripts\reporting\Get-ContentionAnalysis.ps1
+.\powershell\reporting\Get-ContentionAnalysis.ps1
 
 .EXAMPLE
-.\database-admin\powershell-scripts\reporting\Get-ContentionAnalysis.ps1 -ServerInstance PROD01\SQL2019 -OutputFormat Csv
+.\powershell\reporting\Get-ContentionAnalysis.ps1 -ServerInstance PROD01\SQL2019 -OutputFormat Csv
 #>
 
 param(
@@ -34,7 +34,7 @@ param(
 $ErrorActionPreference = 'Stop'
 
 $repoRoot  = Resolve-Path (Join-Path $PSScriptRoot '..\..\..')
-$sqlScript = Join-Path $repoRoot 'database-admin\sql-scripts\performance\Get-ContentionAnalysis.sql'
+$sqlScript = Join-Path $repoRoot 'sql\performance\Get-ContentionAnalysis.sql'
 $runner    = Join-Path $repoRoot 'tools\local-sql\Invoke-RepoSql.ps1'
 
 if (-not (Test-Path -LiteralPath $sqlScript)) { throw "SQL script not found: $sqlScript" }
