@@ -1180,8 +1180,20 @@ function fmtCell(val,col){
   }
   const k=s.toLowerCase().trim();
   if(SV[k])return '<span class="sv sv-'+SV[k]+'">'+esc(s)+'</span>';
+  // Boolean True/False — colour direction is column-semantic, not universal
+  if(k==='true'||k==='false'){
+    const t=(k==='true');
+    // True = problem (red when on, green when off)
+    if(/auto_shrink|auto_close|is_suspended|is_damaged|growth_is_percent|is_percent_growth|is_locked|has_incomplete|is_heap/.test(c))
+      return '<span class="sv sv-'+(t?'red':'green')+'">'+esc(s)+'</span>';
+    // True = good (green when on, orange when off)
+    if(/is_encrypted|tde_enabled|sb_enabled|is_state_enabled|ifi_enabled/.test(c))
+      return '<span class="sv sv-'+(t?'green':'orange')+'">'+esc(s)+'</span>';
+    // All other booleans: neutral badge — informational, no strong signal
+    return '<span class="sv sv-gray">'+esc(s)+'</span>';
+  }
   // Prefix-based match for multi-word status columns (autogrowth_status, sizing_status, etc.)
-  if(/_status$/.test(c)){
+  if(/_status$|_risk$/.test(c)){
     if(k.startsWith('ok'))   return '<span class="sv sv-green">'+esc(s)+'</span>';
     if(k.startsWith('warn')) return '<span class="sv sv-orange">'+esc(s)+'</span>';
     if(k.startsWith('info')) return '<span class="sv sv-blue">'+esc(s)+'</span>';

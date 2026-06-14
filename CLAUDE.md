@@ -94,7 +94,9 @@ powershell/
   migration/          — Generate-LoginScript, Generate-AgentJobScript, Generate-UserMappingScript,
                         Generate-LinkedServerScript, Generate-RestoreWithMoveScript,
                         Invoke-MigrationExport, Invoke-PreMigrationAssessment, Export-MigrationBaseline
-  patching/           — CU updates (install-cu.ps1), SSMS updates, patch summary
+  patching/           — patch-summary.ps1 (SQL + SSMS status overview, stays at this level)
+    sql/              — Invoke-SqlPatch.ps1 (multi-server auto-patch), patch-config.psd1
+    ssms/             — install-ssms.ps1 (handles SSMS ≤20 and 21+), uninstall-ssms.ps1
   lab/                — lab and test database scripts (dev/test only)
   collectors/         — paired SQL+PS for scheduled historical data collection
     Each collector: <name>.sql + Collect-<Name>.ps1; output appends to daily CSV.
