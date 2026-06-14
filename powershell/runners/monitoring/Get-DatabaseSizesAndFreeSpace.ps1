@@ -19,7 +19,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-$repoRoot = Resolve-Path (Join-Path $PSScriptRoot '..\\..')
+$repoRoot = Resolve-Path (Join-Path $PSScriptRoot '..\..\..')
 $sqlScript = Join-Path $repoRoot 'sql\monitoring\Get-DatabaseSizesAndFreeSpace.sql'
 $runner = Join-Path $repoRoot 'tools\local-sql\Invoke-RepoSql.ps1'
 

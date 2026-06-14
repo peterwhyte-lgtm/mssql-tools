@@ -943,12 +943,13 @@ const SV={
   online:'green',running:'green',complete:'green',completed:'green',success:'green',succeeded:'green',
   yes:'green',pass:'green',enabled:'green',ok:'green',healthy:'green',available:'green',
   offline:'red',failed:'red',fail:'red',error:'red',suspect:'red',no:'red',
-  missing:'red',critical:'red',unavailable:'red',
+  missing:'red',critical:'red',high:'red',unavailable:'red',
   // backup_status values from Get-BackupCoverage
   'no_full_backup':'red','stale_full':'orange','full_recovery_no_log':'red','stale_log':'orange',
   // growth_status values from Get-DatabaseGrowthRisk
   'at_limit':'red','near_limit':'orange','unlimited':'gray',
-  restoring:'orange',warning:'orange',pending:'orange',recovering:'orange',
+  restoring:'orange',warning:'orange',warn:'orange',medium:'orange',pending:'orange',recovering:'orange',
+  low:'blue',info:'blue',
   disabled:'gray','n/a':'gray',none:'gray',
   'read-only':'blue',writes:'blue'
 };
@@ -2241,7 +2242,7 @@ try {
                         "{`"ok`":false,`"error`":`"$msg`"}"
                     }
                 } catch {
-                    $errMsg = ($_.Exception.Message -replace '"','\"' -replace '\r?\n',' ')
+                    $errMsg = ($_.Exception.Message -replace '\\','\\' -replace '"','\"' -replace '\r?\n',' ')
                     "{`"ok`":false,`"error`":`"$errMsg`"}"
                 } finally {
                     $env:DBASCRIPTS_BATCH = $null
@@ -2271,7 +2272,7 @@ try {
                         '{"ok":false,"error":"Collection finished but no output folder found."}'
                     }
                 } catch {
-                    $errMsg = $_.Exception.Message -replace '"','\"' -replace '\r?\n',' '
+                    $errMsg = $_.Exception.Message -replace '\\','\\' -replace '"','\"' -replace '\r?\n',' '
                     "{`"ok`":false,`"error`":`"$errMsg`"}"
                 }
             }
@@ -2294,7 +2295,7 @@ try {
                     }
                     "{`"ok`":true,`"deleted`":$deleted}"
                 } catch {
-                    $errMsg = $_.Exception.Message -replace '"','\"' -replace '\r?\n',' '
+                    $errMsg = $_.Exception.Message -replace '\\','\\' -replace '"','\"' -replace '\r?\n',' '
                     "{`"ok`":false,`"error`":`"$errMsg`"}"
                 }
             }
@@ -2315,7 +2316,7 @@ try {
                     $shortName = [System.IO.Path]::GetFileName($pngFull)
                     "{`"ok`":true,`"file`":`"$shortName`"}"
                 } catch {
-                    $errMsg = $_.Exception.Message -replace '"','\"' -replace '\r?\n',' '
+                    $errMsg = $_.Exception.Message -replace '\\','\\' -replace '"','\"' -replace '\r?\n',' '
                     "{`"ok`":false,`"error`":`"$errMsg`"}"
                 }
             }
