@@ -85,8 +85,11 @@ powershell/
   reporting/multi-server/ — MultiServer-Get*.ps1 scripts (disk, wait stats, patch level, blocking, etc.)
   maintenance/        — Generate-BackupJobs, Generate-IndexMaintenanceJobs, Generate-MaintenanceJobs,
                         Invoke-MaintenanceDeployment
-  operations/         — Generate-FullBackupScript, Generate-DiffBackupScript, Generate-TLogBackupScript,
-                        Generate-RestoreScript (DDL generators for backup operations)
+  operations/         — Backup-AllDatabases, Backup-SqlDatabases, Restore-AllDatabases, Get-BackupAge,
+                        Generate-FullBackupScript, Generate-DiffBackupScript, Generate-TLogBackupScript,
+                        Generate-RestoreScript (backup execution and DDL generators)
+  installation/       — install-sql.ps1, configure-sql.ps1, pre-install-check.ps1, post-install-validation.ps1,
+                        uninstall-sql.ps1, generate-install-report.ps1, templates/
   inventory/          — Get-LargestFolders, Get-DiskSpaceSummary, Get-OldestBackupFolderFiles
   migration/          — Generate-LoginScript, Generate-AgentJobScript, Generate-UserMappingScript,
                         Generate-LinkedServerScript, Generate-RestoreWithMoveScript,
