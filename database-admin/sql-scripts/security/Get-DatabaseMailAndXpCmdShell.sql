@@ -6,6 +6,7 @@ Author      : Peter Whyte (https://sqldba.blog)
 Safe        : Read-only
 Impact      : Low
 Requires    : VIEW SERVER STATE (sysadmin to see xp_cmdshell value_in_use)
+HealthCheck : Yes
 */
 SET NOCOUNT ON;
 -- SAFE:ReadOnly

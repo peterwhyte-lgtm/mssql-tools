@@ -6,6 +6,7 @@ Author      : Peter Whyte (https://sqldba.blog)
 Safe        : Read-only
 Impact      : Low
 Requires    : Public (no special permissions required)
+HealthCheck : Yes
 */
 SET NOCOUNT ON;
 -- SAFE:ReadOnly

@@ -9,6 +9,7 @@ Author      : Peter Whyte (https://sqldba.blog)
 Safe        : Read-only
 Impact      : Low
 Requires    : SQLAgentReaderRole or sysadmin
+HealthCheck : Yes
 */
 SET NOCOUNT ON;
 -- SAFE:ReadOnly

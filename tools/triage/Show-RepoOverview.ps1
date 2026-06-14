@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
 Prints a descriptive overview of the DBA scripts repo — intended as the first
 thing a new user runs to understand what's here and how to get started.
@@ -102,6 +102,6 @@ Write-Host "  [5]  Browse the full structure" -ForegroundColor Green
 Write-Host "       database-admin/sql-scripts/        — SSMS-ready diagnostic queries (run directly or via .\run.ps1)" -ForegroundColor White
 Write-Host "       database-admin/powershell-scripts/ — wrappers, healthcheck collection, automation" -ForegroundColor White
 Write-Host "       database-admin/migration/          — migration DDL generators and assessment scripts" -ForegroundColor White
-Write-Host "       docs/ops/    — change orders, runbooks, checklists, rollback playbooks" -ForegroundColor White
+Write-Host "       database-admin/change-templates/    — change orders, runbooks, checklists, rollback playbooks" -ForegroundColor White
 Write-Host "       docs/        — structure notes, standards, roadmap" -ForegroundColor White
 Write-Host ""

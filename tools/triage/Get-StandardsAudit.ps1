@@ -44,8 +44,9 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$repoRoot = Resolve-Path (Join-Path $PSScriptRoot '..\..')
-$sqlRoot  = Join-Path $repoRoot 'database-admin\sql-scripts'
+$repoRoot    = Resolve-Path (Join-Path $PSScriptRoot '..\..')
+$sqlRoot     = Join-Path $repoRoot 'database-admin\sql-scripts'
+$migrationRoot = Join-Path $repoRoot 'database-admin\migration\sql'
 
 # Required header fields
 $requiredFields = @('Script Name', 'Category', 'Purpose', 'Author', 'Safe', 'Impact')
@@ -60,12 +61,20 @@ $deprecatedViews = @(
 $deprecatedPattern = ($deprecatedViews -join '|')
 
 # ── Collect SQL files ──────────────────────────────────────────────────────────
-$searchPath = if ($Category) { Join-Path $sqlRoot $Category } else { $sqlRoot }
-if (-not (Test-Path $searchPath)) {
-    Write-Error "Category folder not found: $searchPath"
-    exit 1
+if ($Category -eq 'migration') {
+    $searchPaths = @($migrationRoot)
+} elseif ($Category) {
+    $searchPaths = @(Join-Path $sqlRoot $Category)
+} else {
+    $searchPaths = @($sqlRoot, $migrationRoot)
 }
-$sqlFiles = Get-ChildItem -Path $searchPath -Recurse -Filter '*.sql' | Sort-Object FullName
+
+foreach ($sp in $searchPaths) {
+    if (-not (Test-Path $sp)) { Write-Error "Folder not found: $sp"; exit 1 }
+}
+$sqlFiles = $searchPaths | ForEach-Object {
+    Get-ChildItem -Path $_ -Recurse -Filter '*.sql'
+} | Sort-Object FullName
 
 if (-not $sqlFiles) {
     Write-Host "No SQL files found under $searchPath" -ForegroundColor Yellow
@@ -76,7 +85,7 @@ if (-not $sqlFiles) {
 $results = foreach ($file in $sqlFiles) {
     $content = [System.IO.File]::ReadAllText($file.FullName, [System.Text.Encoding]::UTF8)
     $rel     = $file.FullName.Substring($repoRoot.Path.Length + 1).Replace('\', '/')
-    $cat     = $file.Directory.Name
+    $cat     = if ($rel -match 'migration/sql/') { 'migration' } else { $file.Directory.Name }
 
     $fails = [System.Collections.Generic.List[string]]::new()
     $warns = [System.Collections.Generic.List[string]]::new()
@@ -156,7 +165,8 @@ if ($OutputFormat -eq 'Csv') {
     Write-Host "Saved: $outPath" -ForegroundColor Green
 } else {
     Write-Host ""
-    Write-Host "  SQL Standards Audit — sql/" -ForegroundColor Cyan
+    $scope = if ($Category) { $Category } else { 'all categories' }
+    Write-Host "  SQL Standards Audit — $scope" -ForegroundColor Cyan
     if ($Category) { Write-Host "  Category filter: $Category" }
     Write-Host ""
 

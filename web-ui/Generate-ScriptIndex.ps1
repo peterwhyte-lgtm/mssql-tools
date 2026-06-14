@@ -64,6 +64,22 @@ foreach ($dir in $sqlDirs) {
     $null = $sb.AppendLine('')
 }
 
+# ── Migration SQL scripts ─────────────────────────────────────────────────────
+$migrationSqlPath = Join-Path $repoRoot 'database-admin\migration\sql'
+$migrationFiles   = Get-ChildItem -Path $migrationSqlPath -File -Filter '*.sql' -ErrorAction SilentlyContinue |
+    Where-Object { $_.Name -ne 'README.md' } | Sort-Object Name
+if ($migrationFiles) {
+    $null = $sb.AppendLine("### migration  ($($migrationFiles.Count) scripts)")
+    $null = $sb.AppendLine('')
+    $null = $sb.AppendLine('| Script | Purpose |')
+    $null = $sb.AppendLine('|--------|---------|')
+    foreach ($file in $migrationFiles) {
+        $purpose = Get-SqlPurpose $file.FullName
+        $null = $sb.AppendLine("| ``$($file.BaseName)`` | $purpose |")
+    }
+    $null = $sb.AppendLine('')
+}
+
 # ── PowerShell scripts ───────────────────────────────────────────────────────
 $null = $sb.AppendLine('## PowerShell Scripts')
 $null = $sb.AppendLine('')

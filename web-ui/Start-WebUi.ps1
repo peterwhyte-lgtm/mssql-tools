@@ -33,14 +33,6 @@ function Get-AllScripts {
             @{n='Type';    e={ 'SQL' }},
             @{n='RelPath'; e={ $_.FullName.Replace($repoRoot,'').TrimStart('\') }}
 
-    # Wrappers are the web UI execution entry point — one per SQL script
-    $wrappers = Get-ChildItem "$repoRoot\web-ui\wrappers" -Recurse -Filter '*.ps1' -File |
-        Select-Object FullName,
-            @{n='Name';    e={ $_.BaseName }},
-            @{n='Category';e={ $_.Directory.Name }},
-            @{n='Type';    e={ 'PS1' }},
-            @{n='RelPath'; e={ $_.FullName.Replace($repoRoot,'').TrimStart('\') }}
-
     $ps = Get-ChildItem "$repoRoot\database-admin\powershell-scripts" -Recurse -Filter '*.ps1' -File |
         Select-Object FullName,
             @{n='Name';    e={ $_.BaseName }},
@@ -56,7 +48,7 @@ function Get-AllScripts {
             @{n='Type';    e={ 'PS1' }},
             @{n='RelPath'; e={ $_.FullName.Replace($repoRoot,'').TrimStart('\') }}
 
-    @($sql) + @($wrappers) + @($ps) + @($msq)
+    @($sql) + @($ps) + @($msq)
 }
 
 function Get-AllScriptsCached {
@@ -68,8 +60,12 @@ function Get-AllScriptsCached {
     $enriched = @($raw | ForEach-Object {
         $fp = $_.FullName
         $_ | Select-Object *,
-            @{n='Purpose';   e={ Get-ScriptPurpose $fp }},
-            @{n='Safety';    e={ Get-ScriptSafety  $fp }},
+            @{n='Purpose';      e={ Get-ScriptPurpose $fp }},
+            @{n='Safety';       e={ Get-ScriptSafety  $fp }},
+            @{n='IsHealthCheck';e={
+                $_.Type -eq 'SQL' -and
+                ((Get-Content $fp -Raw -EA SilentlyContinue) -match '(?m)HealthCheck\s*:\s*Yes')
+            }},
             @{n='IsWrapper'; e={
                 # Thin wrapper = has a matching SQL file AND delegates to Invoke-RepoSql.
                 # Orchestrators (e.g. Invoke-HealthCheckCollection) also call Invoke-RepoSql
@@ -255,6 +251,7 @@ h2{font-size:1rem;font-weight:600;color:#e6edf3;margin:10px 0 14px;padding-botto
 .badge-sql{background:#1f3a4a;color:#58a6ff}
 .badge-ps{background:#2d2a4a;color:#a78bfa}
 .badge-top{background:#1a3a2a;color:#3fb950}
+.badge-hc{background:#3a2a0a;color:#e3a530}
 .cat-label{font-size:.75rem;color:#8b949e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;font-weight:600}
 pre{background:#0d1117;border:1px solid #21262d;border-radius:8px;padding:20px;overflow:auto;font-size:.82rem;color:#c9d1d9;tab-size:4;white-space:pre-wrap}
 .code-wrap{position:relative}
@@ -478,6 +475,19 @@ function Build-HomePage {
     $html = ''
     if ($topCards) {
         $html += "<h2>Start here</h2><div class='grid'>$topCards</div><hr class='section-sep' style='margin-bottom:28px'>"
+    }
+
+    # ── Health Check Suite ────────────────────────────────────────────────────
+    $hcScripts = @($sqlScripts | Where-Object { $_.IsHealthCheck })
+    if ($hcScripts.Count -gt 0) {
+        $hcCards = ''
+        foreach ($s in $hcScripts) {
+            $relEnc  = [Uri]::EscapeDataString($s.RelPath)
+            $purpose = if ($s.Purpose) { "<div class='purpose'>$(Html-Escape $s.Purpose)</div>" } else { '' }
+            $hcCards += "<div class='card'><span class='badge badge-hc'>HC</span><a href='/view?p=$relEnc'>$(Html-Escape $s.Name)</a>$purpose</div>"
+        }
+        $html += "<details class='cat-group'><summary><span>Health Check Suite</span><span class='cat-count'>$($hcScripts.Count) scripts — run daily via Invoke-HealthCheckCollection</span></summary><div class='grid'>$hcCards</div></details>"
+        $html += "<hr class='section-sep' style='margin-bottom:24px'>"
     }
 
     # ── SQL scripts — collapsible per category, expanded by default ───────────
@@ -2187,16 +2197,25 @@ try {
                     }
 
                     if ($sExt -eq '.sql') {
-                        # For DDL-generator SQL files (Generate-*), route to the matching PS wrapper
-                        # so MaxCharLength and single-cell CSV are handled correctly.
+                        # Route through the matching wrapper if one exists — keeps wrapper logic in the loop.
+                        # Derive category: sql-scripts/<cat>/ or migration/sql/ → 'migration'
+                        $wrapCategory = if ($p -match '[\\/]sql-scripts[\\/]([^\\/]+)[\\/]') { $Matches[1] }
+                                        elseif ($p -match '[\\/]migration[\\/]sql[\\/]')      { 'migration' }
+                                        else                                                   { $null }
                         $psWrapper = $null
-                        if ($sName -match '^Generate-') {
-                            $psWrapper = Get-ChildItem -Path (Join-Path $repoRoot 'database-admin\powershell-scripts') `
-                                -Recurse -Filter "$sName.ps1" -File -ErrorAction SilentlyContinue |
+                        if ($wrapCategory) {
+                            $psWrapper = Get-ChildItem -Path (Join-Path $repoRoot "web-ui\wrappers\$wrapCategory") `
+                                -Filter "$sName.ps1" -File -ErrorAction SilentlyContinue |
+                                Select-Object -First 1
+                        }
+                        # Generate-* DDL scripts may live in migration/powershell or powershell-scripts
+                        if (-not $psWrapper -and $sName -match '^Generate-') {
+                            $psWrapper = Get-ChildItem -Path (Join-Path $repoRoot 'database-admin\migration\powershell') `
+                                -Filter "$sName.ps1" -File -ErrorAction SilentlyContinue |
                                 Select-Object -First 1
                             if (-not $psWrapper) {
-                                $psWrapper = Get-ChildItem -Path (Join-Path $repoRoot 'database-admin\migration\powershell') `
-                                    -Filter "$sName.ps1" -File -ErrorAction SilentlyContinue |
+                                $psWrapper = Get-ChildItem -Path (Join-Path $repoRoot 'database-admin\powershell-scripts') `
+                                    -Recurse -Filter "$sName.ps1" -File -ErrorAction SilentlyContinue |
                                     Select-Object -First 1
                             }
                         }

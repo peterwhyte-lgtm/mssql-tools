@@ -1,4 +1,4 @@
-/*
+﻿/*
 Script Name : Get-LinkedServerSecurity
 Category    : security
 Purpose     : Lists linked servers with their security context — how local logins are
@@ -8,6 +8,7 @@ Author      : Peter Whyte (https://sqldba.blog)
 Safe        : Read-only
 Impact      : Low
 Requires    : VIEW ANY DEFINITION or sysadmin
+HealthCheck : Yes
 */
 SET NOCOUNT ON;
 -- SAFE:ReadOnly

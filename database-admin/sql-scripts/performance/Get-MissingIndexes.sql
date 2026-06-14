@@ -8,6 +8,7 @@ Impact      : Low
 Requires    : VIEW SERVER STATE, VIEW ANY DATABASE
 Notes       : Impact scores reset on SQL Server restart. Review carefully — DMVs suggest
               individual queries; creating every suggestion causes index bloat and write overhead.
+HealthCheck : Yes
 */
 SET NOCOUNT ON;
 -- SAFE:ReadOnly

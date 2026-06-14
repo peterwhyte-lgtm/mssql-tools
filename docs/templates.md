@@ -20,7 +20,7 @@ SELECT
 - Prefer SSMS-first SQL scripts for investigation and reporting.
 - Add brief metadata headers and safety annotations directly in the script itself.
 - Make PowerShell helpers easy to run locally without extra setup.
-- Use docs/ops for production-ready operational templates (runbooks, change orders, checklists) that are intentionally copy/paste friendly.
+- Use database-admin/change-templates/ for production-ready operational templates (runbooks, change orders, checklists) that are intentionally copy/paste friendly.
 - Keep long narrative notes in the repo docs only when they describe workflows, standards, or repo structure.
 
 ## PowerShell Script Template

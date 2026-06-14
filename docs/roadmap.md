@@ -1,65 +1,54 @@
-﻿# DBA Scripts Roadmap
+# DBA Scripts Roadmap
 
-## Current state (updated 2026-06-03)
+## Current state (updated 2026-06-14)
 
-Fully functional production DBA toolkit. Since the initial build (2026-05-29), significant additions:
+Fully functional production DBA toolkit. The repo underwent a full structural reorganisation on 2026-06-14, consolidating all DBA operational content under `database-admin/` and relocating wrappers into `web-ui/wrappers/` as the explicit browser UI entry point. All 338 internal path references were updated and 9 runtime bugs resolved.
 
-- **Multi-server scripts** — 10 standalone scripts (`powershell/multi-server/`) covering disk, firewall, event logs, service status, service restart, TCP port testing, backup status, blocking, database sizes, and wait stats. Self-contained, copy-and-run anywhere.
-- **Multi-server generator** — `tools/multi-server-query/New-MultiServerScript.ps1` wraps any `.sql` or `.ps1` in a foreach/parallel loop. Fixed `$using:` bugs, added result collection with Server column, added credential template, `-ThrottleLimit` parameter.
-- **Collector documentation** — all 8 collectors now have per-collector READMEs covering output columns, write conditions, collection frequency, SQL Agent T-SQL, and permissions.
-- **Pester tests** — `tests/New-MultiServerScript.Tests.ps1` (18 tests, no SQL Server dependency).
-- **Environment setup** — `Initialize-Environment.ps1` + `SETUP.md` for new machine onboarding.
-- **Script headers** — all multi-server scripts have Params/Output/Example inline docs.
+**What is complete:**
+- SQL diagnostic layer — 80+ scripts across monitoring, performance, ha-dr, backups, security, maintenance, migration
+- Wrapper layer — 81 thin PS wrappers, one per SQL script, colocated with the web UI
+- PowerShell orchestration — healthcheck collection (27 scripts), review, assessment report, multi-server health check
+- Migration toolkit — full pre/post assessment, DDL generators (logins, jobs, linked servers, user mappings), baseline export
+- Collectors — 12 scheduled data collectors with paired SQL + PS, READMEs, SQL Agent T-SQL
+- Collector analysis — `Compare-CollectorSnapshots.ps1`, `Invoke-CollectorAlert.ps1`
+- Multi-server scripts — 12 self-contained scripts for fleet-wide operations
+- Browser UI — script browser, CSV viewer, triage page, health check runner
+- Environment setup — `Initialize-Environment.ps1` + `SETUP.md`
+- Pester tests — path resolution smoke tests, multi-server generator tests
 
 ---
 
-## Roadmap
+## Active backlog
 
-### P3 — Active backlog (carry-over + new)
+### Phase 3 — Per-script documentation (not started)
 
-| Item | Type | Effort | Notes |
-|------|------|--------|-------|
-| `Invoke-MultiServerHealthCheck.ps1` | New PS | Medium | Server list → per-server collection → aggregated CRITICAL/WARNING report |
-| `Get-DatabasePermissions.sql` + wrapper | New SQL | Small | Object-level explicit grants per database |
-| `Get-ProxyAndCredentials.sql` + wrapper | New SQL | Small | SQL Agent proxies and credentials — privilege escalation surface |
-| Collector delta analysis scripts | New PS | Medium | `Compare-CollectorSnapshots.ps1` — load two CSV files, produce diff table |
-| `Invoke-CollectorAlert.ps1` | New PS | Medium | Check today's collector CSVs against thresholds, output CRITICAL/WARNING |
-| Web UI caching | Bug/Perf | Small | `Get-AllScripts` + `Get-ScriptPurpose` + `Get-ScriptSafety` run on every page load — 2N disk reads per request |
+For each SQL script in `database-admin/sql-scripts/`: add an inline `README` or blog entry covering:
+- Purpose in operational terms (not just what the columns are)
+- Example output interpretation — what does a bad result look like?
+- When **not** to use it
+- Required permissions
+- Known caveats (e.g. DMV resets on restart, AG guard behaviour)
 
-### P4 — CI and quality gates (0% complete)
+### Phase 4 — CI and quality gates (not started)
 
 | Item | Notes |
 |------|-------|
-| GitHub Actions: Pester | `Invoke-Pester tests/` on push — currently 0 CI |
-| GitHub Actions: PS syntax check | `$null = [System.Management.Automation.Language.Parser]::ParseFile()` per .ps1 |
-| GitHub Actions: markdownlint | `.markdownlint.jsonc` already present, not wired to CI |
+| GitHub Actions: Pester | `Invoke-Pester tests/` on push |
+| GitHub Actions: PS syntax check | `[System.Management.Automation.Language.Parser]::ParseFile()` per .ps1 |
+| GitHub Actions: markdownlint | `.markdownlint.jsonc` is present, not wired to CI |
 | SQLFluff T-SQL linting | Flag `NOLOCK`, deprecated catalog views, non-standard patterns |
-| Broken link checker | Catch stale doc cross-references |
+| Broken link / path checker | Catch stale cross-references in docs and wrapper SQL paths |
 
-### P5 — New collectors
+---
 
-| Collector | Source | Value | Delta needed? |
-|-----------|--------|-------|---------------|
-| `query-store` | `sys.query_store_*` | Track plan regressions and query performance trends over time | No — point-in-time |
-| `index-fragmentation` | `sys.dm_db_index_physical_stats` | Weekly snapshot — see which indexes degrade fastest | No — point-in-time |
-| `vlf-count` | `sys.dm_db_log_info` | Track VLF accumulation before it becomes a maintenance emergency | No — point-in-time |
-| `errorlog` | `sys.dm_os_ring_buffers` / `xp_readerrorlog` | Group SQL errorlog entries by severity + source over time | No — new events only |
-
-Each would follow the existing collector pattern: one `.sql` + one `Collect-*.ps1` + one `README.md` with SQL Agent T-SQL.
-
-### P6 — New SQL scripts
-
-All P6 items are complete — moved to the completion log below.
-
-### P7 — Larger ideas (no timeline)
+## Larger ideas (no timeline)
 
 | Idea | Description |
 |------|-------------|
 | Multi-server collector | Run any collector against a list of servers — `Invoke-MultiCollector.ps1 -Collector wait-stats -Servers "SVR01,SVR02"` |
 | Baseline comparison | `Compare-MigrationBaseline.ps1` — load pre and post CSV sets, diff every metric, flag regressions |
-| Trend forecasting | Given database growth collector data, calculate MB/day growth rate and project when disk runs out |
+| Trend forecasting | Given database growth collector data, project when disk runs out based on MB/day growth rate |
 | Assessment scheduling | Run `Invoke-AssessmentReport.ps1` on a schedule via SQL Agent or Task Scheduler, email the output |
-| Blog post automation | Tag a SQL script with `-- Blog: https://...` and have `Ensure-SqlHeaders.ps1` validate the link is live |
 
 ---
 
@@ -67,28 +56,20 @@ All P6 items are complete — moved to the completion log below.
 
 | Date | Item |
 |------|------|
-| 2026-06-05 | `wrappers/` top-level folder — 84 thin PS wrappers separated from `powershell/`; mirrors `sql/` category structure |
-| 2026-06-05 | Phase 2 PS standards — `.NOTES` block (ScriptType, TargetScope, RiskLevel, Purpose) added to all 20 remaining non-compliant PS scripts |
+| 2026-06-14 | Full repo restructure — `database-admin/` layout, `web-ui/wrappers/` colocated with browser UI, `ha-dr/` category rename, `database-admin/migration/` split, all path references updated (338 files), 9 runtime bugs fixed |
+| 2026-06-05 | `wrappers/` top-level folder — 81 thin PS wrappers separated from `powershell/`, mirrors `sql/` category structure |
+| 2026-06-05 | Phase 2 PS standards — `.NOTES` block (ScriptType, TargetScope, RiskLevel, Purpose) added to all remaining non-compliant PS scripts |
 | 2026-06-05 | 7 new PS wrappers — Get-Heaps, Get-UnusedIndexes, Get-CompatibilityLevelAudit, Get-MigrationLoginAudit, Get-PostMigrationValidation, Generate-LinkedServerScript, Generate-RestoreWithMoveScript |
-| 2026-06-05 | `docs/mssql-tools-repo-structure.md` — accurate structure doc replacing the stale structure.md |
-| 2026-06-05 | `docs/script-catalog.md` — full script list with descriptions (SQL + unique PS, no wrappers) |
-| 2026-06-05 | `hybrid/` removed — placeholder folder with no scripts |
-| 2026-06-04 | Generate-BackupJobs/IndexMaintenanceJobs/MaintenanceJobs — fixed OutputFormat=Csv path so web UI renders DDL as code block instead of table |
-| 2026-06-04 | Web UI Scripts page — collapsible SQL categories, separate Workflows & Tools section, IsWrapper detection excludes thin wrappers |
-| 2026-06-04 | Web UI charts — top-N cap with Others aggregation, inferred chart type from column name patterns, threshold visual markers |
-| 2026-06-04 | Web UI threshold constants — named constants block replacing scattered magic numbers |
-| 2026-06-04 | Web UI window title — `mssql-tools web UI — localhost:8787` for process identification |
+| 2026-06-05 | `docs/repo-structure.md` and `docs/script-catalog.md` — accurate structure and full script list |
+| 2026-06-04 | Generate-BackupJobs/IndexMaintenanceJobs/MaintenanceJobs — fixed OutputFormat=Csv path so web UI renders DDL as code block |
+| 2026-06-04 | Web UI — collapsible SQL categories, Workflows section, IsWrapper detection, chart improvements, threshold markers |
 | 2026-06-03 | P6 SQL scripts — Get-TempDbConfiguration, Get-PlanCacheHealth, Get-ReadableSecondaryUsage, Get-BackupEncryptionStatus, Get-LinkedServerSecurity, Get-DatabasePermissions, Get-ProxyAndCredentials, Get-LockEscalationStats |
-| 2026-06-03 | P3 items — Invoke-MultiServerHealthCheck, Get-DatabasePermissions + wrapper, Get-ProxyAndCredentials + wrapper |
-| 2026-06-03 | `Initialize-Environment.ps1` + `SETUP.md` — new machine onboarding script and full setup guide |
-| 2026-06-03 | `tests/New-MultiServerScript.Tests.ps1` — 18 Pester tests for the generator, no SQL Server dependency |
-| 2026-06-03 | 7 collector READMEs — blocking, deadlocks, tempdb, perfmon, ag-health, storage-io, database-growth |
-| 2026-06-03 | Params/Output/Example added to all 10 multi-server script headers |
-| 2026-06-03 | Multi-server scripts code review — fixed 6 bugs: $using: in parallel paths, GetRecentEventLogs catch, GetDatabaseSizes error loss, WebUI category label, README -Credential table, generator here-string guard |
-| 2026-06-03 | `New-MultiServerScript.ps1` improvements — fixed $using: bugs, added -ThrottleLimit, result collection with Server column, credential template for PS remoting, updated helpers README |
-| 2026-06-03 | `powershell/multi-server/` — renamed from multi-server-queries, 10 scripts with compact headers, bug fixes (invalid Get-Service -Credential, WinRM documentation, parallel catch handling) |
-| 2026-05-29 | Added `.gitignore`, healthcheck `-Quiet` switch, fixed `Invoke-RepoSql.ps1` category detection, archived `categories/`, rewrote `docs/standards.md`, deleted `docs/catalog.md` |
-| 2026-05-29 | `run.ps1 -List` discovery mode, collection timestamp in review header, expanded `docs/runbook.md`, resolved `hybrid/` folder |
-| 2026-05-29 | Full canonical `sql/` + `powershell/` layout, all scripts single-result-set, standard headers, no NOLOCK, no deprecated catalog views |
-| 2026-05-29 | 8 collectors with SQL + PS orchestrator pairs: wait-stats, blocking, deadlocks, tempdb, perfmon, ag-health, storage-io, database-growth |
-| 2026-05-29 | `Invoke-HealthCheckCollection.ps1` (22 scripts) + `Review-HealthCheckOutput.ps1` (17 rule categories) |
+| 2026-06-03 | `Invoke-MultiServerHealthCheck.ps1` — server list → per-server collection → aggregated CRITICAL/WARNING report |
+| 2026-06-03 | `Compare-CollectorSnapshots.ps1`, `Invoke-CollectorAlert.ps1` — post-incident collector analysis and threshold alerting |
+| 2026-06-03 | Collectors: query-store, index-fragmentation, vlf-count, errorlog — all 12 collectors now complete with READMEs |
+| 2026-06-03 | `Initialize-Environment.ps1` + `SETUP.md` — new machine onboarding |
+| 2026-06-03 | `tests/New-MultiServerScript.Tests.ps1`, `tests/SqlPathResolution.Tests.ps1` — Pester smoke tests |
+| 2026-06-03 | Multi-server scripts — 12 self-contained scripts, parallel execution, credential template, result collection with Server column |
+| 2026-05-29 | Full canonical layout, all scripts single-result-set, standard headers, no NOLOCK, no deprecated catalog views |
+| 2026-05-29 | 8 initial collectors — wait-stats, blocking, deadlocks, tempdb, perfmon, ag-health, storage-io, database-growth |
+| 2026-05-29 | `Invoke-HealthCheckCollection.ps1` (27 scripts) + `Review-HealthCheckOutput.ps1` |

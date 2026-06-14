@@ -1,4 +1,4 @@
-﻿<p align="center">
+<p align="center">
   <img src="assets/logo/sqldba-site-logo.png" alt="sqldba.blog" width="220">
 </p>
 
@@ -118,7 +118,7 @@ For a client handover or ownership review, the assessment report generates a sco
 
 ## Operational Runbooks
 
-`docs/ops/` covers the planned work — the things you need to get right before and during a maintenance window, not the things you're diagnosing in the moment.
+`database-admin/change-templates/` covers the planned work — the things you need to get right before and during a maintenance window, not the things you're diagnosing in the moment.
 
 **Change orders** — CAB-ready approval documents for version upgrades, server migrations, and AG failovers. Pre/post checks and rollback criteria included.
 

@@ -3,7 +3,7 @@
 ## Quick triage commands
 
 ```powershell
-# Full healthcheck — collect 22 scripts, review findings
+# Full healthcheck — collect 27 scripts, review findings
 .\database-admin\powershell-scripts\reporting\Invoke-HealthCheckCollection.ps1 -ServerInstance . -Quiet
 .\database-admin\powershell-scripts\reporting\Review-HealthCheckOutput.ps1
 
@@ -245,8 +245,8 @@ HADR_SYNC_COMMIT spike in wait-stats delta
 .\database-admin\powershell-scripts\multi-server\MultiServer-TestSqlPort.ps1 -Servers "SVR01,SVR02,SVR03,SVR04,SVR05" -Parallel
 
 # Generate a custom multi-server wrapper for any SQL script
-.\tools\multi-server-query\New-MultiServerScript.ps1 `
-    -ScriptPath sql\performance\Get-WaitStatistics.sql `
+.\tools\scaffolding\New-MultiServerScript.ps1 `
+    -ScriptPath database-admin\sql-scripts\performance\Get-WaitStatistics.sql `
     -Servers "SVR01,SVR02,SVR03" `
     -OutputFile C:\Temp\run-waits.ps1
 # Review the generated script, then: pwsh -File C:\Temp\run-waits.ps1

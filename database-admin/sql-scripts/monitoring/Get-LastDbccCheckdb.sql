@@ -9,6 +9,7 @@ Requires    : VIEW ANY DATABASE
 Notes       : Uses DATABASEPROPERTYEX('LastGoodCheckDbTime') — available SQL Server 2012+.
               NULL means CHECKDB has never completed successfully on this instance for that database.
               Microsoft recommends running CHECKDB at least weekly.
+HealthCheck : Yes
 */
 SET NOCOUNT ON;
 -- SAFE:ReadOnly

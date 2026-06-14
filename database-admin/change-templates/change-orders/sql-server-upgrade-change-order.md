@@ -1,4 +1,4 @@
-﻿# Change Order — SQL Server Version Upgrade
+# Change Order — SQL Server Version Upgrade
 
 > **Instructions:** Complete all fields before CAB submission. Fields marked `*` are mandatory.
 > Attach assessment output from `Invoke-PreMigrationAssessment.ps1` and non-prod test evidence.
@@ -180,7 +180,7 @@ All items must pass before closing the change. Failures trigger rollback within 
 > **Note:** In-place upgrade rollback is significantly more complex and time-consuming.
 > Side-by-side migration is strongly preferred for this reason.
 
-Full rollback procedures: `docs/ops/rollback/migration-rollback-playbook.md`
+Full rollback procedures: `database-admin/change-templates/rollback/migration-rollback-playbook.md`
 
 ---
 

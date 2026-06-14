@@ -117,17 +117,17 @@ One wrapper per SQL script. Each wrapper resolves the repo root (three levels up
 
 ---
 
-## `database-admin/operations/` — Operational runbooks
+## `database-admin/change-templates/` — Change management
 
-Runbook-style content for planned DBA work: change orders, checklists, SQL templates, and installation scripts.
+SQL templates, change orders, checklists, and runbooks for planned DBA work.
 
-| Subfolder | Contents |
-|-----------|----------|
-| `change-orders/` | Change order documents for AlwaysOn failover, server migration, SQL upgrade |
-| `change-templates/` | SQL templates for CDC, TDE, mirroring, AG, statistics, DBCC, patching, installation |
+| Item | Contents |
+|------|----------|
+| `*.sql` (root) | SQL templates for CDC, TDE, AG, mirroring, DBCC, statistics, patching |
+| `change-orders/` | CAB-ready change order documents for AlwaysOn failover, server migration, SQL upgrade |
 | `checklists/` | Step-by-step checklists for AG migration, DR failover, server replacement, version upgrade |
 | `runbooks/` | Full runbooks for standalone migration, AG cluster migration, OS upgrade, edition change, version upgrade |
-| `rollback/` | Migration rollback playbook |
+| `rollback/` | Migration rollback playbook with binary trigger criteria and decision ownership |
 
 ---
 

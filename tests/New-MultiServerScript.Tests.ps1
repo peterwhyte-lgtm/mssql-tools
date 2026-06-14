@@ -1,7 +1,7 @@
 ﻿#Requires -Modules Pester
 
 <#
-Pester tests for tools/multi-server-query/New-MultiServerScript.ps1
+Pester tests for tools/scaffolding/New-MultiServerScript.ps1
 
 Tests cover the PS remoting path entirely (no SQL Server dependency) and the
 input validation / here-string guard for SQL files. SQL generation tests that
@@ -12,7 +12,7 @@ Run from repo root:
     Invoke-Pester tests/New-MultiServerScript.Tests.ps1
 #>
 
-$generator  = (Resolve-Path "$PSScriptRoot\..\tools\multi-server-query\New-MultiServerScript.ps1").Path
+$generator  = (Resolve-Path "$PSScriptRoot\..\tools\scaffolding\New-MultiServerScript.ps1").Path
 $hasSqlMod  = $null -ne (Get-Module -Name SqlServer -ListAvailable -ErrorAction SilentlyContinue)
 
 # Use a real temp path — $TestDrive is only available inside Describe in Pester v3

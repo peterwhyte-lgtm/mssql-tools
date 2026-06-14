@@ -6,6 +6,7 @@ Author      : Peter Whyte (https://sqldba.blog)
 Safe        : Read-only
 Impact      : Low
 Requires    : VIEW SERVER STATE (xp_readerrorlog; sysadmin in practice for most instances)
+HealthCheck : Yes
 */
 SET NOCOUNT ON;
 -- SAFE:ReadOnly

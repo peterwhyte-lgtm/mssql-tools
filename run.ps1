@@ -1,6 +1,6 @@
 ﻿<#
 .SYNOPSIS
-Root launcher for DBA helper scripts. Fuzzy name match against powershell/ and sql/.
+Root launcher for DBA helper scripts. Fuzzy name match across database-admin/ and web-ui/wrappers/.
 
 .DESCRIPTION
 Finds and runs any script in the repo by name (partial match accepted).

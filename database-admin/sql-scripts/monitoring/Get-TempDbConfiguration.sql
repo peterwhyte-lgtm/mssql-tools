@@ -1,4 +1,4 @@
-/*
+﻿/*
 Script Name : Get-TempDbConfiguration
 Category    : monitoring
 Purpose     : Reviews TempDB file configuration — file count, sizing parity, autogrowth
@@ -8,6 +8,7 @@ Author      : Peter Whyte (https://sqldba.blog)
 Safe        : Read-only
 Impact      : Low
 Requires    : VIEW SERVER STATE
+HealthCheck : Yes
 */
 SET NOCOUNT ON;
 -- SAFE:ReadOnly

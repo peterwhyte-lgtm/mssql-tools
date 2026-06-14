@@ -12,10 +12,10 @@ Optional output directory to clear. Defaults to .\output-files.
 .PARAMETER Mode
 Controls the cleanup strategy:
   - all: removes all files and folders under the output root
-  - age: removes only old backup-style files older than -BackupAgeDays
+  - age: removes CSV and markdown output files older than -AgeDays
 
-.PARAMETER BackupAgeDays
-Age threshold in days for backup-style file cleanup when -Mode age is used. Defaults to 30.
+.PARAMETER AgeDays
+Age threshold in days for output file cleanup when -Mode age is used. Defaults to 30.
 
 .PARAMETER WhatIf
 Shows what would be removed without deleting anything.
@@ -25,7 +25,7 @@ param(
     [string]$Path = (Join-Path (Resolve-Path (Join-Path $PSScriptRoot '..\..')) 'output-files'),
     [ValidateSet('all', 'age')]
     [string]$Mode = 'all',
-    [int]$BackupAgeDays = 30,
+    [int]$AgeDays = 30,
     [switch]$WhatIf
 )
 $ErrorActionPreference = 'Stop'
@@ -44,25 +44,25 @@ if (-not (Test-Path -LiteralPath $resolvedPath)) {
 }
 
 if ($Mode -eq 'age') {
-    $cutoff = (Get-Date).AddDays(-$BackupAgeDays)
+    $cutoff = (Get-Date).AddDays(-$AgeDays)
     $items = Get-ChildItem -LiteralPath $resolvedPath -File -Recurse -Force |
         Where-Object {
-            $_.Extension -in '.bak', '.bakup', '.trn' -and $_.LastWriteTime -lt $cutoff
+            $_.Extension -in '.csv', '.md' -and $_.LastWriteTime -lt $cutoff
         }
 
     if (-not $items) {
-        Write-Host "No backup files older than $BackupAgeDays day(s) were found under $resolvedPath" -ForegroundColor Yellow
+        Write-Host "No output files older than $AgeDays day(s) were found under $resolvedPath" -ForegroundColor Yellow
         return
     }
 
     if ($WhatIf) {
         $items | Select-Object -ExpandProperty FullName | Write-Host
-        Write-Host "Would remove $($items.Count) backup file(s) older than $BackupAgeDays day(s)." -ForegroundColor Cyan
+        Write-Host "Would remove $($items.Count) file(s) older than $AgeDays day(s)." -ForegroundColor Cyan
         return
     }
 
     $items | Remove-Item -Force -ErrorAction Stop
-    Write-Host "Removed $($items.Count) backup file(s) older than $BackupAgeDays day(s) from $resolvedPath" -ForegroundColor Green
+    Write-Host "Removed $($items.Count) file(s) older than $AgeDays day(s) from $resolvedPath" -ForegroundColor Green
     return
 }
 

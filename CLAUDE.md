@@ -105,9 +105,9 @@ database-admin/
     Collectors: ag-health, blocking, database-growth, deadlocks, errorlog, index-fragmentation,
                 perfmon, query-store, storage-io, tempdb, vlf-count, wait-stats
 
-  installation/ — SQL Server install, configure, validate, uninstall
-  patching/     — CU updates (install-cu.ps1), SSMS updates, patch summary
-  operations/   — ops runbooks, change orders, checklists (was sql-operations/)
+  installation/    — SQL Server install, configure, validate, uninstall
+  patching/        — CU updates (install-cu.ps1), SSMS updates, patch summary
+  change-templates/ — change orders, checklists, runbooks, rollback playbooks, SQL templates
 
 web-ui/wrappers/      — thin PS wrappers: one per SQL script; presence here is what makes a script appear in the web UI.
   monitoring/         — wrappers for all sql-scripts/monitoring/ scripts
@@ -127,8 +127,7 @@ tools/
   maintenance/  — Clear-OutputFiles.ps1, update-powershell.ps1
 
 docs/
-  quick-start.md, roadmap.md, runbook.md
-  ops/          — change orders, checklists, runbooks, rollback playbooks, change-templates
+  quick-start.md, roadmap.md, runbook.md, standards.md, repo-structure.md, script-catalog.md
 
 output-files/         — generated CSVs, healthcheck folders, reviews
 ```
@@ -158,7 +157,7 @@ Or pass `-ServerInstance` directly on any individual call:
 
 ```powershell
 .\run.ps1 Get-WaitStatistics -ServerInstance PROD01\SQL2019
-.\database-admin\powershell-scripts\reporting\Get-WaitStatistics.ps1 -ServerInstance PROD01\SQL2019 -OutputFormat Csv
+.\web-ui\wrappers\performance\Get-WaitStatistics.ps1 -ServerInstance PROD01\SQL2019 -OutputFormat Csv
 ```
 
 Env vars used internally: `$env:DBASCRIPTS_SERVER`, `$env:DBASCRIPTS_USER`, `$env:DBASCRIPTS_PASS`. Explicit params always win over env vars.
@@ -219,6 +218,8 @@ SET NOCOUNT ON;
 `Safe` values: `Read-only` / `Writes data` / `Creates objects`  
 `Impact` values: `Low` / `Medium` / `High`
 
+Add `HealthCheck : Yes` (after `Requires`) to any script that runs as part of `Invoke-HealthCheckCollection.ps1`. This tag drives the "Health Check Suite" section in the web UI and makes membership machine-readable without needing a separate folder.
+
 **SQL script rules:**
 - Remove or flag unsafe patterns: `WITH (NOLOCK)` (explain risk if present), deprecated catalog views (`sys.sysprocesses`, `sys.sysobjects` etc.)
 - Prefer modern DMVs — `sys.objects` not `sys.sysobjects`, `sys.server_principals` not `sys.syslogins`
@@ -227,7 +228,6 @@ SET NOCOUNT ON;
 - No trailing blank lines; 0–1 blank lines at end of file
 - Keep output readable and deterministic
 
-**`docs/standards.md` is outdated** — it shows an older header format. The format above is what the scripts actually use.
 
 ## Adding new scripts
 
@@ -235,7 +235,7 @@ New SQL script: `database-admin/sql-scripts/<category>/Get-Something.sql` using 
 
 New PS wrapper: copy any existing wrapper in `web-ui/wrappers/<category>/` (matching the sql-scripts/ category), update the three variables (`syn`, `$sqlScript` path, `Write-Host` message). Use `$PSScriptRoot '..\..\..'` — wrappers are three levels from root (`web-ui/wrappers/<category>/`). The wrapper must be present for the script to appear in the web UI.
 
-If there is no matching subcategory, add to `powershell/reporting/` for read/query scripts or `powershell/inventory/` for environment/config scripts.
+New orchestrator PS script (has real logic, not a thin wrapper): add to `database-admin/powershell-scripts/reporting/` for query/reporting scripts or `database-admin/powershell-scripts/inventory/` for environment/config scripts. Use `$PSScriptRoot '..\..\..'` to resolve repo root.
 
 **When refactoring an existing script, summarise:** improved script, risk classification (`SAFE` / `MEDIUM` / `HIGH IMPACT`), key changes (bullets), suggested folder placement.
 
@@ -280,6 +280,6 @@ If there is no matching subcategory, add to `powershell/reporting/` for read/que
 ## Important caveats
 
 - AG scripts (`database-admin/sql-scripts/ha-dr/Get-AvailabilityGroupReplicaState.sql`, `Get-AvailabilityGroupLatency.sql`) guard against non-AG instances and return a status row instead of throwing.
-- Multi-result-set SQL scripts cannot be cleanly exported as a single CSV via `Invoke-RepoSql.ps1`. All canonical `sql/` scripts are single-result-set by design.
-- `output-files/` has no `.gitignore` protection — CSV files accumulate there and should not be committed.
-- `docs/catalog.md` is outdated and references old `categories/` paths. Ignore it; use the `database-admin/sql-scripts/` folder tree directly.
+- Multi-result-set SQL scripts cannot be cleanly exported as a single CSV via `Invoke-RepoSql.ps1`. All scripts in `database-admin/sql-scripts/` are single-result-set by design.
+- `output-files/` CSV files accumulate and should not be committed. Clear with `.\tools\maintenance\Clear-OutputFiles.ps1` before a fresh assessment run.
+- `docs/standards.md` is outdated — it shows an older header format. The header in this file is authoritative.

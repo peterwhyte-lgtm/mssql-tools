@@ -1,4 +1,4 @@
-/*
+﻿/*
 Script Name : Get-PlanCacheHealth
 Category    : performance
 Purpose     : Summarises plan cache composition by object type — highlights single-use
@@ -8,6 +8,7 @@ Author      : Peter Whyte (https://sqldba.blog)
 Safe        : Read-only
 Impact      : Low
 Requires    : VIEW SERVER STATE
+HealthCheck : Yes
 */
 SET NOCOUNT ON;
 -- SAFE:ReadOnly
