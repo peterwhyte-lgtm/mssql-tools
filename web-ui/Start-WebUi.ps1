@@ -552,7 +552,7 @@ function Build-ViewPage([string]$relPath) {
     $isRunnable = $false
     if ($ext -eq '.sql' -and $relPath -match '^sql[\\/]' -and -not $isManualOnly) {
         $isRunnable = $true
-    } elseif ($ext -eq '.ps1' -and ($relPath -match '^powershell[\\/]' -or $relPath -match '[\\/]wrappers[\\/]')) {
+    } elseif ($ext -eq '.ps1' -and $relPath -match '[\\/]runners[\\/]') {
         $isRunnable = ($content -match 'OutputFormat') -and ($content -match 'OutputPath')
     }
 
@@ -2179,7 +2179,7 @@ try {
                 $sExt   = [IO.Path]::GetExtension($fullRunPath).ToLower()
                 $cat    = if ($p -match '(^|[\\/])sql[\\/]([^\\/]+)[\\/]')             { $Matches[2] }
                           elseif ($p -match '(^|[\\/])powershell[\\/]([^\\/]+)[\\/]') { $Matches[2] }
-                          elseif ($p -match '[\\/]wrappers[\\/]([^\\/]+)[\\/]')       { $Matches[1] }
+                          elseif ($p -match '[\\/]runners[\\/]([^\\/]+)[\\/]')       { $Matches[1] }
                           else { 'general' }
                 $ts      = Get-Date -Format 'yyyyMMdd-HHmmss'
                 $csvDir  = Join-Path $repoRoot "output-files\reviews\$cat$(if ($dryRun) {'\dry-runs'} else {''})"

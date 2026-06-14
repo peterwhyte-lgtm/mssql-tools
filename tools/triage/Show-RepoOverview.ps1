@@ -100,7 +100,7 @@ Write-Host "       .\tools\triage\Find-UsefulScript.ps1 -Keyword blocking" -Fore
 Write-Host ""
 Write-Host "  [5]  Browse the full structure" -ForegroundColor Green
 Write-Host "       sql/        — SSMS-ready diagnostic queries (run directly or via .\run.ps1)" -ForegroundColor White
-Write-Host "       powershell/ — wrappers, healthcheck collection, automation" -ForegroundColor White
+Write-Host "       powershell/ — runners, healthcheck collection, automation" -ForegroundColor White
 Write-Host "       powershell/migration/               — migration DDL generators and assessment scripts" -ForegroundColor White
 Write-Host "       docs/ops/    — change orders, runbooks, checklists, rollback playbooks" -ForegroundColor White
 Write-Host "       docs/        — structure notes, standards, roadmap" -ForegroundColor White
