@@ -3,7 +3,7 @@
 Simple launcher for the repo PowerShell scripts.
 
 .DESCRIPTION
-This helper makes it easier to run scripts from the canonical sql/, powershell/, wrappers/, and tools/ layout.
+This helper makes it easier to run scripts from the canonical sql/, powershell/, powershell/runners/, and tools/ layout.
 #>
 
 param(
@@ -28,8 +28,7 @@ function Resolve-RepoScript {
     $searchRoots = @(
         (Join-Path $repoRoot 'tools'),
         (Join-Path $repoRoot 'sql'),
-        (Join-Path $repoRoot 'powershell'),
-        (Join-Path $repoRoot 'web-ui\wrappers')
+        (Join-Path $repoRoot 'powershell')
     )
 
     foreach ($root in $searchRoots) {

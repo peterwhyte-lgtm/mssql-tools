@@ -13,7 +13,7 @@ $required = @(
   'powershell',
   'powershell\collectors',
   'tools',
-  'web-ui\wrappers',
+  'powershell\runners',
   'output-files'
 )
 

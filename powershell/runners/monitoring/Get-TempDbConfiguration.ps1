@@ -1,18 +1,13 @@
 ﻿<#
 .SYNOPSIS
-Summarises plan cache composition and single-use plan pressure.
+Reviews TempDB file configuration — count, sizing parity, and autogrowth settings.
 
 .NOTES
 ScriptType   : hybrid
 TargetScope  : single server
 RiskLevel    : SAFE
-Purpose      : Identify ad-hoc SQL bloat in the plan cache. High single-use plan
-               ratios indicate missing parameterisation or parameter sniffing issues.
-
-.DESCRIPTION
-Wrapper for Get-PlanCacheHealth.sql. Shows plan count, single-use ratio, and memory
-per plan type. High ad-hoc single-use % → enable 'optimize for ad hoc workloads'
-or investigate sp_executesql adoption.
+Purpose      : Surface TempDB misconfigurations that cause allocation contention:
+               unequal file sizing, percent-based autogrowth, insufficient file count.
 
 .PARAMETER ServerInstance
 SQL Server instance to query. Defaults to '.'.
@@ -24,7 +19,7 @@ Output mode: 'Table' (default) or 'Csv'.
 Optional file path to save the output.
 
 .EXAMPLE
-pwsh -File .\web-ui\wrappers\performance\Get-PlanCacheHealth.ps1
+pwsh -File .\powershell\runners\monitoring\Get-TempDbConfiguration.ps1
 #>
 
 param(
@@ -38,11 +33,11 @@ param(
 $ErrorActionPreference = 'Stop'
 
 $repoRoot  = Resolve-Path (Join-Path $PSScriptRoot '..\..\..')
-$sqlScript = Join-Path $repoRoot 'sql\performance\Get-PlanCacheHealth.sql'
+$sqlScript = Join-Path $repoRoot 'sql\monitoring\Get-TempDbConfiguration.sql'
 $runner    = Join-Path $repoRoot 'tools\local-sql\Invoke-RepoSql.ps1'
 
 if (-not (Test-Path -LiteralPath $sqlScript)) { throw "SQL script not found: $sqlScript" }
 if (-not (Test-Path -LiteralPath $runner))    { throw "Runner not found: $runner" }
 
-Write-Host 'Running plan cache health check...' -ForegroundColor Cyan
+Write-Host 'Running TempDB configuration review...' -ForegroundColor Cyan
 & $runner -ScriptPath $sqlScript -ServerInstance $ServerInstance -Database $Database -OutputFormat $OutputFormat -OutputPath $OutputPath

@@ -24,12 +24,12 @@ This repository is **not** a collection of scripts — it is an operational tool
 The three entry points, in order of preference:
 
 ```powershell
-# 1. Root launcher — fuzzy name match, searches sql/, powershell/, and web-ui/wrappers/
+# 1. Root launcher — fuzzy name match, searches sql/, powershell/, and powershell/runners/
 .\run.ps1 Get-WaitStatistics
 .\run.ps1 Get-WaitStatistics -ServerInstance MYSERVER\INST01 -OutputFormat Csv
 
 # 2. Direct wrapper — explicit path, passes all params through
-pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\web-ui\wrappers\performance\Get-WaitStatistics.ps1 -ServerInstance . -OutputFormat Csv
+pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\powershell\runners\performance\Get-WaitStatistics.ps1 -ServerInstance . -OutputFormat Csv
 
 # 3. SQL directly via the repo runner (for SSMS-style results in terminal)
 pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\tools\local-sql\Invoke-RepoSql.ps1 -ScriptPath .\sql\performance\Get-WaitStatistics.sql -ServerInstance .
@@ -66,7 +66,7 @@ Migration DDL generators:
 
 ## Layout
 
-**Use `sql/`, `powershell/`, or `web-ui/wrappers/` for all new work.**
+**Use `sql/`, `powershell/`, or `powershell/runners/` for all new work.**
 
 ```text
 sql/
@@ -101,7 +101,7 @@ powershell/
     Collectors: ag-health, blocking, database-growth, deadlocks, errorlog, index-fragmentation,
                 perfmon, query-store, storage-io, tempdb, vlf-count, wait-stats
 
-web-ui/wrappers/      — thin PS wrappers: one per SQL script; presence here makes a script appear in the web UI
+powershell/runners/      — thin PS wrappers: one per SQL script; presence here makes a script appear in the web UI
   monitoring, performance, backups, security, migration, ha-dr, maintenance
 
 web-ui/               — browser UI: Start-WebUi.ps1, Generate-ScriptIndex.ps1
@@ -143,7 +143,7 @@ Or pass `-ServerInstance` directly on any individual call:
 
 ```powershell
 .\run.ps1 Get-WaitStatistics -ServerInstance PROD01\SQL2019
-.\web-ui\wrappers\performance\Get-WaitStatistics.ps1 -ServerInstance PROD01\SQL2019 -OutputFormat Csv
+.\powershell\runners\performance\Get-WaitStatistics.ps1 -ServerInstance PROD01\SQL2019 -OutputFormat Csv
 ```
 
 Env vars used internally: `$env:DBASCRIPTS_SERVER`, `$env:DBASCRIPTS_USER`, `$env:DBASCRIPTS_PASS`. Explicit params always win over env vars.
@@ -163,17 +163,17 @@ Env vars used internally: `$env:DBASCRIPTS_SERVER`, `$env:DBASCRIPTS_USER`, `$en
 
 ## How PowerShell wrappers work
 
-Every script in `web-ui/wrappers/**/*.ps1` is a thin wrapper:
+Every script in `powershell/runners/**/*.ps1` is a thin wrapper:
 
-1. Resolves `$repoRoot` as **three** levels up from `$PSScriptRoot` (wrappers sit at `web-ui/wrappers/<category>/`)
+1. Resolves `$repoRoot` as **three** levels up from `$PSScriptRoot` (wrappers sit at `powershell/runners/<category>/`)
 2. Builds `$sqlScript = Join-Path $repoRoot 'sql\<category>\<Name>.sql'` (or `sql\migration\` for migration scripts)
 3. Delegates to `tools\local-sql\Invoke-RepoSql.ps1` with `-ScriptPath`, `-ServerInstance`, `-Database`, `-OutputFormat`, `-OutputPath`
 
-**Web UI contract:** A SQL script in `sql/` only appears in the web UI if it has a matching wrapper in `web-ui/wrappers/<same-category>/`. The wrapper IS the web UI entry point — the web UI launches wrappers, not SQL files directly. Every new SQL script in `sql/` must therefore get a paired wrapper.
+**Web UI contract:** A SQL script in `sql/` only appears in the web UI if it has a matching wrapper in `powershell/runners/<same-category>/`. The wrapper IS the web UI entry point — the web UI launches wrappers, not SQL files directly. Every new SQL script in `sql/` must therefore get a paired wrapper.
 
 `Invoke-RepoSql.ps1` tries `Invoke-Sqlcmd` first (SqlServer module), falls back to `sqlcmd.exe`. Always writes a CSV to `output-files\reviews\<category>\<scriptname>-<timestamp>.csv` and prints a table preview. If neither tool is available it throws.
 
-`run.ps1` resolves script by name fuzzy match → `& $target @Arguments`. It searches `powershell/`, `powershell/migration/`, `web-ui/wrappers/`, `tools/`, `sql/` recursively. Throws if more than one match — callers must be specific.
+`run.ps1` resolves script by name fuzzy match → `& $target @Arguments`. It searches `powershell/`, `powershell/migration/`, `powershell/runners/`, `tools/`, `sql/` recursively. Throws if more than one match — callers must be specific.
 
 **PowerShell script rules:**
 - Classify script type in `.NOTES`: `runner` / `automation` / `hybrid`
@@ -219,7 +219,7 @@ Add `HealthCheck : Yes` (after `Requires`) to any script that runs as part of `I
 
 New SQL script: `sql/<category>/Get-Something.sql` using the header above.
 
-New PS wrapper: copy any existing wrapper in `web-ui/wrappers/<category>/` (matching the sql-scripts/ category), update the three variables (`syn`, `$sqlScript` path, `Write-Host` message). Use `$PSScriptRoot '..\..\..'` — wrappers are three levels from root (`web-ui/wrappers/<category>/`). The wrapper must be present for the script to appear in the web UI.
+New PS wrapper: copy any existing wrapper in `powershell/runners/<category>/` (matching the sql-scripts/ category), update the three variables (`syn`, `$sqlScript` path, `Write-Host` message). Use `$PSScriptRoot '..\..\..'` — wrappers are three levels from root (`powershell/runners/<category>/`). The wrapper must be present for the script to appear in the web UI.
 
 New orchestrator PS script (has real logic, not a thin wrapper): add to `powershell/reporting/` for query/reporting scripts or `powershell/inventory/` for environment/config scripts. Use `$PSScriptRoot '..\..\..'` to resolve repo root.
 

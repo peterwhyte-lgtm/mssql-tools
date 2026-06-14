@@ -13,7 +13,7 @@ param(
 $ErrorActionPreference = 'Stop'
 
 $repoRoot    = Resolve-Path (Join-Path $PSScriptRoot '..\..')
-$searchRoots = @('sql', 'powershell', 'web-ui\wrappers', 'tools', 'blog')
+$searchRoots = @('sql', 'powershell', 'tools', 'blog')
 
 $found = $searchRoots | ForEach-Object {
     $path = Join-Path $repoRoot $_

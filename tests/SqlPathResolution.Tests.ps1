@@ -14,7 +14,6 @@ $repoRoot = (Resolve-Path "$PSScriptRoot\..")
 
 $wrappers = @(
     Get-ChildItem "$repoRoot\powershell" -Recurse -Filter '*.ps1' -File
-    Get-ChildItem "$repoRoot\web-ui\wrappers" -Recurse -Filter '*.ps1' -File
 )
 
 $allPairs = @(

@@ -90,9 +90,9 @@ Each collector pairs a `.sql` query with a PowerShell orchestrator (`Collect-*.p
 | `web-ui/Start-WebUi.ps1` | Local web interface for browsing scripts and visualising CSV output |
 | `web-ui/Restart-WebUi.ps1` | Restarts the UI server |
 | `web-ui/Generate-ScriptIndex.ps1` | Regenerates `docs/script-index.md` from script headers |
-| `web-ui/wrappers/` | Thin PS wrappers — one per SQL script; **presence here is what makes a script appear in the web UI** |
+| `powershell/runners/` | Thin PS wrappers — one per SQL script; **presence here is what makes a script appear in the web UI** |
 
-### `web-ui/wrappers/` — Thin PS wrappers
+### `powershell/runners/` — Thin PS wrappers
 
 One wrapper per SQL script. Each wrapper resolves the repo root (three levels up), locates its matching `.sql` file, and delegates to `tools/local-sql/Invoke-RepoSql.ps1`. Categories mirror `sql/` and `sql/migration/`.
 
@@ -137,7 +137,7 @@ SQL templates, change orders, checklists, and runbooks for planned DBA work.
 
 **New SQL script:** `sql/<category>/Get-Something.sql` — use the standard header from `CLAUDE.md`.
 
-**New PS wrapper:** Copy any existing wrapper from `web-ui/wrappers/<category>/`, update the SQL path and description. Use `$PSScriptRoot '..\..\..'` — wrappers are three levels from root. The wrapper must exist for the script to appear in the web UI.
+**New PS wrapper:** Copy any existing wrapper from `powershell/runners/<category>/`, update the SQL path and description. Use `$PSScriptRoot '..\..\..'` — wrappers are three levels from root. The wrapper must exist for the script to appear in the web UI.
 
 **New unique PS script:** Add to `powershell/<subfolder>/`. Use `$PSScriptRoot '..\..\..'` to resolve the repo root.
 

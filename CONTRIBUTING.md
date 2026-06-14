@@ -59,7 +59,7 @@ Additional rules:
 Wrappers follow a thin-wrapper pattern — SQL logic stays in external `.sql` files, not in PowerShell strings.
 
 ```powershell
-# Standard wrapper shape — lives at web-ui/wrappers/<category>/, three levels from root
+# Standard wrapper shape — lives at powershell/runners/<category>/, three levels from root
 $repoRoot  = Resolve-Path (Join-Path $PSScriptRoot '..\..\..')
 $sqlScript = Join-Path $repoRoot 'sql\<category>\Get-Something.sql'
 $runner    = Join-Path $repoRoot 'tools\local-sql\Invoke-RepoSql.ps1'
@@ -75,7 +75,7 @@ Required `.NOTES` fields: `ScriptType` (runner / automation / hybrid), `TargetSc
 | Type | Location |
 |------|----------|
 | New SQL diagnostic or monitoring script | `sql/<category>/Get-Something.sql` |
-| New PowerShell wrapper for a SQL script | `web-ui/wrappers/<category>/Get-Something.ps1` (required for web UI) |
+| New PowerShell wrapper for a SQL script | `powershell/runners/<category>/Get-Something.ps1` (required for web UI) |
 | New unique PowerShell script (orchestration, automation) | `powershell/<subfolder>/` |
 | New change order template | `docs/ops/change-orders/` |
 | New operational checklist | `docs/ops/checklists/` |

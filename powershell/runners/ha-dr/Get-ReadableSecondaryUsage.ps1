@@ -19,7 +19,7 @@ Output mode: 'Table' (default) or 'Csv'.
 Optional file path to save the output.
 
 .EXAMPLE
-pwsh -File .\web-ui\wrappers\ha-dr\Get-ReadableSecondaryUsage.ps1
+pwsh -File .\powershell\runners\ha-dr\Get-ReadableSecondaryUsage.ps1
 #>
 
 param(

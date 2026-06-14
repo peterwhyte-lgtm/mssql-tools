@@ -827,7 +827,7 @@ function Build-CsvViewPage([string]$relPath) {
         $ps1Match = Get-ChildItem "$repoRoot\powershell\migration" -Filter "$scriptBase.ps1" -File -ErrorAction SilentlyContinue | Select-Object -First 1
     }
     if (-not $ps1Match) {
-        $ps1Match = Get-ChildItem "$repoRoot\web-ui\wrappers" -Recurse -Filter "$scriptBase.ps1" -File -ErrorAction SilentlyContinue | Select-Object -First 1
+        $ps1Match = Get-ChildItem "$repoRoot\powershell\runners" -Recurse -Filter "$scriptBase.ps1" -File -ErrorAction SilentlyContinue | Select-Object -First 1
     }
     $srcFile      = if ($sqlMatch) { $sqlMatch } elseif ($ps1Match) { $ps1Match } else { $null }
     $srcScriptRel = if ($srcFile) { $srcFile.FullName.Replace($repoRoot.ToString(), '').TrimStart('\') } else { '' }
@@ -2205,7 +2205,7 @@ try {
                                         else                                               { $null }
                         $psWrapper = $null
                         if ($wrapCategory) {
-                            $psWrapper = Get-ChildItem -Path (Join-Path $repoRoot "web-ui\wrappers\$wrapCategory") `
+                            $psWrapper = Get-ChildItem -Path (Join-Path $repoRoot "powershell\runners\$wrapCategory") `
                                 -Filter "$sName.ps1" -File -ErrorAction SilentlyContinue |
                                 Select-Object -First 1
                         }

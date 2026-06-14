@@ -177,7 +177,7 @@ Write-Host '  Output directories' -ForegroundColor DarkGray
 # Verify key repo folders are present
 Write-Host ''
 Write-Host '  Repo structure' -ForegroundColor DarkGray
-foreach ($folder in @('sql', 'powershell', 'powershell\collectors', 'web-ui\wrappers', 'tools')) {
+foreach ($folder in @('sql', 'powershell', 'powershell\collectors', 'powershell\runners', 'tools')) {
     $full = Join-Path $repoRoot $folder
     if (Test-Path $full) {
         Add-Check "$folder/" 'OK' ''

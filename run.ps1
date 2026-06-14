@@ -1,6 +1,6 @@
 ﻿<#
 .SYNOPSIS
-Root launcher for DBA helper scripts. Fuzzy name match across sql/, powershell/, and web-ui/wrappers/.
+Root launcher for DBA helper scripts. Fuzzy name match across sql/, powershell/, and powershell/runners/.
 
 .DESCRIPTION
 Finds and runs any script in the repo by name (partial match accepted).
@@ -77,11 +77,11 @@ if ($List -or -not $ScriptName) {
         }
     }
 
-    $wrRoot = Join-Path $repoRoot 'web-ui\wrappers'
+    $wrRoot = Join-Path $repoRoot 'powershell\runners'
     foreach ($folder in (Get-ChildItem $wrRoot -Directory -ErrorAction SilentlyContinue | Sort-Object Name)) {
         $scripts = Get-ChildItem $folder.FullName -Filter '*.ps1' -ErrorAction SilentlyContinue | Sort-Object Name
         if ($scripts.Count -gt 0) {
-            Write-Host "  web-ui/wrappers/$($folder.Name)/" -ForegroundColor DarkGray
+            Write-Host "  powershell/runners/$($folder.Name)/" -ForegroundColor DarkGray
             $scripts | ForEach-Object { Write-Host "    $($_.BaseName)" -ForegroundColor DarkGray }
             Write-Host ''
         }
@@ -110,7 +110,6 @@ if ($List -or -not $ScriptName) {
 # which mangles named parameters during array splatting.
 $searchRoots = @(
     (Join-Path $repoRoot 'powershell'),
-    (Join-Path $repoRoot 'web-ui\wrappers'),
     (Join-Path $repoRoot 'tools'),
     (Join-Path $repoRoot 'sql')
 )

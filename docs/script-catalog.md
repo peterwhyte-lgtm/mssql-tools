@@ -1,6 +1,6 @@
 ﻿# Script catalog
 
-All SQL scripts and unique PowerShell scripts in the repo. Thin PS wrappers (`web-ui/wrappers/`) are excluded — for every SQL script listed below, a matching PS wrapper exists in `web-ui/wrappers/<category>/`.
+All SQL scripts and unique PowerShell scripts in the repo. Thin PS wrappers (`powershell/runners/`) are excluded — for every SQL script listed below, a matching PS wrapper exists in `powershell/runners/<category>/`.
 
 ---
 
@@ -148,7 +148,7 @@ All SQL scripts and unique PowerShell scripts in the repo. Thin PS wrappers (`we
 
 ## PowerShell scripts
 
-Unique scripts with real logic — orchestrators, DDL generators, automation, and OS tools. Thin wrappers are in `web-ui/wrappers/` and are excluded here.
+Unique scripts with real logic — orchestrators, DDL generators, automation, and OS tools. Thin wrappers are in `powershell/runners/` and are excluded here.
 
 ### Healthcheck & reporting — `powershell/reporting/`
 

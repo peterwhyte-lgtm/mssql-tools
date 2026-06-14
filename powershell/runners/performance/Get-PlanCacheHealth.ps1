@@ -1,17 +1,21 @@
 ﻿<#
 .SYNOPSIS
-Shows AG replica health, connection state, and synchronisation status.
+Summarises plan cache composition and single-use plan pressure.
 
 .NOTES
 ScriptType   : hybrid
 TargetScope  : single server
 RiskLevel    : SAFE
+Purpose      : Identify ad-hoc SQL bloat in the plan cache. High single-use plan
+               ratios indicate missing parameterisation or parameter sniffing issues.
+
+.DESCRIPTION
+Wrapper for Get-PlanCacheHealth.sql. Shows plan count, single-use ratio, and memory
+per plan type. High ad-hoc single-use % → enable 'optimize for ad hoc workloads'
+or investigate sp_executesql adoption.
 
 .PARAMETER ServerInstance
 SQL Server instance to query. Defaults to '.'.
-
-.PARAMETER Database
-Initial database for the session. Defaults to 'master'.
 
 .PARAMETER OutputFormat
 Output mode: 'Table' (default) or 'Csv'.
@@ -20,7 +24,7 @@ Output mode: 'Table' (default) or 'Csv'.
 Optional file path to save the output.
 
 .EXAMPLE
-pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\web-ui\wrappers\ha-dr\Get-AvailabilityGroupReplicaState.ps1
+pwsh -File .\powershell\runners\performance\Get-PlanCacheHealth.ps1
 #>
 
 param(
@@ -34,11 +38,11 @@ param(
 $ErrorActionPreference = 'Stop'
 
 $repoRoot  = Resolve-Path (Join-Path $PSScriptRoot '..\..\..')
-$sqlScript = Join-Path $repoRoot 'sql\ha-dr\Get-AvailabilityGroupReplicaState.sql'
+$sqlScript = Join-Path $repoRoot 'sql\performance\Get-PlanCacheHealth.sql'
 $runner    = Join-Path $repoRoot 'tools\local-sql\Invoke-RepoSql.ps1'
 
 if (-not (Test-Path -LiteralPath $sqlScript)) { throw "SQL script not found: $sqlScript" }
 if (-not (Test-Path -LiteralPath $runner))    { throw "Runner not found: $runner" }
 
-Write-Host 'Running AG replica state review...' -ForegroundColor Cyan
+Write-Host 'Running plan cache health check...' -ForegroundColor Cyan
 & $runner -ScriptPath $sqlScript -ServerInstance $ServerInstance -Database $Database -OutputFormat $OutputFormat -OutputPath $OutputPath
