@@ -1,4 +1,4 @@
-﻿# mssql-tools repo structure
+# dba-tools repo structure
 
 This document describes the current folder layout and the purpose of each area.
 

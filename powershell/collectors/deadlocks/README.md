@@ -1,4 +1,4 @@
-﻿﻿# Deadlock Collector
+# Deadlock Collector
 
 Extracts deadlock events from the `system_health` XEvent ring buffer and appends **new events only** to the daily CSV. No XEvent session configuration required — `system_health` is always running.
 
@@ -68,7 +68,7 @@ EXEC msdb.dbo.sp_add_jobstep
     @job_name  = N'DBA - Deadlock Collector',
     @step_name = N'Collect',
     @subsystem = N'CmdExec',
-    @command   = N'pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File "C:\mssql-tools\collectors\deadlocks\Collect-Deadlocks.ps1"',
+    @command   = N'pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File "C:\dba-tools\powershell\collectors\deadlocks\Collect-Deadlocks.ps1"',
     @on_success_action = 1,
     @on_fail_action    = 2;
 

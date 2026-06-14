@@ -1,9 +1,9 @@
-﻿<#
+<#
 .SYNOPSIS
 Adds the standard SQL script header comment to SQL files that are missing it.
 
 .DESCRIPTION
-Scans mssql-tools/sql and prepends a standard header block of the form:
+Scans dba-tools/sql and prepends a standard header block of the form:
 /*
 Script Name : <file name>
 Description : Returns information for DBA review and troubleshooting.

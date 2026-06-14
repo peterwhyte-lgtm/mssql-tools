@@ -1,4 +1,4 @@
-﻿# Quick start
+# Quick start
 
 Get from a fresh clone to running diagnostics against a SQL Server instance in five minutes.
 
@@ -7,8 +7,8 @@ Get from a fresh clone to running diagnostics against a SQL Server instance in f
 ## 1. Clone and initialise
 
 ```powershell
-git clone https://github.com/peterwhyte-lgtm/mssql-tools
-cd mssql-tools
+git clone https://github.com/peterwhyte-lgtm/dba-tools
+cd dba-tools
 
 # Checks PowerShell version, SQL execution tools, and creates output directories
 .\Initialize-Environment.ps1
@@ -152,7 +152,7 @@ Every script in `sql/` is paste-and-run in SSMS. No PowerShell needed:
 | Need | Resource |
 |------|----------|
 | Full script list with descriptions | [docs/script-catalog.md](script-catalog.md) |
-| Repo folder layout | [docs/mssql-tools-repo-structure.md](mssql-tools-repo-structure.md) |
+| Repo folder layout | [docs/repo-structure.md](repo-structure.md) |
 | Prerequisites, permissions, troubleshooting | [SETUP.md](../SETUP.md) |
 | Migration workflow | `powershell/migration/Invoke-PreMigrationAssessment.ps1` |
 | Change orders and runbooks | `docs/ops/` |

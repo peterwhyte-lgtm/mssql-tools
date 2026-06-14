@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     Generates a ready-to-run PowerShell script that executes a SQL or PowerShell
     script against multiple servers. Output is printed to the console (or written
@@ -88,7 +88,7 @@
 
 .NOTES
     Author  : Peter Whyte (https://sqldba.blog)
-    Repo    : https://github.com/peterwhyte-lgtm/mssql-tools
+    Repo    : https://github.com/peterwhyte-lgtm/dba-tools
     Safe    : Read-only (this script generates output only — nothing is executed)
 #>
 

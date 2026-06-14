@@ -1,4 +1,4 @@
-﻿title = "mssql-tools gitleaks config"
+title = "dba-tools gitleaks config"
 
 # ── Allow-list false positives specific to this repo ─────────────────────────
 [allowlist]
@@ -19,7 +19,7 @@
 
   paths = [
     # INI answer file templates — placeholders only, no real credentials
-    '''admin\installation\templates/.*\.ini''',
+    '''admin/installation/templates/.*\.ini''',
     # Documentation files — contain example values
     '''docs/.*''',
     '''blog/.*''',

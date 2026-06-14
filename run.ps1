@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
 Root launcher for DBA helper scripts. Fuzzy name match across sql/, powershell/, and powershell/runners/.
 
@@ -27,7 +27,7 @@ $repoRoot = Resolve-Path $PSScriptRoot
 
 if ($List -or -not $ScriptName) {
     Write-Host ''
-    Write-Host 'mssql-tools — available scripts' -ForegroundColor Cyan
+    Write-Host 'dba-tools — available scripts' -ForegroundColor Cyan
     Write-Host ('─' * 60) -ForegroundColor DarkCyan
     Write-Host ''
 

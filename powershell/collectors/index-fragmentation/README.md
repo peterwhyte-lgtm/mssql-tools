@@ -1,4 +1,4 @@
-﻿﻿# Index Fragmentation Collector
+# Index Fragmentation Collector
 
 Weekly point-in-time snapshot of index fragmentation across all user databases using SAMPLED mode. Tracks which indexes degrade fastest and provides recommended action (REBUILD / REORGANIZE / NONE).
 
@@ -82,7 +82,7 @@ EXEC msdb.dbo.sp_add_jobstep
     @job_name  = N'DBA - Index Fragmentation Collector',
     @step_name = N'Collect',
     @subsystem = N'CmdExec',
-    @command   = N'pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File "C:\mssql-tools\collectors\index-fragmentation\Collect-IndexFragmentation.ps1"',
+    @command   = N'pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File "C:\dba-tools\powershell\collectors\index-fragmentation\Collect-IndexFragmentation.ps1"',
     @on_success_action = 1,
     @on_fail_action    = 2;
 

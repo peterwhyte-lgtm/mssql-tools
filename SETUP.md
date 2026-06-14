@@ -1,4 +1,4 @@
-﻿# Environment Setup
+# Environment Setup
 
 Everything you need to go from a fresh clone to running your first query. Run the setup script for an automated check, or follow the manual steps below.
 
@@ -8,8 +8,8 @@ Everything you need to go from a fresh clone to running your first query. Run th
 
 ```powershell
 # Clone the repo
-git clone https://github.com/peterwhyte-lgtm/mssql-tools
-cd mssql-tools
+git clone https://github.com/peterwhyte-lgtm/dba-tools
+cd dba-tools
 
 # Run the setup script — checks prerequisites and creates output directories
 .\Initialize-Environment.ps1

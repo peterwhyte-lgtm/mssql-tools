@@ -1,4 +1,4 @@
-﻿<#
+<#
 Script Name : Initialize-Environment
 Purpose     : First-time setup check for this repo on a new machine. Validates
               prerequisites, installs missing modules, creates the output directory
@@ -290,7 +290,7 @@ if ($ServerInstance) {
         $line = "`$env:DBASCRIPTS_SERVER = '$ServerInstance'"
 
         if ($profileContent -notmatch [regex]::Escape('DBASCRIPTS_SERVER')) {
-            Add-Content -Path $profilePath -Value "`n# mssql-tools default server`n$line"
+            Add-Content -Path $profilePath -Value "`n# dba-tools default server`n$line"
             Add-Check 'Profile persistence' 'OK' "Added to $profilePath — survives session restarts"
         } else {
             Add-Check 'Profile persistence' 'SKIP' 'DBASCRIPTS_SERVER already in profile — update manually if needed'

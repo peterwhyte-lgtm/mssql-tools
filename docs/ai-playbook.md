@@ -1,4 +1,4 @@
-﻿# AI Playbook — mssql-tools
+# AI Playbook — dba-tools
 
 Decision-support for AI agents working with this repo. This is not a structure guide (see `CLAUDE.md` and `docs/repo-structure.md`). This is the answer to: *"A DBA has described a problem — which scripts, in what order, and what do I do with the output?"*
 

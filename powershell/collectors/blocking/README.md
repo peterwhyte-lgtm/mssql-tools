@@ -1,4 +1,4 @@
-﻿﻿# Blocking Collector
+# Blocking Collector
 
 Captures active blocking chains from `sys.dm_exec_requests` on a schedule. Writes to CSV **only when blocking is detected** — quiet servers produce no files.
 
@@ -74,7 +74,7 @@ EXEC msdb.dbo.sp_add_jobstep
     @job_name  = N'DBA - Blocking Collector',
     @step_name = N'Collect',
     @subsystem = N'CmdExec',
-    @command   = N'pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File "C:\mssql-tools\collectors\blocking\Collect-Blocking.ps1"',
+    @command   = N'pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File "C:\dba-tools\powershell\collectors\blocking\Collect-Blocking.ps1"',
     @on_success_action = 1,
     @on_fail_action    = 2;
 

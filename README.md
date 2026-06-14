@@ -1,13 +1,13 @@
-﻿<p align="center">
+<p align="center">
   <img src="assets/logo/sqldba-site-logo.png" alt="sqldba.blog" width="220">
 </p>
 
 <h3 align="center">SQL Server Diagnostic & Operational Scripts for Production DBAs</h3>
 
 <p align="center">
-  <a href="https://github.com/peterwhyte-lgtm/mssql-tools"><img src="https://img.shields.io/badge/SQL%20Server-2016%2B-CC2927?logo=microsoftsqlserver&logoColor=white" alt="SQL Server"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/github/license/peterwhyte-lgtm/mssql-tools" alt="License"></a>
-  <a href="https://github.com/peterwhyte-lgtm/mssql-tools/commits/main"><img src="https://img.shields.io/github/last-commit/peterwhyte-lgtm/mssql-tools" alt="Last commit"></a>
+  <a href="https://github.com/peterwhyte-lgtm/dba-tools"><img src="https://img.shields.io/badge/SQL%20Server-2016%2B-CC2927?logo=microsoftsqlserver&logoColor=white" alt="SQL Server"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/peterwhyte-lgtm/dba-tools" alt="License"></a>
+  <a href="https://github.com/peterwhyte-lgtm/dba-tools/commits/main"><img src="https://img.shields.io/github/last-commit/peterwhyte-lgtm/dba-tools" alt="Last commit"></a>
   <a href="https://sqldba.blog"><img src="https://img.shields.io/badge/blog-sqldba.blog-blue" alt="Blog"></a>
 </p>
 
@@ -18,8 +18,8 @@
 Clone the repo and run the setup script. This assumes a local SQL Server is installed, no flags needed:
 
 ```powershell
-git clone https://github.com/peterwhyte-lgtm/mssql-tools
-cd mssql-tools
+git clone https://github.com/peterwhyte-lgtm/dba-tools
+cd dba-tools
 .\Initialize-Environment.ps1
 ```
 

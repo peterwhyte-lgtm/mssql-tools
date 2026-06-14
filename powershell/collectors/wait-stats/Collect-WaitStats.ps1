@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
 Scheduled wait stats collector — appends a snapshot to the daily CSV.
 
@@ -36,7 +36,7 @@ Root folder for output. Defaults to output-files\collectors\wait-stats\ under re
 .\collectors\wait-stats\Collect-WaitStats.ps1 -ServerInstance PROD01\SQL2019
 
 # SQL Agent job step command (CmdExec):
-# pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File "C:\mssql-tools\collectors\wait-stats\Collect-WaitStats.ps1"
+# pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File "C:\dba-tools\powershell\collectors\wait-stats\Collect-WaitStats.ps1"
 #>
 param(
     [string]$ServerInstance = '.',

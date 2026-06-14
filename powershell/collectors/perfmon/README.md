@@ -1,4 +1,4 @@
-﻿﻿# Perfmon Collector
+# Perfmon Collector
 
 Snapshots SQL Server performance counters from `sys.dm_os_performance_counters`. Covers buffer pool, memory, throughput, connections, locks, and I/O. Some counters are cumulative (require delta) — the `cntr_type` column identifies which.
 
@@ -84,7 +84,7 @@ EXEC msdb.dbo.sp_add_jobstep
     @job_name  = N'DBA - Perfmon Collector',
     @step_name = N'Collect',
     @subsystem = N'CmdExec',
-    @command   = N'pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File "C:\mssql-tools\collectors\perfmon\Collect-Perfmon.ps1"',
+    @command   = N'pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File "C:\dba-tools\powershell\collectors\perfmon\Collect-Perfmon.ps1"',
     @on_success_action = 1,
     @on_fail_action    = 2;
 

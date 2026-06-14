@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     Local web UI for browsing scripts and visualising output CSVs.
 .DESCRIPTION
@@ -17,7 +17,7 @@ if (-not $Inline) {
 }
 
 $ErrorActionPreference = 'Stop'
-$Host.UI.RawUI.WindowTitle = "mssql-tools web UI — localhost:$Port"
+$Host.UI.RawUI.WindowTitle = "dba-tools web UI — localhost:$Port"
 $repoRoot = Split-Path $PSScriptRoot -Parent
 
 $script:enrichedCache       = $null
@@ -409,10 +409,10 @@ function Wrap-Page([string]$title, [string]$body, [string]$q='', [string]$active
     @"
 <!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>$title — mssql-tools</title>
+<title>$title — dba-tools</title>
 <style>$CSS</style></head><body>
 <header>
-  <h1>mssql-tools</h1>
+  <h1>dba-tools</h1>
   <nav>
     <a href="/triage" $navTriage>Triage</a>
     <a href="/" $navScripts>Scripts</a>
@@ -2100,7 +2100,7 @@ $listener = [System.Net.HttpListener]::new()
 $listener.Prefixes.Add("http://localhost:$Port/")
 $listener.Start()
 
-Write-Host "mssql-tools UI  →  http://localhost:$Port/"
+Write-Host "dba-tools UI  →  http://localhost:$Port/"
 Write-Host "Press Ctrl+C to stop."
 
 try {

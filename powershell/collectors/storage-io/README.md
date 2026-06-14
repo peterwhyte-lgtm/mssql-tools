@@ -1,4 +1,4 @@
-﻿﻿# Storage I/O Collector
+# Storage I/O Collector
 
 Snapshots cumulative I/O statistics per database file from `sys.dm_io_virtual_file_stats`. Diff adjacent snapshots to measure read/write throughput and latency within each collection interval. Same delta model as wait-stats.
 
@@ -91,7 +91,7 @@ EXEC msdb.dbo.sp_add_jobstep
     @job_name  = N'DBA - Storage I/O Collector',
     @step_name = N'Collect',
     @subsystem = N'CmdExec',
-    @command   = N'pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File "C:\mssql-tools\collectors\storage-io\Collect-StorageIo.ps1"',
+    @command   = N'pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File "C:\dba-tools\powershell\collectors\storage-io\Collect-StorageIo.ps1"',
     @on_success_action = 1,
     @on_fail_action    = 2;
 
