@@ -12,6 +12,8 @@ Requires    : CREATE TABLE, INSERT, UPDATE, DROP TABLE
 -- IMPACT:Medium
 -- LAB:DevOnly
 
+SET NOCOUNT ON;
+
 /*
   ===================================================================
    WARNING: DO NOT PRESS F5 / EXECUTE ALL ON THIS FILE

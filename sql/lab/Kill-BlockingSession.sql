@@ -13,6 +13,8 @@ Requires    : ALTER ANY CONNECTION (or sysadmin)
 -- IMPACT:High
 -- LAB:ManualOnly
 
+SET NOCOUNT ON;
+
 /*
   ===================================================================
    BEFORE KILLING A SESSION:

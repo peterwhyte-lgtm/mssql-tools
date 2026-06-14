@@ -66,7 +66,7 @@ if ($Category -eq 'migration') {
 } elseif ($Category) {
     $searchPaths = @(Join-Path $sqlRoot $Category)
 } else {
-    $searchPaths = @($sqlRoot, $migrationRoot)
+    $searchPaths = @($sqlRoot)
 }
 
 foreach ($sp in $searchPaths) {
@@ -121,7 +121,7 @@ $results = foreach ($file in $sqlFiles) {
             ForEach-Object { $_.Value } | Select-Object -Unique
         $warns.Add("deprecated view: $($matched -join ', ')")
     }
-    if ($content -imatch '(?m)^\s*USE\s+\w+') {
+    if ($content -imatch '(?m)^\s*USE\s+\[?\w+\]?\s*;') {
         $warns.Add('USE <database> (not supported by Invoke-Sqlcmd)')
     }
     if ($content -imatch '(?m)^\s*GO\s*$') {
