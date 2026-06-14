@@ -9,10 +9,11 @@ $ErrorActionPreference = 'Stop'
 
 $repoRoot = Resolve-Path (Join-Path $PSScriptRoot '..\..')
 $required = @(
-  'sql',
-  'powershell',
-  'helpers',
+  'database-admin\sql-scripts',
+  'database-admin\powershell-scripts',
+  'database-admin\collectors',
   'tools',
+  'web-ui\wrappers',
   'output-files'
 )
 

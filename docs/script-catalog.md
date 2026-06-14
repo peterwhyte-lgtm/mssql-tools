@@ -1,12 +1,12 @@
 # Script catalog
 
-All SQL scripts and unique PowerShell scripts in the repo. Thin PS wrappers (`wrappers/`) are excluded — for every SQL script listed below, a matching PS wrapper exists in `wrappers/<category>/`.
+All SQL scripts and unique PowerShell scripts in the repo. Thin PS wrappers (`web-ui/wrappers/`) are excluded — for every SQL script listed below, a matching PS wrapper exists in `web-ui/wrappers/<category>/`.
 
 ---
 
 ## SQL scripts
 
-### Monitoring — `sql/monitoring/`
+### Monitoring — `database-admin/sql-scripts/monitoring/`
 
 | Script | Purpose |
 |--------|---------|
@@ -42,7 +42,7 @@ All SQL scripts and unique PowerShell scripts in the repo. Thin PS wrappers (`wr
 | Get-VersionAndEdition | Core instance version, edition, cluster status, and patch level |
 | Get-VlfCount | Virtual log file (VLF) count per database transaction log |
 
-### Performance — `sql/performance/`
+### Performance — `database-admin/sql-scripts/performance/`
 
 | Script | Purpose |
 |--------|---------|
@@ -73,7 +73,7 @@ All SQL scripts and unique PowerShell scripts in the repo. Thin PS wrappers (`wr
 | Get-WaitStatistics | Top wait types since last SQL Server restart, filtered to actionable waits only |
 | Get-WorkerThreadsAndActiveSessions | Active user sessions with CPU, elapsed time, and current worker thread pool usage |
 
-### Backups — `sql/backups/`
+### Backups — `database-admin/sql-scripts/backups/`
 
 | Script | Purpose |
 |--------|---------|
@@ -88,7 +88,7 @@ All SQL scripts and unique PowerShell scripts in the repo. Thin PS wrappers (`wr
 | Get-DatabaseBackupHistory | Detailed backup history for all databases over the last 2 months |
 | Get-LastDatabaseBackupTimes | Latest backup timestamp per type (Full, Differential, Log) per database |
 
-### Security — `sql/security/`
+### Security — `database-admin/sql-scripts/security/`
 
 | Script | Purpose |
 |--------|---------|
@@ -104,7 +104,7 @@ All SQL scripts and unique PowerShell scripts in the repo. Thin PS wrappers (`wr
 | Get-UserPermissionsAudit | All SQL Server logins by type and disabled state for permissions review |
 | Get-WeakLoginSettings | SQL logins with weak security: policy off, expiration off, or sa enabled |
 
-### Migration — `sql/migration/`
+### Migration — `database-admin/migration/sql/`
 
 | Script | Purpose |
 |--------|---------|
@@ -126,7 +126,7 @@ All SQL scripts and unique PowerShell scripts in the repo. Thin PS wrappers (`wr
 | Get-PostMigrationValidation | Summary of key server state for side-by-side comparison between source and target |
 | Get-VersionUpgradeReadiness | Pre-upgrade readiness summary for SQL Server version upgrades |
 
-### High Availability — `sql/high-availability/`
+### High Availability — `database-admin/sql-scripts/ha-dr/`
 
 | Script | Purpose |
 |--------|---------|
@@ -134,7 +134,7 @@ All SQL scripts and unique PowerShell scripts in the repo. Thin PS wrappers (`wr
 | Get-AvailabilityGroupReplicaState | AG replica health, connection state, and synchronization status |
 | Get-ReadableSecondaryUsage | AG replica connection modes and read-only routing configuration |
 
-### Maintenance — `sql/maintenance/`
+### Maintenance — `database-admin/sql-scripts/maintenance/`
 
 | Script | Purpose |
 |--------|---------|
@@ -148,9 +148,9 @@ All SQL scripts and unique PowerShell scripts in the repo. Thin PS wrappers (`wr
 
 ## PowerShell scripts
 
-Unique scripts with real logic — orchestrators, DDL generators, automation, and OS tools. Thin wrappers are in `wrappers/` and are excluded here.
+Unique scripts with real logic — orchestrators, DDL generators, automation, and OS tools. Thin wrappers are in `web-ui/wrappers/` and are excluded here.
 
-### Healthcheck & reporting — `powershell/reporting/`
+### Healthcheck & reporting — `database-admin/powershell-scripts/reporting/`
 
 | Script | Purpose |
 |--------|---------|
@@ -161,7 +161,7 @@ Unique scripts with real logic — orchestrators, DDL generators, automation, an
 | Invoke-AssessmentReport | Generate a client-ready instance assessment report in markdown |
 | Invoke-MultiServerHealthCheck | Estate-wide health check — flags which servers need attention across a server list |
 
-### Migration — `powershell/migration/`
+### Migration — `database-admin/migration/powershell/`
 
 | Script | Purpose |
 |--------|---------|
@@ -175,7 +175,7 @@ Unique scripts with real logic — orchestrators, DDL generators, automation, an
 | Invoke-PreMigrationAssessment | Full pre-migration assessment report |
 | Export-MigrationBaseline | Capture baseline metrics from source for post-migration comparison |
 
-### Maintenance — `powershell/maintenance/`
+### Maintenance — `database-admin/powershell-scripts/maintenance/`
 
 | Script | Purpose |
 |--------|---------|

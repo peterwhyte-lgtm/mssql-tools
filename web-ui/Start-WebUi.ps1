@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     Local web UI for browsing scripts and visualising output CSVs.
 .DESCRIPTION
@@ -6,8 +6,8 @@
     Chart.js is loaded from CDN on the CSV chart page (requires internet for that page only).
     Press Ctrl+C to stop.
 .EXAMPLE
-    .\tools\web-ui\Start-WebUi.ps1
-    .\tools\web-ui\Start-WebUi.ps1 -Port 9090
+    .\web-ui\Start-WebUi.ps1
+    .\web-ui\Start-WebUi.ps1 -Port 9090
 #>
 param([int]$Port = 8787, [switch]$Inline)
 
@@ -26,14 +26,22 @@ $script:enrichedCacheExpiry = [DateTime]::MinValue
 # ── data helpers ───────────────────────────────────────────────────────────────
 
 function Get-AllScripts {
-    $sql = Get-ChildItem "$repoRoot\sql" -Recurse -Filter '*.sql' -File |
+    $sql = Get-ChildItem "$repoRoot\database-admin\sql-scripts" -Recurse -Filter '*.sql' -File |
         Select-Object FullName,
             @{n='Name';    e={ $_.BaseName }},
             @{n='Category';e={ $_.Directory.Name }},
             @{n='Type';    e={ 'SQL' }},
             @{n='RelPath'; e={ $_.FullName.Replace($repoRoot,'').TrimStart('\') }}
 
-    $ps = Get-ChildItem "$repoRoot\powershell" -Recurse -Filter '*.ps1' -File |
+    # Wrappers are the web UI execution entry point — one per SQL script
+    $wrappers = Get-ChildItem "$repoRoot\web-ui\wrappers" -Recurse -Filter '*.ps1' -File |
+        Select-Object FullName,
+            @{n='Name';    e={ $_.BaseName }},
+            @{n='Category';e={ $_.Directory.Name }},
+            @{n='Type';    e={ 'PS1' }},
+            @{n='RelPath'; e={ $_.FullName.Replace($repoRoot,'').TrimStart('\') }}
+
+    $ps = Get-ChildItem "$repoRoot\database-admin\powershell-scripts" -Recurse -Filter '*.ps1' -File |
         Select-Object FullName,
             @{n='Name';    e={ $_.BaseName }},
             @{n='Category';e={ $_.Directory.Name }},
@@ -41,14 +49,14 @@ function Get-AllScripts {
             @{n='RelPath'; e={ $_.FullName.Replace($repoRoot,'').TrimStart('\') }}
 
     # Multi-server scripts — browsable and copyable, not runnable via the web UI
-    $msq = Get-ChildItem "$repoRoot\powershell\multi-server" -Recurse -Filter '*.ps1' -File -ErrorAction SilentlyContinue |
+    $msq = Get-ChildItem "$repoRoot\database-admin\powershell-scripts\multi-server" -Recurse -Filter '*.ps1' -File -ErrorAction SilentlyContinue |
         Select-Object FullName,
             @{n='Name';    e={ $_.BaseName }},
             @{n='Category';e={ 'multi-server' }},
             @{n='Type';    e={ 'PS1' }},
             @{n='RelPath'; e={ $_.FullName.Replace($repoRoot,'').TrimStart('\') }}
 
-    @($sql) + @($ps) + @($msq)
+    @($sql) + @($wrappers) + @($ps) + @($msq)
 }
 
 function Get-AllScriptsCached {
@@ -71,7 +79,16 @@ function Get-AllScriptsCached {
                 if ($_.Type -ne 'PS1') { $false }
                 else {
                     $base          = [System.IO.Path]::GetFileNameWithoutExtension($fp)
-                    $hasMatchingSql = $null -ne (Get-ChildItem "$repoRoot\sql" -Recurse -Filter "$base.sql" -File -EA SilentlyContinue | Select-Object -First 1)
+                    $hasMatchingSql = $null -ne (
+                        Get-ChildItem "$repoRoot\database-admin\sql-scripts" -Recurse -Filter "$base.sql" -File -EA SilentlyContinue |
+                        Select-Object -First 1
+                    )
+                    if (-not $hasMatchingSql) {
+                        $hasMatchingSql = $null -ne (
+                            Get-ChildItem "$repoRoot\database-admin\migration\sql" -Filter "$base.sql" -File -EA SilentlyContinue |
+                            Select-Object -First 1
+                        )
+                    }
                     $callsRunner   = (Get-Content $fp -Raw -EA SilentlyContinue) -match 'Invoke-RepoSql'
                     $hasMatchingSql -and $callsRunner
                 }
@@ -438,16 +455,16 @@ function Build-HomePage {
 
     # ── Top scripts for production DBA ────────────────────────────────────────
     $topDefs = @(
-        [ordered]@{P='sql\performance\Get-WaitStatistics.sql';             Desc='Ranked wait types — first stop for unexplained slowness'}
-        [ordered]@{P='sql\performance\Get-BlockingChains.sql';             Desc='Who is blocking whom — head-blocker tree'}
-        [ordered]@{P='sql\performance\Get-ActiveRequests.sql';             Desc='Queries running right now — incident first look'}
-        [ordered]@{P='sql\performance\Get-TopCpuQueries.sql';              Desc='Highest CPU queries from plan cache'}
-        [ordered]@{P='sql\performance\Get-MissingIndexes.sql';             Desc='High-impact missing index recommendations'}
-        [ordered]@{P='sql\monitoring\Get-DatabaseSizesAndFreeSpace.sql';   Desc='All databases — sizes and free space'}
-        [ordered]@{P='sql\backups\Get-BackupCoverage.sql';                 Desc='Backup currency across all databases'}
-        [ordered]@{P='sql\monitoring\Get-SqlAgentJobFailureSummary.sql';   Desc='Recent job failures and duration outliers'}
-        [ordered]@{P='sql\monitoring\Get-IndexFragmentation.sql';          Desc='Index fragmentation — maintenance candidate list'}
-        [ordered]@{P='sql\monitoring\Get-InstanceConfigurationScore.sql';  Desc='Best-practice configuration score for this instance'}
+        [ordered]@{P='database-admin\sql-scripts\performance\Get-WaitStatistics.sql';             Desc='Ranked wait types — first stop for unexplained slowness'}
+        [ordered]@{P='database-admin\sql-scripts\performance\Get-BlockingChains.sql';             Desc='Who is blocking whom — head-blocker tree'}
+        [ordered]@{P='database-admin\sql-scripts\performance\Get-ActiveRequests.sql';             Desc='Queries running right now — incident first look'}
+        [ordered]@{P='database-admin\sql-scripts\performance\Get-TopCpuQueries.sql';              Desc='Highest CPU queries from plan cache'}
+        [ordered]@{P='database-admin\sql-scripts\performance\Get-MissingIndexes.sql';             Desc='High-impact missing index recommendations'}
+        [ordered]@{P='database-admin\sql-scripts\monitoring\Get-DatabaseSizesAndFreeSpace.sql';   Desc='All databases — sizes and free space'}
+        [ordered]@{P='database-admin\sql-scripts\backups\Get-BackupCoverage.sql';                 Desc='Backup currency across all databases'}
+        [ordered]@{P='database-admin\sql-scripts\monitoring\Get-SqlAgentJobFailureSummary.sql';   Desc='Recent job failures and duration outliers'}
+        [ordered]@{P='database-admin\sql-scripts\monitoring\Get-IndexFragmentation.sql';          Desc='Index fragmentation — maintenance candidate list'}
+        [ordered]@{P='database-admin\sql-scripts\monitoring\Get-InstanceConfigurationScore.sql';  Desc='Best-practice configuration score for this instance'}
     )
 
     $topCards = ''
@@ -517,15 +534,15 @@ function Build-ViewPage([string]$relPath) {
     # Determine if this script can be run through the web UI.
     # Manual-only: lab scripts that contain a GOTO safety gate or an explicit LAB:ManualOnly tag.
     # These require multiple SSMS windows or deliberate human review before execution.
-    $isLab        = $relPath -match '(^|[\\/])sql[\\/]lab[\\/]'
+    $isLab        = $relPath -match '[\\/]sql-scripts[\\/]lab[\\/]'
     $isManualOnly = $isLab -and (
         ($content -match 'GOTO\s+CannotRunAsFullScript') -or
         ($content -match '--\s*LAB\s*:\s*ManualOnly')
     )
     $isRunnable = $false
-    if ($ext -eq '.sql' -and $relPath -match '(^|[\\/])sql[\\/]' -and -not $isManualOnly) {
+    if ($ext -eq '.sql' -and ($relPath -match '[\\/]sql-scripts[\\/]' -or $relPath -match '[\\/]migration[\\/]sql[\\/]') -and -not $isManualOnly) {
         $isRunnable = $true
-    } elseif ($ext -eq '.ps1' -and $relPath -match '(^|[\\/])powershell[\\/]') {
+    } elseif ($ext -eq '.ps1' -and ($relPath -match '[\\/]powershell-scripts[\\/]' -or $relPath -match '[\\/]wrappers[\\/]')) {
         $isRunnable = ($content -match 'OutputFormat') -and ($content -match 'OutputPath')
     }
 
@@ -648,74 +665,74 @@ function Build-SearchPage([string]$q) {
 function Build-TriagePage {
     $groups = @(
         [ordered]@{ Title='Right Now'; When='First stop during any active incident — see what is running, waiting, or blocked this moment'; Scripts=@(
-            [ordered]@{P='sql\performance\Get-ActiveRequests.sql';                T='SQL'}
-            [ordered]@{P='sql\performance\Get-ActiveRequestsWithPlan.sql';        T='SQL'}
-            [ordered]@{P='sql\performance\Get-WorkerThreadsAndActiveSessions.sql';T='SQL'}
-            [ordered]@{P='sql\performance\Get-BackupRestoreProgress.sql';         T='SQL'}
-            [ordered]@{P='sql\monitoring\Get-TempdbHotspots.sql';                 T='SQL'}
+            [ordered]@{P='database-admin\sql-scripts\performance\Get-ActiveRequests.sql';                T='SQL'}
+            [ordered]@{P='database-admin\sql-scripts\performance\Get-ActiveRequestsWithPlan.sql';        T='SQL'}
+            [ordered]@{P='database-admin\sql-scripts\performance\Get-WorkerThreadsAndActiveSessions.sql';T='SQL'}
+            [ordered]@{P='database-admin\sql-scripts\performance\Get-BackupRestoreProgress.sql';         T='SQL'}
+            [ordered]@{P='database-admin\sql-scripts\monitoring\Get-TempdbHotspots.sql';                 T='SQL'}
         )}
         [ordered]@{ Title='Blocking & Locks'; When='Users timing out, SSMS hanging, head blocker suspected, long-running transactions'; Scripts=@(
-            [ordered]@{P='sql\performance\Get-BlockingChains.sql';        T='SQL'}
-            [ordered]@{P='sql\performance\Get-BlockingChainsWithPlan.sql';T='SQL'}
-            [ordered]@{P='sql\performance\Get-BlockingSessions.sql';      T='SQL'}
-            [ordered]@{P='sql\performance\Get-BlockingSummary.sql';       T='SQL'}
-            [ordered]@{P='sql\performance\Get-DeadlockSummary.sql';       T='SQL'}
-            [ordered]@{P='sql\performance\Get-ContentionAnalysis.sql';    T='SQL'}
+            [ordered]@{P='database-admin\sql-scripts\performance\Get-BlockingChains.sql';        T='SQL'}
+            [ordered]@{P='database-admin\sql-scripts\performance\Get-BlockingChainsWithPlan.sql';T='SQL'}
+            [ordered]@{P='database-admin\sql-scripts\performance\Get-BlockingSessions.sql';      T='SQL'}
+            [ordered]@{P='database-admin\sql-scripts\performance\Get-BlockingSummary.sql';       T='SQL'}
+            [ordered]@{P='database-admin\sql-scripts\performance\Get-DeadlockSummary.sql';       T='SQL'}
+            [ordered]@{P='database-admin\sql-scripts\performance\Get-ContentionAnalysis.sql';    T='SQL'}
         )}
         [ordered]@{ Title='Slow Queries & High CPU'; When='CPU high, specific queries regressed, plan cache pollution, IO pressure'; Scripts=@(
-            [ordered]@{P='sql\performance\Get-TopCpuQueries.sql';        T='SQL'}
-            [ordered]@{P='sql\performance\Get-TopIoQueries.sql';         T='SQL'}
-            [ordered]@{P='sql\performance\Get-LongRunningQueries.sql';   T='SQL'}
-            [ordered]@{P='sql\performance\Get-SlowQueriesFromCache.sql'; T='SQL'}
-            [ordered]@{P='sql\performance\Get-DatabaseIoUsage.sql';      T='SQL'}
-            [ordered]@{P='sql\performance\Get-QueryStoreTopQueries.sql'; T='SQL'}
+            [ordered]@{P='database-admin\sql-scripts\performance\Get-TopCpuQueries.sql';        T='SQL'}
+            [ordered]@{P='database-admin\sql-scripts\performance\Get-TopIoQueries.sql';         T='SQL'}
+            [ordered]@{P='database-admin\sql-scripts\performance\Get-LongRunningQueries.sql';   T='SQL'}
+            [ordered]@{P='database-admin\sql-scripts\performance\Get-SlowQueriesFromCache.sql'; T='SQL'}
+            [ordered]@{P='database-admin\sql-scripts\performance\Get-DatabaseIoUsage.sql';      T='SQL'}
+            [ordered]@{P='database-admin\sql-scripts\performance\Get-QueryStoreTopQueries.sql'; T='SQL'}
         )}
         [ordered]@{ Title='Wait Statistics'; When='Unexplained slowness — identify the bottleneck category before digging deeper into queries'; Scripts=@(
-            [ordered]@{P='sql\performance\Get-WaitStatistics.sql'; T='SQL'}
+            [ordered]@{P='database-admin\sql-scripts\performance\Get-WaitStatistics.sql'; T='SQL'}
         )}
         [ordered]@{ Title='Index & Statistics Health'; When='Queries slowing over time, fragmentation suspected, missing index warnings, heap tables'; Scripts=@(
-            [ordered]@{P='sql\monitoring\Get-IndexFragmentation.sql';           T='SQL'}
-            [ordered]@{P='sql\performance\Get-IndexUsageStats.sql';             T='SQL'}
-            [ordered]@{P='sql\performance\Get-MissingIndexes.sql';              T='SQL'; Fix=$true}
-            [ordered]@{P='sql\performance\Get-UnusedIndexes.sql';               T='SQL'}
-            [ordered]@{P='sql\performance\Get-Heaps.sql';                       T='SQL'}
-            [ordered]@{P='sql\performance\Get-StatisticsHealth.sql';            T='SQL'; Fix=$true}
-            [ordered]@{P='sql\maintenance\Generate-IndexMaintenanceScript.sql'; T='SQL'; Fix=$true}
+            [ordered]@{P='database-admin\sql-scripts\monitoring\Get-IndexFragmentation.sql';           T='SQL'}
+            [ordered]@{P='database-admin\sql-scripts\performance\Get-IndexUsageStats.sql';             T='SQL'}
+            [ordered]@{P='database-admin\sql-scripts\performance\Get-MissingIndexes.sql';              T='SQL'; Fix=$true}
+            [ordered]@{P='database-admin\sql-scripts\performance\Get-UnusedIndexes.sql';               T='SQL'}
+            [ordered]@{P='database-admin\sql-scripts\performance\Get-Heaps.sql';                       T='SQL'}
+            [ordered]@{P='database-admin\sql-scripts\performance\Get-StatisticsHealth.sql';            T='SQL'; Fix=$true}
+            [ordered]@{P='database-admin\sql-scripts\maintenance\Generate-IndexMaintenanceScript.sql'; T='SQL'; Fix=$true}
         )}
         [ordered]@{ Title='Disk & Space'; When='Disk alerts, databases growing unexpectedly, transaction log filling up, autogrowth events'; Scripts=@(
-            [ordered]@{P='sql\monitoring\Get-DiskSpace.sql';                  T='SQL'}
-            [ordered]@{P='sql\monitoring\Get-DatabaseSizesAndFreeSpace.sql';  T='SQL'}
-            [ordered]@{P='sql\monitoring\Get-TransactionLogSizeAndUsage.sql'; T='SQL'}
-            [ordered]@{P='sql\monitoring\Get-VlfCount.sql';                   T='SQL'}
-            [ordered]@{P='sql\monitoring\Get-AutogrowthHistory.sql';          T='SQL'}
-            [ordered]@{P='sql\monitoring\Get-DatabaseGrowthRisk.sql';         T='SQL'}
+            [ordered]@{P='database-admin\sql-scripts\monitoring\Get-DiskSpace.sql';                  T='SQL'}
+            [ordered]@{P='database-admin\sql-scripts\monitoring\Get-DatabaseSizesAndFreeSpace.sql';  T='SQL'}
+            [ordered]@{P='database-admin\sql-scripts\monitoring\Get-TransactionLogSizeAndUsage.sql'; T='SQL'}
+            [ordered]@{P='database-admin\sql-scripts\monitoring\Get-VlfCount.sql';                   T='SQL'}
+            [ordered]@{P='database-admin\sql-scripts\monitoring\Get-AutogrowthHistory.sql';          T='SQL'}
+            [ordered]@{P='database-admin\sql-scripts\monitoring\Get-DatabaseGrowthRisk.sql';         T='SQL'}
         )}
         [ordered]@{ Title='Backups'; When='Verifying coverage, investigating a missed backup, planning or scripting a restore'; Scripts=@(
-            [ordered]@{P='sql\backups\Get-BackupCoverage.sql';          T='SQL'}
-            [ordered]@{P='sql\backups\Get-LastDatabaseBackupTimes.sql'; T='SQL'}
-            [ordered]@{P='sql\backups\Get-DatabaseBackupHistory.sql';   T='SQL'}
-            [ordered]@{P='sql\backups\Generate-FullBackupScript.sql';   T='SQL'; Fix=$true}
-            [ordered]@{P='sql\backups\Generate-RestoreScript.sql';      T='SQL'; Fix=$true}
+            [ordered]@{P='database-admin\sql-scripts\backups\Get-BackupCoverage.sql';          T='SQL'}
+            [ordered]@{P='database-admin\sql-scripts\backups\Get-LastDatabaseBackupTimes.sql'; T='SQL'}
+            [ordered]@{P='database-admin\sql-scripts\backups\Get-DatabaseBackupHistory.sql';   T='SQL'}
+            [ordered]@{P='database-admin\sql-scripts\backups\Generate-FullBackupScript.sql';   T='SQL'; Fix=$true}
+            [ordered]@{P='database-admin\sql-scripts\backups\Generate-RestoreScript.sql';      T='SQL'; Fix=$true}
         )}
         [ordered]@{ Title='Jobs & Errors'; When='Agent job failures, unexpected error log entries, maintenance jobs not running on schedule'; Scripts=@(
-            [ordered]@{P='sql\monitoring\Get-SqlAgentJobFailureSummary.sql'; T='SQL'}
-            [ordered]@{P='sql\monitoring\Get-RecentErrorLogEntries.sql';     T='SQL'}
-            [ordered]@{P='sql\monitoring\Get-SqlAgentJobOverview.sql';       T='SQL'}
+            [ordered]@{P='database-admin\sql-scripts\monitoring\Get-SqlAgentJobFailureSummary.sql'; T='SQL'}
+            [ordered]@{P='database-admin\sql-scripts\monitoring\Get-RecentErrorLogEntries.sql';     T='SQL'}
+            [ordered]@{P='database-admin\sql-scripts\monitoring\Get-SqlAgentJobOverview.sql';       T='SQL'}
         )}
         [ordered]@{ Title='Security'; When='Permissions audit, sysadmin membership review, orphaned users, weak password policy'; Scripts=@(
-            [ordered]@{P='sql\security\Get-SysadminMembers.sql';      T='SQL'}
-            [ordered]@{P='sql\security\Get-WeakLoginSettings.sql';    T='SQL'}
-            [ordered]@{P='sql\security\Get-UserPermissionsAudit.sql'; T='SQL'}
-            [ordered]@{P='sql\security\Get-OrphanedUsers.sql';        T='SQL'}
+            [ordered]@{P='database-admin\sql-scripts\security\Get-SysadminMembers.sql';      T='SQL'}
+            [ordered]@{P='database-admin\sql-scripts\security\Get-WeakLoginSettings.sql';    T='SQL'}
+            [ordered]@{P='database-admin\sql-scripts\security\Get-UserPermissionsAudit.sql'; T='SQL'}
+            [ordered]@{P='database-admin\sql-scripts\security\Get-OrphanedUsers.sql';        T='SQL'}
         )}
         [ordered]@{ Title='Instance Configuration'; When='New server review, performance baseline, best practice settings check, integrity'; Scripts=@(
-            [ordered]@{P='sql\monitoring\Get-Databases.sql';                   T='SQL'}
-            [ordered]@{P='sql\monitoring\Get-InstanceConfigurationScore.sql';  T='SQL'}
-            [ordered]@{P='sql\monitoring\Get-MaxdopConfiguration.sql';         T='SQL'}
-            [ordered]@{P='sql\monitoring\Get-MemoryConfigurationAndUsage.sql'; T='SQL'}
-            [ordered]@{P='sql\monitoring\Get-LastDbccCheckdb.sql';             T='SQL'}
-            [ordered]@{P='sql\monitoring\Get-SuspectPages.sql';                T='SQL'}
-            [ordered]@{P='sql\monitoring\Get-DatabaseHealth.sql';              T='SQL'}
+            [ordered]@{P='database-admin\sql-scripts\monitoring\Get-Databases.sql';                   T='SQL'}
+            [ordered]@{P='database-admin\sql-scripts\monitoring\Get-InstanceConfigurationScore.sql';  T='SQL'}
+            [ordered]@{P='database-admin\sql-scripts\monitoring\Get-MaxdopConfiguration.sql';         T='SQL'}
+            [ordered]@{P='database-admin\sql-scripts\monitoring\Get-MemoryConfigurationAndUsage.sql'; T='SQL'}
+            [ordered]@{P='database-admin\sql-scripts\monitoring\Get-LastDbccCheckdb.sql';             T='SQL'}
+            [ordered]@{P='database-admin\sql-scripts\monitoring\Get-SuspectPages.sql';                T='SQL'}
+            [ordered]@{P='database-admin\sql-scripts\monitoring\Get-DatabaseHealth.sql';              T='SQL'}
         )}
     )
 
@@ -791,8 +808,17 @@ function Build-CsvViewPage([string]$relPath) {
 
     # ── find the source script by stripping the timestamp suffix ──────────────
     $scriptBase   = $name -replace '-\d{8}-\d{6}$', ''
-    $sqlMatch     = Get-ChildItem "$repoRoot\sql"        -Recurse -Filter "$scriptBase.sql" -File -ErrorAction SilentlyContinue | Select-Object -First 1
-    $ps1Match     = Get-ChildItem "$repoRoot\powershell" -Recurse -Filter "$scriptBase.ps1" -File -ErrorAction SilentlyContinue | Select-Object -First 1
+    $sqlMatch     = Get-ChildItem "$repoRoot\database-admin\sql-scripts" -Recurse -Filter "$scriptBase.sql" -File -ErrorAction SilentlyContinue | Select-Object -First 1
+    if (-not $sqlMatch) {
+        $sqlMatch = Get-ChildItem "$repoRoot\database-admin\migration\sql" -Filter "$scriptBase.sql" -File -ErrorAction SilentlyContinue | Select-Object -First 1
+    }
+    $ps1Match     = Get-ChildItem "$repoRoot\database-admin\powershell-scripts" -Recurse -Filter "$scriptBase.ps1" -File -ErrorAction SilentlyContinue | Select-Object -First 1
+    if (-not $ps1Match) {
+        $ps1Match = Get-ChildItem "$repoRoot\database-admin\migration\powershell" -Filter "$scriptBase.ps1" -File -ErrorAction SilentlyContinue | Select-Object -First 1
+    }
+    if (-not $ps1Match) {
+        $ps1Match = Get-ChildItem "$repoRoot\web-ui\wrappers" -Recurse -Filter "$scriptBase.ps1" -File -ErrorAction SilentlyContinue | Select-Object -First 1
+    }
     $srcFile      = if ($sqlMatch) { $sqlMatch } elseif ($ps1Match) { $ps1Match } else { $null }
     $srcScriptRel = if ($srcFile) { $srcFile.FullName.Replace($repoRoot.ToString(), '').TrimStart('\') } else { '' }
     $srcScriptEnc = if ($srcScriptRel) { [Uri]::EscapeDataString($srcScriptRel) } else { '' }
@@ -2137,9 +2163,11 @@ try {
 
                 $sName  = [IO.Path]::GetFileNameWithoutExtension($fullRunPath)
                 $sExt   = [IO.Path]::GetExtension($fullRunPath).ToLower()
-                $cat    = if ($p -match '(^|[\\/])sql[\\/]([^\\/]+)[\\/]')            { $Matches[2] }
-                          elseif ($p -match '(^|[\\/])powershell[\\/]([^\\/]+)[\\/]') { $Matches[2] }
-                          elseif ($p -match '(^|[\\/])wrappers[\\/]([^\\/]+)[\\/]')  { $Matches[2] }
+                $cat    = if ($p -match '[\\/]sql-scripts[\\/]([^\\/]+)[\\/]')              { $Matches[1] }
+                          elseif ($p -match '[\\/]migration[\\/]sql[\\/]')               { 'migration' }
+                          elseif ($p -match '[\\/]powershell-scripts[\\/]([^\\/]+)[\\/]') { $Matches[1] }
+                          elseif ($p -match '[\\/]migration[\\/]powershell[\\/]')         { 'migration' }
+                          elseif ($p -match '[\\/]wrappers[\\/]([^\\/]+)[\\/]')           { $Matches[1] }
                           else { 'general' }
                 $ts      = Get-Date -Format 'yyyyMMdd-HHmmss'
                 $csvDir  = Join-Path $repoRoot "output-files\reviews\$cat$(if ($dryRun) {'\dry-runs'} else {''})"
@@ -2163,9 +2191,14 @@ try {
                         # so MaxCharLength and single-cell CSV are handled correctly.
                         $psWrapper = $null
                         if ($sName -match '^Generate-') {
-                            $psWrapper = Get-ChildItem -Path (Join-Path $repoRoot 'powershell') `
+                            $psWrapper = Get-ChildItem -Path (Join-Path $repoRoot 'database-admin\powershell-scripts') `
                                 -Recurse -Filter "$sName.ps1" -File -ErrorAction SilentlyContinue |
                                 Select-Object -First 1
+                            if (-not $psWrapper) {
+                                $psWrapper = Get-ChildItem -Path (Join-Path $repoRoot 'database-admin\migration\powershell') `
+                                    -Filter "$sName.ps1" -File -ErrorAction SilentlyContinue |
+                                    Select-Object -First 1
+                            }
                         }
                         if ($psWrapper) {
                             & $psWrapper.FullName -ServerInstance $svr -OutputFormat 'Csv' `
@@ -2200,7 +2233,7 @@ try {
                 $svr  = ($qs['server'] ?? '').Trim()
                 $page = $qs['page']   ?? 'review'
                 if (-not $svr) { $svr = if ($env:DBASCRIPTS_SERVER) { $env:DBASCRIPTS_SERVER } else { '.' } }
-                $collScript = Join-Path $repoRoot 'powershell\reporting\Invoke-HealthCheckCollection.ps1'
+                $collScript = Join-Path $repoRoot 'database-admin\powershell-scripts\reporting\Invoke-HealthCheckCollection.ps1'
                 if (-not (Test-Path $collScript)) {
                     '{"ok":false,"error":"Invoke-HealthCheckCollection.ps1 not found"}'; break
                 }

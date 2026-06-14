@@ -67,13 +67,13 @@
 .EXAMPLE
     # Generate a multi-server wait statistics script and view in the console
     .\New-MultiServerScript.ps1 `
-        -ScriptPath "..\..\sql\performance\Get-WaitStatistics.sql" `
+        -ScriptPath "..\..\database-admin\sql-scripts\performance\Get-WaitStatistics.sql" `
         -Servers "SVR-DB01,SVR-DB02,SVR-DB03"
 
 .EXAMPLE
     # Same but with SQL auth, specific database, saved to a file
     .\New-MultiServerScript.ps1 `
-        -ScriptPath "..\..\sql\performance\Get-WaitStatistics.sql" `
+        -ScriptPath "..\..\database-admin\sql-scripts\performance\Get-WaitStatistics.sql" `
         -Servers "SVR-DB01,SVR-DB02" `
         -Database "YourDatabase" `
         -SqlAuth `

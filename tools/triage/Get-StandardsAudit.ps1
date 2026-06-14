@@ -45,7 +45,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $repoRoot = Resolve-Path (Join-Path $PSScriptRoot '..\..')
-$sqlRoot  = Join-Path $repoRoot 'sql'
+$sqlRoot  = Join-Path $repoRoot 'database-admin\sql-scripts'
 
 # Required header fields
 $requiredFields = @('Script Name', 'Category', 'Purpose', 'Author', 'Safe', 'Impact')

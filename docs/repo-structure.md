@@ -1,4 +1,4 @@
-﻿# mssql-tools repo structure
+# mssql-tools repo structure
 
 This document describes the current folder layout and the purpose of each area.
 
@@ -7,72 +7,60 @@ This document describes the current folder layout and the purpose of each area.
 ## Top-level layout
 
 ```text
-sql/             Raw SQL scripts — SSMS-ready, paste-and-run
-powershell/      Unique PowerShell scripts: orchestration, automation, DDL generators, OS tools
-wrappers/        Thin PS wrappers — one per SQL script, mirrors sql/ categories
-collectors/      Scheduled data collectors for trend analysis
-tools/         Repo utilities: SQL runner, triage, scaffolding, maintenance
-tools/           Optional tooling: web UI, multi-server scripts
-docs/ops/  Operational runbooks: change orders, checklists, installation, patching
-docs/            Documentation: structure, roadmap, runbooks, quick-start
-blog/            Draft blog posts for sqldba.blog (one post per script or workflow)
-tests/           Pester test suite
-output-files/    Generated output (gitignored — CSVs, healthcheck folders, reports)
+database-admin/     All SQL scripts, PS orchestrators, migration tools, collectors, ops docs
+web-ui/             Browser UI + thin PS wrappers (one per SQL script)
+tools/              Repo utilities: SQL runner, triage, scaffolding, maintenance
+docs/               Documentation: structure, roadmap, runbooks, quick-start
+blog/               Draft blog posts for sqldba.blog
+tests/              Pester test suite
+output-files/       Generated output (gitignored — CSVs, healthcheck folders, reports)
 ```
 
 ---
 
-## `sql/` — SQL scripts
+## `database-admin/sql-scripts/` — SQL scripts
 
 All SQL scripts are single-result-set, read-only, and SSMS paste-and-run compatible. Every script has a standard header with `Script Name`, `Purpose`, `Author`, `Safe`, `Impact`, and `Requires`.
 
 | Category | Contents |
 |----------|----------|
-| `sql/monitoring/` | Instance health, memory, MAXDOP, jobs, TempDB, DBCC, suspect pages, disk, config |
-| `sql/performance/` | Waits, blocking, long queries, missing indexes, I/O, plan cache, active requests |
-| `sql/backups/` | Coverage, history, DR estimates, restore generation, encryption status |
-| `sql/security/` | Roles, permissions, orphans, weak logins, surface area, linked server security |
-| `sql/migration/` | Risk assessment, compat audit, login audit, deprecated features, DDL generators |
-| `sql/high-availability/` | AG replica state, AG latency, readable secondary usage |
-| `sql/maintenance/` | Index maintenance jobs, backup jobs, housekeeping jobs, job status |
-| `sql/lab/` | Dev/test-only scripts — blocking scenarios, test database creation |
+| `sql-scripts/monitoring/` | Instance health, memory, MAXDOP, jobs, TempDB, DBCC, suspect pages, disk, config |
+| `sql-scripts/performance/` | Waits, blocking, long queries, missing indexes, I/O, plan cache, active requests |
+| `sql-scripts/backups/` | Coverage, history, DR estimates, restore generation, encryption status |
+| `sql-scripts/security/` | Roles, permissions, orphans, weak logins, surface area, linked server security |
+| `sql-scripts/ha-dr/` | AG replica state, AG latency, readable secondary usage |
+| `sql-scripts/maintenance/` | Index maintenance jobs, backup jobs, housekeeping jobs, job status |
+| `sql-scripts/lab/` | Dev/test-only scripts — blocking scenarios, test database creation |
 
-See [script-catalog.md](script-catalog.md) for the full per-script list with descriptions.
+Migration SQL scripts live separately at `database-admin/migration/sql/`. See [script-catalog.md](script-catalog.md) for the full list.
 
 ---
 
-## `powershell/` — Unique PowerShell scripts
+## `database-admin/powershell-scripts/` — Unique PowerShell scripts
 
-These are scripts with genuine logic beyond "run the matching SQL file." DDL generators, orchestrators, automation, and OS-level tools. Not thin wrappers.
+Scripts with genuine logic beyond "run the matching SQL file." Orchestrators, automation, and OS-level tools.
 
 | Folder | Contents |
 |--------|----------|
-| `powershell/reporting/` | Invoke-HealthCheckCollection, Review-HealthCheckOutput, Invoke-AssessmentReport, Invoke-MultiServerHealthCheck, Get-ActiveRequests (with -IncludePlan), Get-BlockingChains (with -IncludePlan) |
-| `powershell/migration/` | Generate-LoginScript, Generate-AgentJobScript, Generate-UserMappingScript, Generate-LinkedServerScript, Generate-RestoreWithMoveScript, Invoke-MigrationExport, Invoke-MigrationPreFlightCheck, Invoke-PreMigrationAssessment, Export-MigrationBaseline |
-| `powershell/maintenance/` | Generate-BackupJobs, Generate-IndexMaintenanceJobs, Generate-MaintenanceJobs, Invoke-MaintenanceDeployment |
-| `powershell/backup-automation/` | Backup-AllDatabases, Backup-SqlDatabases, Restore-AllDatabases, Generate-FullBackupScript, Generate-DiffBackupScript, Generate-TLogBackupScript, Generate-RestoreScript, Get-BackupAge |
-| `powershell/inventory/` | Get-LargestFolders, Get-DiskSpaceSummary, Get-OldestBackupFolderFiles, Get-InstanceSnapshot, Get-InstanceHealthSummary |
-| `powershell/lab/` | New-MultipleDatabases, Remove-DatabasesByPrefix, Run-CreateTestDatabases |
+| `reporting/` | Invoke-HealthCheckCollection, Review-HealthCheckOutput, Invoke-AssessmentReport, Invoke-MultiServerHealthCheck, Get-ActiveRequests (with -IncludePlan), Get-BlockingChains (with -IncludePlan) |
+| `maintenance/` | Generate-BackupJobs, Generate-IndexMaintenanceJobs, Generate-MaintenanceJobs, Invoke-MaintenanceDeployment |
+| `backup-automation/` | Backup-AllDatabases, Backup-SqlDatabases, Restore-AllDatabases, Generate-FullBackupScript, Generate-DiffBackupScript, Generate-TLogBackupScript, Generate-RestoreScript, Get-BackupAge |
+| `inventory/` | Get-LargestFolders, Get-DiskSpaceSummary, Get-OldestBackupFolderFiles, Get-InstanceSnapshot, Get-InstanceHealthSummary |
+| `multi-server/` | MultiServer-Get*.ps1 and MultiServer-*.ps1 scripts for fleet-wide operations |
+| `lab/` | New-MultipleDatabases, Remove-DatabasesByPrefix, Run-CreateTestDatabases |
 
 ---
 
-## `wrappers/` — Thin PS wrappers
+## `database-admin/migration/` — Migration toolkit
 
-One wrapper per SQL script. Each wrapper resolves the repo root, locates its matching `.sql` file, and delegates to `tools/local-sql/Invoke-RepoSql.ps1`. Categories mirror `sql/` exactly so it is easy to find the wrapper for any SQL script.
-
-| Folder | Wraps |
-|--------|-------|
-| `wrappers/monitoring/` | All `sql/monitoring/` scripts |
-| `wrappers/performance/` | All `sql/performance/` scripts (except those handled via -IncludePlan) |
-| `wrappers/backups/` | All `sql/backups/` scripts |
-| `wrappers/security/` | All `sql/security/` scripts |
-| `wrappers/migration/` | All `sql/migration/` Get-* scripts |
-| `wrappers/high-availability/` | All `sql/high-availability/` scripts |
-| `wrappers/maintenance/` | `sql/maintenance/` Get-* scripts |
+| Subfolder | Contents |
+|-----------|----------|
+| `sql/` | Get-MigrationRiskAssessment, Get-DeprecatedFeaturesInUse, Get-CompatibilityLevelAudit, Generate-LoginScript, Generate-AgentJobScript, and other migration assessment and DDL generator SQL scripts |
+| `powershell/` | Generate-LoginScript, Generate-AgentJobScript, Generate-UserMappingScript, Generate-LinkedServerScript, Generate-RestoreWithMoveScript, Invoke-MigrationExport, Invoke-PreMigrationAssessment, Export-MigrationBaseline |
 
 ---
 
-## `collectors/` — Scheduled monitoring
+## `database-admin/collectors/` — Scheduled monitoring
 
 Each collector pairs a `.sql` query with a PowerShell orchestrator (`Collect-*.ps1`) for scheduled historical data collection. They append timestamped rows to daily CSV files in `output-files/collectors/`.
 
@@ -93,30 +81,45 @@ Each collector pairs a `.sql` query with a PowerShell orchestrator (`Collect-*.p
 
 ---
 
+## `web-ui/` — Browser UI and wrappers
+
+| Item | Purpose |
+|------|---------|
+| `web-ui/Start-WebUi.ps1` | Local web interface for browsing scripts and visualising CSV output |
+| `web-ui/Restart-WebUi.ps1` | Restarts the UI server |
+| `web-ui/Generate-ScriptIndex.ps1` | Regenerates `docs/script-index.md` from script headers |
+| `web-ui/wrappers/` | Thin PS wrappers — one per SQL script; **presence here is what makes a script appear in the web UI** |
+
+### `web-ui/wrappers/` — Thin PS wrappers
+
+One wrapper per SQL script. Each wrapper resolves the repo root (three levels up), locates its matching `.sql` file, and delegates to `tools/local-sql/Invoke-RepoSql.ps1`. Categories mirror `database-admin/sql-scripts/` and `database-admin/migration/sql/`.
+
+| Folder | Wraps |
+|--------|-------|
+| `wrappers/monitoring/` | All `sql-scripts/monitoring/` scripts |
+| `wrappers/performance/` | All `sql-scripts/performance/` scripts |
+| `wrappers/backups/` | All `sql-scripts/backups/` scripts |
+| `wrappers/security/` | All `sql-scripts/security/` scripts |
+| `wrappers/migration/` | All `migration/sql/` Get-* scripts |
+| `wrappers/ha-dr/` | All `sql-scripts/ha-dr/` scripts |
+| `wrappers/maintenance/` | `sql-scripts/maintenance/` Get-* scripts |
+
+---
+
 ## `tools/` — Repo utilities
 
 | Folder | Contents |
 |--------|----------|
 | `tools/local-sql/` | `Invoke-RepoSql.ps1` (core runner), `Test-SqlConnectivity.ps1`, `Set-SqlConnection.ps1`, `Install-Prerequisites.ps1` |
 | `tools/triage/` | `Show-RepoOverview.ps1`, `Find-UsefulScript.ps1`, `Quick-TaskRouter.ps1` |
-| `tools/scaffolding/` | `Generate-NextPowerShell.ps1` (stub new wrappers quickly) |
+| `tools/scaffolding/` | `New-MultiServerScript.ps1` — wraps any SQL or PS in a multi-server foreach loop |
 | `tools/maintenance/` | `Clear-OutputFiles.ps1`, `update-powershell.ps1` |
-| `tools/multi-server-query/` | `New-MultiServerScript.ps1` — wraps any SQL or PS in a multi-server foreach loop |
 
 ---
 
-## `tools/` — Optional tooling
+## `database-admin/operations/` — Operational runbooks
 
-| Item | Purpose |
-|------|---------|
-| `tools/web-ui/Start-WebUi.ps1` | Local web interface for browsing scripts and visualising CSV output. Optional — not required for any core workflow. |
-| `powershell/multi-server/` | Self-contained scripts for running operations across multiple servers simultaneously |
-
----
-
-## `docs/ops/` — Operational runbooks
-
-Runbook-style content for planned DBA work: change orders, checklists, SQL templates, and installation scripts. Not diagnostic scripts — these are for executing changes safely.
+Runbook-style content for planned DBA work: change orders, checklists, SQL templates, and installation scripts.
 
 | Subfolder | Contents |
 |-----------|----------|
@@ -124,18 +127,16 @@ Runbook-style content for planned DBA work: change orders, checklists, SQL templ
 | `change-templates/` | SQL templates for CDC, TDE, mirroring, AG, statistics, DBCC, patching, installation |
 | `checklists/` | Step-by-step checklists for AG migration, DR failover, server replacement, version upgrade |
 | `runbooks/` | Full runbooks for standalone migration, AG cluster migration, OS upgrade, edition change, version upgrade |
-| `installation/` | SQL Server install, configure, validate, and uninstall scripts |
-| `patches/` | CU and SSMS patch installation scripts |
 | `rollback/` | Migration rollback playbook |
 
 ---
 
 ## Adding new content
 
-**New SQL script:** `sql/<category>/Get-Something.sql` — use the standard header from `CLAUDE.md`.
+**New SQL script:** `database-admin/sql-scripts/<category>/Get-Something.sql` — use the standard header from `CLAUDE.md`.
 
-**New PS wrapper:** Copy any existing wrapper from `wrappers/<category>/`, update the SQL path and description. The `$PSScriptRoot '..\..'` path resolves correctly at this depth.
+**New PS wrapper:** Copy any existing wrapper from `web-ui/wrappers/<category>/`, update the SQL path and description. Use `$PSScriptRoot '..\..\..'` — wrappers are three levels from root. The wrapper must exist for the script to appear in the web UI.
 
-**New unique PS script:** Add to the appropriate `powershell/<subfolder>/`. If no matching subfolder exists, use `powershell/reporting/` for query/reporting scripts or `powershell/inventory/` for environment/config scripts.
+**New unique PS script:** Add to `database-admin/powershell-scripts/<subfolder>/`. Use `$PSScriptRoot '..\..\..'` to resolve the repo root.
 
-**New collector:** Follow the pattern in any existing `collectors/<name>/` — one `.sql`, one `Collect-*.ps1`, one `README.md` with SQL Agent T-SQL.
+**New collector:** Follow the pattern in any existing `database-admin/collectors/<name>/` — one `.sql`, one `Collect-*.ps1`, one `README.md` with SQL Agent T-SQL.

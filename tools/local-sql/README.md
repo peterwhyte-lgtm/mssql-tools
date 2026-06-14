@@ -1,4 +1,4 @@
-﻿# Local SQL helpers
+# Local SQL helpers
 
 This folder contains the production-focused helpers for running SQL scripts from this repo against a local or remote SQL Server instance.
 
@@ -19,7 +19,7 @@ This folder contains the production-focused helpers for running SQL scripts from
 ## Example: top wait statistics
 
 ```powershell
-pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\powershell\reporting\Get-WaitStatistics.ps1
+pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\database-admin\powershell-scripts\reporting\Get-WaitStatistics.ps1
 ```
 
 ## Extra high-value review wrappers

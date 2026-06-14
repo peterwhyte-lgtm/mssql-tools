@@ -55,33 +55,33 @@ if ($List -or -not $ScriptName) {
     Write-Host ''
 
     # ── Full script listing by category ───────────────────────────────────────
-    $sqlRoot = Join-Path $repoRoot 'sql'
+    $sqlRoot = Join-Path $repoRoot 'database-admin\sql-scripts'
     foreach ($folder in (Get-ChildItem $sqlRoot -Directory -ErrorAction SilentlyContinue | Sort-Object Name)) {
         $scripts = Get-ChildItem $folder.FullName -Filter '*.sql' -ErrorAction SilentlyContinue | Sort-Object Name
         if ($scripts.Count -gt 0) {
-            Write-Host "  sql/$($folder.Name)/" -ForegroundColor Yellow
+            Write-Host "  database-admin/sql-scripts/$($folder.Name)/" -ForegroundColor Yellow
             $scripts | ForEach-Object { Write-Host "    $($_.BaseName)" -ForegroundColor DarkGray }
             Write-Host ''
         }
     }
 
-    $psRoot = Join-Path $repoRoot 'powershell'
+    $psRoot = Join-Path $repoRoot 'database-admin\powershell-scripts'
     foreach ($folder in (Get-ChildItem $psRoot -Directory -ErrorAction SilentlyContinue | Sort-Object Name)) {
         $scripts = Get-ChildItem $folder.FullName -Filter '*.ps1' -ErrorAction SilentlyContinue |
                    Where-Object { $_.Name -match '^(Get|Invoke|Review|Generate|Backup|Restore)-' } |
                    Sort-Object Name
         if ($scripts.Count -gt 0) {
-            Write-Host "  powershell/$($folder.Name)/" -ForegroundColor Yellow
+            Write-Host "  database-admin/powershell-scripts/$($folder.Name)/" -ForegroundColor Yellow
             $scripts | ForEach-Object { Write-Host "    $($_.BaseName)" -ForegroundColor DarkGray }
             Write-Host ''
         }
     }
 
-    $wrRoot = Join-Path $repoRoot 'wrappers'
+    $wrRoot = Join-Path $repoRoot 'web-ui\wrappers'
     foreach ($folder in (Get-ChildItem $wrRoot -Directory -ErrorAction SilentlyContinue | Sort-Object Name)) {
         $scripts = Get-ChildItem $folder.FullName -Filter '*.ps1' -ErrorAction SilentlyContinue | Sort-Object Name
         if ($scripts.Count -gt 0) {
-            Write-Host "  wrappers/$($folder.Name)/" -ForegroundColor DarkGray
+            Write-Host "  web-ui/wrappers/$($folder.Name)/" -ForegroundColor DarkGray
             $scripts | ForEach-Object { Write-Host "    $($_.BaseName)" -ForegroundColor DarkGray }
             Write-Host ''
         }
@@ -109,10 +109,11 @@ if ($List -or -not $ScriptName) {
 # Resolve the script name directly — avoids a second hop through Run-Helper
 # which mangles named parameters during array splatting.
 $searchRoots = @(
-    (Join-Path $repoRoot 'powershell'),
-    (Join-Path $repoRoot 'wrappers'),
+    (Join-Path $repoRoot 'database-admin\powershell-scripts'),
+    (Join-Path $repoRoot 'database-admin\migration\powershell'),
+    (Join-Path $repoRoot 'web-ui\wrappers'),
     (Join-Path $repoRoot 'tools'),
-    (Join-Path $repoRoot 'sql')
+    (Join-Path $repoRoot 'database-admin\sql-scripts')
 )
 
 $candidates = @()

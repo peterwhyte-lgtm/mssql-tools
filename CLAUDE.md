@@ -1,4 +1,4 @@
-﻿# CLAUDE.md
+# CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
@@ -24,27 +24,27 @@ This repository is **not** a collection of scripts — it is an operational tool
 The three entry points, in order of preference:
 
 ```powershell
-# 1. Root launcher — fuzzy name match, searches all powershell/ subfolders
+# 1. Root launcher — fuzzy name match, searches all database-admin/ subfolders
 .\run.ps1 Get-WaitStatistics
 .\run.ps1 Get-WaitStatistics -ServerInstance MYSERVER\INST01 -OutputFormat Csv
 
 # 2. Direct wrapper — explicit path, passes all params through
-pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\powershell\reporting\Get-WaitStatistics.ps1 -ServerInstance . -OutputFormat Csv
+pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\web-ui\wrappers\performance\Get-WaitStatistics.ps1 -ServerInstance . -OutputFormat Csv
 
 # 3. SQL directly via the repo runner (for SSMS-style results in terminal)
-pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\tools\local-sql\Invoke-RepoSql.ps1 -ScriptPath .\sql\performance\Get-WaitStatistics.sql -ServerInstance .
+pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\tools\local-sql\Invoke-RepoSql.ps1 -ScriptPath .\database-admin\sql-scripts\performance\Get-WaitStatistics.sql -ServerInstance .
 ```
 
 Full healthcheck workflow:
 ```powershell
 # Collect 27 scripts, save CSVs to output-files\healthcheck\<server>-<timestamp>\
-.\powershell\reporting\Invoke-HealthCheckCollection.ps1 -ServerInstance .
+.\database-admin\powershell-scripts\reporting\Invoke-HealthCheckCollection.ps1 -ServerInstance .
 
 # Review the latest collection folder and surface CRITICAL / WARNING / INFO findings
-.\powershell\reporting\Review-HealthCheckOutput.ps1
+.\database-admin\powershell-scripts\reporting\Review-HealthCheckOutput.ps1
 
 # Or target a specific folder
-.\powershell\reporting\Review-HealthCheckOutput.ps1 -FolderPath ".\output-files\healthcheck\.-20260529-185000" -OutputFormat Csv
+.\database-admin\powershell-scripts\reporting\Review-HealthCheckOutput.ps1 -FolderPath ".\output-files\healthcheck\.-20260529-185000" -OutputFormat Csv
 ```
 
 Preflight and discovery:
@@ -55,50 +55,68 @@ Preflight and discovery:
 .\tools\maintenance\Clear-OutputFiles.ps1                     # wipe output-files\ before a fresh run
 ```
 
+Migration DDL generators:
+```powershell
+.\tools\local-sql\Set-SqlConnection.ps1 -ServerInstance PROD01\SQL2019
+.\database-admin\migration\powershell\Generate-LoginScript.ps1
+.\database-admin\migration\powershell\Generate-AgentJobScript.ps1
+.\database-admin\migration\powershell\Generate-UserMappingScript.ps1
+# Output: output-files\migration\*.sql
+```
+
 ## Layout
 
-**Use `sql/`, `powershell/`, or `wrappers/` for all new work.**
+**Use `database-admin/sql-scripts/`, `database-admin/powershell-scripts/`, or `web-ui/wrappers/` for all new work.**
 
 ```text
-sql/
-  monitoring/         — health, memory, MAXDOP, jobs, TempDB, DBCC, suspect pages, instance config
-  performance/        — waits, blocking, long queries, missing indexes, I/O, plan cache, active requests
-  high-availability/  — AG replica state, AG latency (guards against non-AG instances)
-  backups/            — coverage, history, DR estimates, restore generation
-  security/           — roles, permissions, orphans, weak logins, surface area
-  migration/          — risk assessment, compat audit, login audit, deprecated features, DDL generators
+database-admin/
+  sql-scripts/
+    monitoring/         — health, memory, MAXDOP, jobs, TempDB, DBCC, suspect pages, instance config
+    performance/        — waits, blocking, long queries, missing indexes, I/O, plan cache, active requests
+    ha-dr/              — AG replica state, AG latency (guards against non-AG instances)
+    backups/            — coverage, history, DR estimates, restore generation
+    security/           — roles, permissions, orphans, weak logins, surface area
+    maintenance/        — maintenance job scripts (Generate-* and Get-MaintenanceJobStatus)
+    lab/                — test scripts — dev/test only
 
-powershell/
-  reporting/          — Invoke-HealthCheckCollection, Review-HealthCheckOutput, Invoke-AssessmentReport,
-                        Invoke-MultiServerHealthCheck, Get-ActiveRequests, Get-BlockingChains (with -IncludePlan)
-  migration/          — Generate-LoginScript, Generate-AgentJobScript, Generate-UserMappingScript,
-                        Generate-LinkedServerScript, Generate-RestoreWithMoveScript,
-                        Invoke-MigrationExport, Invoke-MigrationPreFlightCheck, Invoke-PreMigrationAssessment,
-                        Export-MigrationBaseline
-  maintenance/        — Generate-BackupJobs, Generate-IndexMaintenanceJobs, Generate-MaintenanceJobs,
-                        Invoke-MaintenanceDeployment
-  backup-automation/  — Backup-AllDatabases, Backup-SqlDatabases, Restore-AllDatabases,
-                        Generate-FullBackupScript, Generate-DiffBackupScript, Generate-TLogBackupScript,
-                        Generate-RestoreScript, Get-BackupAge
-  inventory/          — Get-LargestFolders, Get-DiskSpaceSummary, Get-OldestBackupFolderFiles,
-                        Get-InstanceSnapshot, Get-InstanceHealthSummary
-  multi-server/       — MultiServer-Get*.ps1 scripts (disk, wait stats, patch level, blocking, etc.)
-  lab/                — lab and test database scripts (dev/test only)
+  powershell-scripts/
+    reporting/          — Invoke-HealthCheckCollection, Review-HealthCheckOutput, Invoke-AssessmentReport,
+                          Invoke-MultiServerHealthCheck, Get-ActiveRequests, Get-BlockingChains (with -IncludePlan)
+    maintenance/        — Generate-BackupJobs, Generate-IndexMaintenanceJobs, Generate-MaintenanceJobs,
+                          Invoke-MaintenanceDeployment
+    backup-automation/  — Backup-AllDatabases, Backup-SqlDatabases, Restore-AllDatabases,
+                          Generate-FullBackupScript, Generate-DiffBackupScript, Generate-TLogBackupScript,
+                          Generate-RestoreScript, Get-BackupAge
+    inventory/          — Get-LargestFolders, Get-DiskSpaceSummary, Get-OldestBackupFolderFiles,
+                          Get-InstanceSnapshot, Get-InstanceHealthSummary
+    multi-server/       — MultiServer-Get*.ps1 scripts (disk, wait stats, patch level, blocking, etc.)
+    lab/                — lab and test database scripts (dev/test only)
 
-wrappers/             — thin PS wrappers: one per SQL script, mirrors sql/ category structure.
-  monitoring/         — wrappers for all sql/monitoring/ scripts
-  performance/        — wrappers for all sql/performance/ scripts
-  backups/            — wrappers for all sql/backups/ scripts
-  security/           — wrappers for all sql/security/ scripts
-  migration/          — wrappers for all sql/migration/ Get-* scripts
-  high-availability/  — wrappers for all sql/high-availability/ scripts
-  maintenance/        — wrappers for sql/maintenance/ Get-* scripts
+  migration/
+    sql/        — migration SQL scripts (Get-MigrationRiskAssessment, Generate-LoginScript, etc.)
+    powershell/ — Generate-LoginScript, Generate-AgentJobScript, Generate-UserMappingScript,
+                  Generate-LinkedServerScript, Generate-RestoreWithMoveScript,
+                  Invoke-MigrationExport, Invoke-PreMigrationAssessment, Export-MigrationBaseline
 
-collectors/
-  Each collector pairs a SQL file with a PS orchestrator for scheduled historical data collection.
-  Naming: lowercase-hyphenated (blocking.sql, wait-stats.sql) — these are recorders, not getters.
-  Output: appends timestamped rows to daily CSV files for trend analysis and post-incident review.
-  Collectors: ag-health, blocking, database-growth, deadlocks, perfmon, storage-io, tempdb, wait-stats
+  collectors/
+    Each collector pairs a SQL file with a PS orchestrator for scheduled historical data collection.
+    Naming: lowercase-hyphenated (blocking.sql, wait-stats.sql) — these are recorders, not getters.
+    Output: appends timestamped rows to daily CSV files for trend analysis and post-incident review.
+    Collectors: ag-health, blocking, database-growth, deadlocks, errorlog, index-fragmentation,
+                perfmon, query-store, storage-io, tempdb, vlf-count, wait-stats
+
+  installation/ — SQL Server install, configure, validate, uninstall
+  patching/     — CU updates (install-cu.ps1), SSMS updates, patch summary
+  operations/   — ops runbooks, change orders, checklists (was sql-operations/)
+
+web-ui/wrappers/      — thin PS wrappers: one per SQL script; presence here is what makes a script appear in the web UI.
+  monitoring/         — wrappers for all sql-scripts/monitoring/ scripts
+  performance/        — wrappers for all sql-scripts/performance/ scripts
+  backups/            — wrappers for all sql-scripts/backups/ scripts
+  security/           — wrappers for all sql-scripts/security/ scripts
+  migration/          — wrappers for all migration/sql/ Get-* scripts
+  ha-dr/              — wrappers for all sql-scripts/ha-dr/ scripts
+  maintenance/        — wrappers for sql-scripts/maintenance/ Get-* scripts
 
 web-ui/               — browser UI: Start-WebUi.ps1, Restart-WebUi.ps1, Generate-ScriptIndex.ps1
 
@@ -107,10 +125,6 @@ tools/
   triage/       — Show-RepoOverview.ps1, Find-UsefulScript.ps1, Quick-TaskRouter.ps1
   scaffolding/  — Generate-NextPowerShell.ps1, New-MultiServerScript.ps1
   maintenance/  — Clear-OutputFiles.ps1, update-powershell.ps1
-
-admin/
-  installation/ — SQL Server install, configure, validate, uninstall
-  patching/     — CU updates (install-cu.ps1), SSMS updates, patch summary
 
 docs/
   quick-start.md, roadmap.md, runbook.md
@@ -144,35 +158,37 @@ Or pass `-ServerInstance` directly on any individual call:
 
 ```powershell
 .\run.ps1 Get-WaitStatistics -ServerInstance PROD01\SQL2019
-.\powershell\reporting\Get-WaitStatistics.ps1 -ServerInstance PROD01\SQL2019 -OutputFormat Csv
+.\database-admin\powershell-scripts\reporting\Get-WaitStatistics.ps1 -ServerInstance PROD01\SQL2019 -OutputFormat Csv
 ```
 
 Env vars used internally: `$env:DBASCRIPTS_SERVER`, `$env:DBASCRIPTS_USER`, `$env:DBASCRIPTS_PASS`. Explicit params always win over env vars.
 
 ### DDL generator scripts
 
-`powershell/migration/Generate-*.ps1` scripts work differently from normal wrappers — they do **not** go through the CSV pipeline. They call `Invoke-Sqlcmd` with `MaxCharLength 2000000` (or `sqlcmd.exe -y 0`) to capture the full `NVARCHAR(MAX)` DDL string and write it to a `.sql` file in `output-files\migration\`. Never call these through `Invoke-RepoSql.ps1`.
+`database-admin/migration/powershell/Generate-*.ps1` scripts work differently from normal wrappers — they do **not** go through the CSV pipeline. They call `Invoke-Sqlcmd` with `MaxCharLength 2000000` (or `sqlcmd.exe -y 0`) to capture the full `NVARCHAR(MAX)` DDL string and write it to a `.sql` file in `output-files\migration\`. Never call these through `Invoke-RepoSql.ps1`.
 
 ```powershell
 # Migration: generate all three scripts from source server
 .\tools\local-sql\Set-SqlConnection.ps1 -ServerInstance PROD01\SQL2019
-.\powershell\migration\Generate-LoginScript.ps1
-.\powershell\migration\Generate-AgentJobScript.ps1
-.\powershell\migration\Generate-UserMappingScript.ps1
+.\database-admin\migration\powershell\Generate-LoginScript.ps1
+.\database-admin\migration\powershell\Generate-AgentJobScript.ps1
+.\database-admin\migration\powershell\Generate-UserMappingScript.ps1
 # Output: output-files\migration\*.sql  — review, edit owners, run on target
 ```
 
 ## How PowerShell wrappers work
 
-Every script in `powershell/**/*.ps1` (except utility scripts and orchestrators) is a thin wrapper:
+Every script in `web-ui/wrappers/**/*.ps1` is a thin wrapper:
 
-1. Resolves `$repoRoot` as two levels up from `$PSScriptRoot`
-2. Builds `$sqlScript = Join-Path $repoRoot 'sql\<category>\<Name>.sql'`
+1. Resolves `$repoRoot` as **three** levels up from `$PSScriptRoot` (wrappers sit at `web-ui/wrappers/<category>/`)
+2. Builds `$sqlScript = Join-Path $repoRoot 'database-admin\sql-scripts\<category>\<Name>.sql'` (or `database-admin\migration\sql\` for migration scripts)
 3. Delegates to `tools\local-sql\Invoke-RepoSql.ps1` with `-ScriptPath`, `-ServerInstance`, `-Database`, `-OutputFormat`, `-OutputPath`
+
+**Web UI contract:** A SQL script in `database-admin/sql-scripts/` only appears in the web UI if it has a matching wrapper in `web-ui/wrappers/<same-category>/`. The wrapper IS the web UI entry point — the web UI launches wrappers, not SQL files directly. Every new SQL script in `database-admin/sql-scripts/` must therefore get a paired wrapper.
 
 `Invoke-RepoSql.ps1` tries `Invoke-Sqlcmd` first (SqlServer module), falls back to `sqlcmd.exe`. Always writes a CSV to `output-files\reviews\<category>\<scriptname>-<timestamp>.csv` and prints a table preview. If neither tool is available it throws.
 
-`run.ps1` resolves script by name fuzzy match → `& $target @Arguments`. It searches `powershell/`, `wrappers/`, `tools/`, `sql/` recursively. Throws if more than one match — callers must be specific.
+`run.ps1` resolves script by name fuzzy match → `& $target @Arguments`. It searches `database-admin/powershell-scripts/`, `database-admin/migration/powershell/`, `web-ui/wrappers/`, `tools/`, `database-admin/sql-scripts/` recursively. Throws if more than one match — callers must be specific.
 
 **PowerShell script rules:**
 - Classify script type in `.NOTES`: `runner` / `automation` / `hybrid`
@@ -215,9 +231,9 @@ SET NOCOUNT ON;
 
 ## Adding new scripts
 
-New SQL script: `sql/<category>/Get-Something.sql` using the header above.
+New SQL script: `database-admin/sql-scripts/<category>/Get-Something.sql` using the header above.
 
-New PS wrapper: copy any existing wrapper in `wrappers/<category>/` (matching the sql/ category), update the three variables (`syn`, `$sqlScript` path, `Write-Host` message). The `$PSScriptRoot '..\..'` path is correct — `wrappers/<category>/` is the same depth as `sql/<category>/`.
+New PS wrapper: copy any existing wrapper in `web-ui/wrappers/<category>/` (matching the sql-scripts/ category), update the three variables (`syn`, `$sqlScript` path, `Write-Host` message). Use `$PSScriptRoot '..\..\..'` — wrappers are three levels from root (`web-ui/wrappers/<category>/`). The wrapper must be present for the script to appear in the web UI.
 
 If there is no matching subcategory, add to `powershell/reporting/` for read/query scripts or `powershell/inventory/` for environment/config scripts.
 
@@ -263,7 +279,7 @@ If there is no matching subcategory, add to `powershell/reporting/` for read/que
 
 ## Important caveats
 
-- AG scripts (`sql/high-availability/Get-AvailabilityGroupReplicaState.sql`, `Get-AvailabilityGroupLatency.sql`) guard against non-AG instances and return a status row instead of throwing.
+- AG scripts (`database-admin/sql-scripts/ha-dr/Get-AvailabilityGroupReplicaState.sql`, `Get-AvailabilityGroupLatency.sql`) guard against non-AG instances and return a status row instead of throwing.
 - Multi-result-set SQL scripts cannot be cleanly exported as a single CSV via `Invoke-RepoSql.ps1`. All canonical `sql/` scripts are single-result-set by design.
 - `output-files/` has no `.gitignore` protection — CSV files accumulate there and should not be committed.
-- `docs/catalog.md` is outdated and references old `categories/` paths. Ignore it; use the `sql/` folder tree directly.
+- `docs/catalog.md` is outdated and references old `categories/` paths. Ignore it; use the `database-admin/sql-scripts/` folder tree directly.
