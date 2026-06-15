@@ -43,7 +43,7 @@
         SQL2017 = @{
             MajorVersion  = 14
             CU            = 'CU31'
-            KB            = 'KB5016884'
+            KB            = 'KB5050533'
             TargetVersion = '14.0.3456.2'
             Url           = 'https://download.microsoft.com/download/c/4/f/c4f908c9-98ed-4e5f-88d5-7d6a5004aebd/SQLServer2017-KB5050533-x64.exe'
             FileName      = 'SQLServer2017-KB5050533-x64.exe'

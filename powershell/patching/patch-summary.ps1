@@ -144,7 +144,7 @@ if (-not $ssmsFound) {
 # ── Recent patch log activity ─────────────────────────────────────────────────
 $repoRoot  = Resolve-Path (Join-Path $PSScriptRoot '..\..')
 $patchLogs = Get-ChildItem (Join-Path $repoRoot 'output-files\patches') `
-                 -Filter '*.log' -File -ErrorAction SilentlyContinue |
+                 -Filter '*.log' -File -Recurse -ErrorAction SilentlyContinue |
              Where-Object { $_.Name -notlike '*.stdout' -and $_.Name -notlike '*.stderr' } |
              Sort-Object LastWriteTime -Descending | Select-Object -First 5
 
@@ -154,9 +154,10 @@ if ($patchLogs) {
     foreach ($log in $patchLogs) {
         $outcome = 'Unknown'
         foreach ($line in (Get-Content $log.FullName -ErrorAction SilentlyContinue)) {
-            if ($line -match 'succeeded|complete|Done') { $outcome = 'Success'   }
-            if ($line -match 'FAILED|ERROR:')           { $outcome = 'Failed'    }
-            if ($line -match 'cancelled')               { $outcome = 'Cancelled' }
+            # Check failed/cancelled first so a trailing 'Done.' line cannot override them
+            if ($line -match 'FAILED|ERROR:')           { $outcome = 'Failed';    break }
+            if ($line -match 'cancelled')               { $outcome = 'Cancelled'; break }
+            if ($line -match 'succeeded|complete|Done') { $outcome = 'Success' }
         }
         $color = switch ($outcome) { 'Success'{'Green'} 'Failed'{'Red'} default{'Yellow'} }
         Write-Host ("  {0}  {1,-40} {2}" -f $log.LastWriteTime.ToString('yyyy-MM-dd HH:mm'), $log.Name, $outcome) -ForegroundColor $color

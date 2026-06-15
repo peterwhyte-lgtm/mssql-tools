@@ -143,7 +143,7 @@ function Get-SqlVersions {
                 # Try sqlcmd.exe fallback
                 if (-not $curVer) {
                     try {
-                        $out = & sqlcmd.exe -S $srvConn -Q "SET NOCOUNT ON;SELECT CAST(SERVERPROPERTY('ProductVersion') AS NVARCHAR(50))" -h -1 -W 2>$null
+                        $out = & sqlcmd.exe -S $srvConn -Q "SET NOCOUNT ON;SELECT CAST(SERVERPROPERTY('ProductVersion') AS NVARCHAR(50))" -h -1 -W 2>&1
                         $line = $out | Where-Object { $_ -match '^\d+\.\d+' } | Select-Object -First 1
                         if ($line) { $curVer = $line.Trim(); $source = 'sql' }
                     } catch { }
