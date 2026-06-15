@@ -77,6 +77,7 @@ sql/
   security/       — roles, permissions, orphans, weak logins, surface area
   maintenance/    — maintenance job scripts (Generate-* and Get-MaintenanceJobStatus)
   migration/      — migration SQL scripts (Get-MigrationRiskAssessment, Generate-LoginScript, etc.)
+  collectors/     — Generate-CollectorJob-*.sql: one script per collector, creates SQL Agent job + DBAMonitor table
   lab/            — test scripts — dev/test only
 
 powershell/
@@ -98,8 +99,8 @@ powershell/
     sql/              — Invoke-SqlPatch.ps1 (multi-server auto-patch), patch-config.psd1
     ssms/             — install-ssms.ps1 (handles SSMS ≤20 and 21+), uninstall-ssms.ps1
   lab/                — lab and test database scripts (dev/test only)
-  collectors/         — paired SQL+PS for scheduled historical data collection
-    Each collector: <name>.sql + Collect-<Name>.ps1; output appends to daily CSV.
+  collectors/         — collector SQL queries (<name>.sql) kept for ad-hoc use; Collect-<Name>.ps1
+                        files are being migrated to SQL Agent jobs (see sql/collectors/ below).
     Collectors: ag-health, blocking, database-growth, deadlocks, errorlog, index-fragmentation,
                 perfmon, query-store, storage-io, tempdb, vlf-count, wait-stats
 
