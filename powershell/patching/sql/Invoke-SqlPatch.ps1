@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
 Download and apply SQL Server Cumulative Updates to local or remote servers.
 
@@ -66,14 +66,14 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-# ── Admin check ───────────────────────────────────────────────────────────────
+# ?? Admin check ???????????????????????????????????????????????????????????????
 $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(
     [Security.Principal.WindowsBuiltInRole]::Administrator)
 if (-not $isAdmin -and -not $WhatIf -and -not $DownloadOnly) {
     Write-Host 'ERROR: This script must be run as Administrator (or use -WhatIf to preview, -DownloadOnly to download only).' -ForegroundColor Red; exit 1
 }
 
-# ── Logging ───────────────────────────────────────────────────────────────────
+# ?? Logging ???????????????????????????????????????????????????????????????????
 $repoRoot = Resolve-Path (Join-Path $PSScriptRoot '..\..\..')
 $logDir   = Join-Path $repoRoot 'output-files\patches'
 New-Item -ItemType Directory -Path $logDir -Force | Out-Null
@@ -87,7 +87,7 @@ function Write-PatchLog {
     Add-Content -Path $logFile -Value $line
 }
 
-# ── Load config ───────────────────────────────────────────────────────────────
+# ?? Load config ???????????????????????????????????????????????????????????????
 if (-not (Test-Path $ConfigPath)) {
     Write-PatchLog "Config not found: $ConfigPath" 'Red'; exit 1
 }
@@ -103,16 +103,16 @@ foreach ($key in $config.Patches.Keys) {
     $versionMap[[int]$entry.MajorVersion] = @{ SqlVersion = $key; Config = $entry }
 }
 
-Write-PatchLog "SQL Server Autopatch — $ts" 'Cyan'
+Write-PatchLog "SQL Server Autopatch - $ts" 'Cyan'
 Write-PatchLog "Config    : $ConfigPath"
 Write-PatchLog "Servers   : $($targetServers -join ', ')"
 Write-PatchLog "PatchRoot : $localPatchRoot"
-if ($WhatIf)       { Write-PatchLog '[WhatIf — no changes will be made]' 'Yellow' }
-if ($DownloadOnly) { Write-PatchLog '[DownloadOnly — will not install]' 'Yellow' }
+if ($WhatIf)       { Write-PatchLog '[WhatIf - no changes will be made]' 'Yellow' }
+if ($DownloadOnly) { Write-PatchLog '[DownloadOnly - will not install]' 'Yellow' }
 Write-PatchLog ''
 
-# ── Get SQL instances and versions ────────────────────────────────────────────
-# Queries SERVERPROPERTY('ProductVersion') via SQL first — this reflects the true
+# ?? Get SQL instances and versions ????????????????????????????????????????????
+# Queries SERVERPROPERTY('ProductVersion') via SQL first - this reflects the true
 # running version immediately after a patch, even before a pending reboot.
 # Falls back to the registry only if the SQL service is unreachable.
 function Get-SqlVersions {
@@ -149,7 +149,7 @@ function Get-SqlVersions {
                     } catch { }
                 }
 
-                # Registry fallback — may show pre-reboot version for patches that exit 3010
+                # Registry fallback - may show pre-reboot version for patches that exit 3010
                 if (-not $curVer) {
                     $verKey = "$base\$instId\MSSQLServer\CurrentVersion"
                     $curVer = (Get-ItemProperty $verKey -ErrorAction SilentlyContinue).CurrentVersion
@@ -175,7 +175,7 @@ function Get-SqlVersions {
     Invoke-Command @params
 }
 
-# ── Download CU installer if not already present ──────────────────────────────
+# ?? Download CU installer if not already present ??????????????????????????????
 function Get-PatchFile {
     param([hashtable]$Entry, [string]$Root)
 
@@ -190,7 +190,7 @@ function Get-PatchFile {
 
     if ([string]::IsNullOrWhiteSpace($cfg.Url)) {
         Write-PatchLog "    ERROR: No download URL configured for $($Entry.SqlVersion) ($($cfg.KB))." 'Red'
-        Write-PatchLog "    Update patch-config.psd1 — see: https://learn.microsoft.com/en-us/troubleshooting/sql/releases/download-and-install-latest-updates" 'Red'
+        Write-PatchLog "    Update patch-config.psd1 - see: https://learn.microsoft.com/en-us/troubleshooting/sql/releases/download-and-install-latest-updates" 'Red'
         return $null
     }
 
@@ -210,7 +210,7 @@ function Get-PatchFile {
     }
 }
 
-# ── Convert local absolute path to UNC via admin share ───────────────────────
+# ?? Convert local absolute path to UNC via admin share ???????????????????????
 function ConvertTo-Unc {
     param([string]$LocalPath, [string]$ComputerName)
     # D:\SQLPatches\... -> \\SERVER\D$\SQLPatches\...
@@ -220,7 +220,7 @@ function ConvertTo-Unc {
     throw "Cannot convert '$LocalPath' to a UNC path (expected drive-letter path)."
 }
 
-# ── Apply patch on a remote server via WinRM ──────────────────────────────────
+# ?? Apply patch on a remote server via WinRM ??????????????????????????????????
 function Invoke-RemotePatch {
     param(
         [string]$ComputerName,
@@ -272,7 +272,7 @@ function Invoke-RemotePatch {
     }
 }
 
-# ── Apply patch on the local machine ─────────────────────────────────────────
+# ?? Apply patch on the local machine ?????????????????????????????????????????
 function Invoke-LocalPatch {
     param([string]$Installer)
 
@@ -285,12 +285,12 @@ function Invoke-LocalPatch {
     return $proc.ExitCode
 }
 
-# ── Handle installer exit code ────────────────────────────────────────────────
+# ?? Handle installer exit code ????????????????????????????????????????????????
 function Write-PatchResult {
     param([int]$ExitCode, [string]$Server)
     switch ($ExitCode) {
         0    { Write-PatchLog "    Patch applied successfully on $Server." 'Green';          return 'Patched' }
-        3010 { Write-PatchLog "    Patch applied on $Server — reboot required." 'Yellow';   return 'PatchedRebootNeeded' }
+        3010 { Write-PatchLog "    Patch applied on $Server - reboot required." 'Yellow';   return 'PatchedRebootNeeded' }
         default {
             Write-PatchLog "    Patch FAILED on $Server (exit $ExitCode). See: $logFile" 'Red'
             return "Failed(exit$ExitCode)"
@@ -298,18 +298,18 @@ function Write-PatchResult {
     }
 }
 
-# ── Main loop ─────────────────────────────────────────────────────────────────
+# ?? Main loop ?????????????????????????????????????????????????????????????????
 $results = [System.Collections.Generic.List[pscustomobject]]::new()
 
 foreach ($srv in $targetServers) {
 
-    Write-PatchLog "━━━ $srv ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" 'Cyan'
+    Write-PatchLog "??? $srv ?????????????????????????????????????????" 'Cyan'
 
     try {
         $sqlInstances = @(Get-SqlVersions -ComputerName $srv -Cred $Credential)
     }
     catch {
-        Write-PatchLog "  ERROR connecting to $srv — $($_.Exception.Message)" 'Red'
+        Write-PatchLog "  ERROR connecting to $srv - $($_.Exception.Message)" 'Red'
         $results.Add([pscustomobject]@{ Server=$srv; Instance='?'; Installed='?'; Target='?'; Status='ConnectionFailed' })
         continue
     }
@@ -325,12 +325,12 @@ foreach ($srv in $targetServers) {
         $major   = $inst.MajorVersion
         $name    = $inst.Instance
 
-        $srcNote = if ($inst.Source -eq 'registry') { ' (registry — reboot may be pending)' } else { '' }
+        $srcNote = if ($inst.Source -eq 'registry') { ' (registry - reboot may be pending)' } else { '' }
         Write-PatchLog "  Instance  : $name  ($($inst.InstId))"
         Write-PatchLog "  Installed : $($inst.ProductVersion)$srcNote"
 
         if (-not $versionMap.ContainsKey($major)) {
-            Write-PatchLog "  Status    : No patch configured for SQL major version $major — skipping." 'Yellow'
+            Write-PatchLog "  Status    : No patch configured for SQL major version $major - skipping." 'Yellow'
             $results.Add([pscustomobject]@{ Server=$srv; Instance=$name; Installed=$inst.ProductVersion; Target='N/A'; Status='NoPatchConfigured' })
             Write-PatchLog ''
             continue
@@ -342,7 +342,7 @@ foreach ($srv in $targetServers) {
         Write-PatchLog "  Target    : $($entry.Config.TargetVersion) ($($entry.SqlVersion) $($entry.Config.CU) / $($entry.Config.KB))"
 
         if ($current -gt $target) {
-            Write-PatchLog "  Status    : AHEAD — installed ($current) is newer than configured target ($target)." 'Yellow'
+            Write-PatchLog "  Status    : AHEAD - installed ($current) is newer than configured target ($target)." 'Yellow'
             Write-PatchLog "             Update patch-config.psd1 or check builds: https://learn.microsoft.com/en-us/troubleshooting/sql/releases/download-and-install-latest-updates" 'DarkGray'
             $results.Add([pscustomobject]@{ Server=$srv; Instance=$name; Installed=$inst.ProductVersion; Target=$target; Status='Ahead' })
             Write-PatchLog ''
@@ -350,14 +350,14 @@ foreach ($srv in $targetServers) {
         }
 
         if ($current -eq $target) {
-            Write-PatchLog "  Status    : UP TO DATE — no action needed." 'Green'
+            Write-PatchLog "  Status    : UP TO DATE - no action needed." 'Green'
             $results.Add([pscustomobject]@{ Server=$srv; Instance=$name; Installed=$inst.ProductVersion; Target=$target; Status='UpToDate' })
             Write-PatchLog ''
             continue
         }
 
         # Patch needed
-        Write-PatchLog "  Status    : PATCH NEEDED  $current  →  $target" 'Yellow'
+        Write-PatchLog "  Status    : PATCH NEEDED  $current  ?  $target" 'Yellow'
 
         if ($WhatIf) {
             Write-PatchLog "  [WhatIf] Would download and install $($entry.Config.KB) on $srv." 'DarkGray'
@@ -405,7 +405,7 @@ foreach ($srv in $targetServers) {
             $status = Write-PatchResult -ExitCode $exitCode -Server $srv
         }
         catch {
-            Write-PatchLog "  ERROR during install on $srv — $($_.Exception.Message)" 'Red'
+            Write-PatchLog "  ERROR during install on $srv - $($_.Exception.Message)" 'Red'
             $status = 'InstallError'
         }
 
@@ -420,7 +420,7 @@ foreach ($srv in $targetServers) {
                     $newVer  = $post.ProductVersion
                     $changed = $newVer -ne $inst.ProductVersion
                     $color   = if ($changed) { 'Green' } else { 'Yellow' }
-                    $note    = if ($changed) { 'updated' } else { 'unchanged — reboot may be required' }
+                    $note    = if ($changed) { 'updated' } else { 'unchanged - reboot may be required' }
                     Write-PatchLog "  Post-patch: $newVer ($note)" $color
                 }
             }
@@ -434,8 +434,8 @@ foreach ($srv in $targetServers) {
     }
 }
 
-# ── Summary ───────────────────────────────────────────────────────────────────
-Write-PatchLog '━━━ Summary ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━' 'Cyan'
+# ?? Summary ???????????????????????????????????????????????????????????????????
+Write-PatchLog '??? Summary ?????????????????????????????????????????' 'Cyan'
 $tableStr = $results | Format-Table Server, Instance, Installed, Target, Status -AutoSize | Out-String
 Write-Host $tableStr
 Add-Content -Path $logFile -Value $tableStr

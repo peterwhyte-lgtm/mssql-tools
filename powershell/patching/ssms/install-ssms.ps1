@@ -1,9 +1,9 @@
-# install-ssms.ps1 — Install or update SQL Server Management Studio
+# install-ssms.ps1 - Install or update SQL Server Management Studio
 #
 # SSMS 22+   (default) : downloads vs_SSMS.exe from aka.ms/ssms/22/release/vs_SSMS.exe
 # SSMS 17-20 (winget)  : winget install Microsoft.SQLServerManagementStudio
 #
-# Cannot upgrade SSMS 17-20 in-place to SSMS 22 — run uninstall-ssms.ps1 first.
+# Cannot upgrade SSMS 17-20 in-place to SSMS 22 - run uninstall-ssms.ps1 first.
 #
 # Parameters:
 #   -Method download|winget  : 'download' = SSMS 22 (default), 'winget' = SSMS 20
@@ -35,14 +35,14 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-# ── Admin check ───────────────────────────────────────────────────────────────
+# -- Admin check ---------------------------------------------------------------
 $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(
     [Security.Principal.WindowsBuiltInRole]::Administrator)
 if (-not $isAdmin -and -not $WhatIf) {
     Write-Host 'ERROR: This script must be run as Administrator (or use -WhatIf to preview without installing).' -ForegroundColor Red; exit 1
 }
 
-# ── Logging ───────────────────────────────────────────────────────────────────
+# -- Logging -------------------------------------------------------------------
 # Falls back to a logs\ folder next to the script when run standalone (not in the repo)
 $_repoOutputDir = Join-Path $PSScriptRoot '..\..\..\output-files'
 $logDir = [System.IO.Path]::GetFullPath($(if (Test-Path $_repoOutputDir) {
@@ -61,9 +61,9 @@ function Write-DbaLog {
     Add-Content -Path $logFile -Value $line
 }
 
-Write-DbaLog "SSMS install log — $ts" 'Cyan'
+Write-DbaLog "SSMS install log - $ts" 'Cyan'
 
-# ── Detect current SSMS version ───────────────────────────────────────────────
+# -- Detect current SSMS version -----------------------------------------------
 function Get-InstalledSsms {
     $paths = @(
         'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*',
@@ -83,19 +83,19 @@ if ($current) {
     $currentMajor = [int]($current.DisplayVersion -split '\.')[0]
     Write-DbaLog "Installed : $($current.DisplayName)  v$($current.DisplayVersion)" 'White'
     if ($currentMajor -ge 22) {
-        Write-DbaLog "           (SSMS 22+ — VS Installer framework)" 'DarkGray'
+        Write-DbaLog "           (SSMS 22+ - VS Installer framework)" 'DarkGray'
     }
 }
 else {
-    Write-DbaLog 'SSMS not detected — will perform a fresh install.' 'Yellow'
+    Write-DbaLog 'SSMS not detected - will perform a fresh install.' 'Yellow'
     $currentMajor = 0
 }
 
-# ── winget method ─────────────────────────────────────────────────────────────
+# -- winget method -------------------------------------------------------------
 if ($Method -eq 'winget') {
     $winget = Get-Command winget.exe -ErrorAction SilentlyContinue
     if (-not $winget) {
-        Write-DbaLog 'winget not available — switching to download method.' 'Yellow'
+        Write-DbaLog 'winget not available - switching to download method.' 'Yellow'
         $Method = 'download'
     }
     else {
@@ -106,7 +106,7 @@ if ($Method -eq 'winget') {
         }
 
         # Note: winget 'Microsoft.SQLServerManagementStudio' resolves to SSMS 20 (legacy stable).
-        # SSMS 22 is not in the winget source catalog — use -Method download for SSMS 22.
+        # SSMS 22 is not in the winget source catalog - use -Method download for SSMS 22.
 
         # Use 'install' for fresh installs, 'upgrade' when already present
         $wingetVerb = if ($current) { 'upgrade' } else { 'install' }
@@ -146,12 +146,12 @@ if ($Method -eq 'winget') {
                     Write-DbaLog 'SSMS is at the latest version available in the winget catalog.' 'Green'
                 }
             }
-            default      { Write-DbaLog "winget exited with code $($proc.ExitCode) — check output above." 'Yellow' }
+            default      { Write-DbaLog "winget exited with code $($proc.ExitCode) - check output above." 'Yellow' }
         }
     }
 }
 
-# ── Download method ───────────────────────────────────────────────────────────
+# -- Download method -----------------------------------------------------------
 if ($Method -eq 'download') {
     # SSMS 22+ (VS Installer bootstrapper):
     #   URL  : https://aka.ms/ssms/22/release/vs_SSMS.exe  (always latest SSMS 22.x)
@@ -172,34 +172,34 @@ if ($Method -eq 'download') {
     $installerPath = Join-Path $saveDir $installerFileName
 
     # Detect installer type by filename:
-    # vs_SSMS.exe = VS Installer bootstrapper (SSMS 22+) → uses -- style flags
-    # SSMS-Setup-ENU.exe = legacy WiX installer (SSMS 20 and below) → uses / style flags
+    # vs_SSMS.exe = VS Installer bootstrapper (SSMS 22+) -> uses -- style flags
+    # SSMS-Setup-ENU.exe = legacy WiX installer (SSMS 20 and below) -> uses / style flags
     $isVsBootstrapper = $installerFileName -like 'vs_*.exe'
 
     Write-DbaLog "Method    : download" 'Cyan'
     Write-DbaLog "URL       : $downloadUrl"
-    Write-DbaLog "Installer : $installerFileName ($( if ($isVsBootstrapper) { 'VS bootstrapper — SSMS 22+' } else { 'legacy WiX — SSMS 20 and below' } ))" 'DarkGray'
+    Write-DbaLog "Installer : $installerFileName ($( if ($isVsBootstrapper) { 'VS bootstrapper - SSMS 22+' } else { 'legacy WiX - SSMS 20 and below' } ))" 'DarkGray'
 
     # Cross-framework upgrade check:
-    # SSMS 20→22 cannot upgrade in-place — the installer framework changed entirely.
-    # SSMS 22→22.x can update in-place via the VS bootstrapper.
+    # SSMS 20->22 cannot upgrade in-place - the installer framework changed entirely.
+    # SSMS 22->22.x can update in-place via the VS bootstrapper.
     if ($current -and $currentMajor -lt 22 -and $isVsBootstrapper) {
-        # Covers SSMS 17, 18, 19, 20 — all use the legacy WiX installer framework.
+        # Covers SSMS 17, 18, 19, 20 - all use the legacy WiX installer framework.
         # SSMS 22+ (VS Installer) cannot upgrade over the top of any of these.
         Write-DbaLog ''
-        Write-DbaLog "SSMS $($current.DisplayName) v$($current.DisplayVersion) is installed (legacy WiX installer — versions 17–20)." 'Yellow'
+        Write-DbaLog "SSMS $($current.DisplayName) v$($current.DisplayVersion) is installed (legacy WiX installer - versions 17-20)." 'Yellow'
         Write-DbaLog "SSMS 22+ uses the VS Installer framework and cannot upgrade in-place over a legacy SSMS install." 'Yellow'
         Write-DbaLog "Run .\uninstall-ssms.ps1 first, then re-run this script to install SSMS 22." 'Yellow'
         exit 0
     }
 
     if ($current -and $currentMajor -ge 22 -and $isVsBootstrapper) {
-        Write-DbaLog "SSMS $($current.DisplayVersion) detected (VS Installer framework) — bootstrapper will perform an in-place update." 'DarkGray'
+        Write-DbaLog "SSMS $($current.DisplayVersion) detected (VS Installer framework) - bootstrapper will perform an in-place update." 'DarkGray'
     }
 
     if ($WhatIf) {
         $flags = if ($isVsBootstrapper) { '--quiet --norestart --wait' } else { '/install /quiet /norestart' }
-        Write-DbaLog "WhatIf: download '$downloadUrl' → '$installerPath'" 'Yellow'
+        Write-DbaLog "WhatIf: download '$downloadUrl' -> '$installerPath'" 'Yellow'
         Write-DbaLog "WhatIf: Start-Process '$installerPath' $flags" 'Yellow'
         return
     }
@@ -211,7 +211,7 @@ if ($Method -eq 'download') {
         Write-DbaLog "Downloaded : $installerFileName ($sizeMB MB)" 'Green'
     }
     catch {
-        Write-DbaLog "ERROR: Download failed — $($_.Exception.Message)" 'Red'
+        Write-DbaLog "ERROR: Download failed - $($_.Exception.Message)" 'Red'
         exit 1
     }
 
@@ -237,28 +237,28 @@ if ($Method -eq 'download') {
 
     switch ($proc.ExitCode) {
         0    { Write-DbaLog 'SSMS install completed.' 'Green' }
-        3010 { Write-DbaLog 'SSMS install completed — reboot required.' 'Yellow' }
-        default { Write-DbaLog "Installer exited with code $($proc.ExitCode) — verify manually." 'Yellow' }
+        3010 { Write-DbaLog 'SSMS install completed - reboot required.' 'Yellow' }
+        default { Write-DbaLog "Installer exited with code $($proc.ExitCode) - verify manually." 'Yellow' }
     }
 }
 
-# ── Verify new version ────────────────────────────────────────────────────────
+# -- Verify new version --------------------------------------------------------
 Write-DbaLog ''
 Write-DbaLog 'Checking installed SSMS version...' 'Cyan'
 $updated = Get-InstalledSsms
 if ($updated) {
     if ($current -and $updated.DisplayVersion -ne $current.DisplayVersion) {
-        Write-DbaLog "SSMS updated : v$($current.DisplayVersion)  →  v$($updated.DisplayVersion)" 'Green'
+        Write-DbaLog "SSMS updated : v$($current.DisplayVersion)  ->  v$($updated.DisplayVersion)" 'Green'
     }
     else {
         Write-DbaLog "SSMS version : v$($updated.DisplayVersion)" 'Green'
     }
 }
 else {
-    Write-DbaLog 'Could not read SSMS version from registry — verify manually.' 'Yellow'
+    Write-DbaLog 'Could not read SSMS version from registry - verify manually.' 'Yellow'
 }
 
-# ── Add SSMS to PATH ──────────────────────────────────────────────────────────
+# -- Add SSMS to PATH ----------------------------------------------------------
 $ssmsExe = $null
 
 # SSMS 22+: use vswhere to get the install path
