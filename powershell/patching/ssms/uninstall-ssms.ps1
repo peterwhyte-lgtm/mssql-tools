@@ -124,10 +124,34 @@ foreach ($entry in $ssmsEntries) {
         $forceFlag   = if ($forceClose) { ' --force' } else { '' }
         $uiFlag      = if ($Passive)    { '--passive' } else { '--quiet' }
 
-        # Try VS Installer CLI via vswhere first (-products * required to find SSMS)
         $vswhere     = 'C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe'
         $vsInstaller = 'C:\Program Files (x86)\Microsoft Visual Studio\Installer\setup.exe'
 
+        # Helper: run setup.exe, wait, stream elapsed, check result
+        function Invoke-VsUninstall {
+            param([string]$Exe, [string]$Args)
+            Write-DbaLog "  Running: $Exe $Args" 'DarkGray'
+            $proc = Start-Process -FilePath $Exe -ArgumentList $Args -PassThru `
+                -RedirectStandardOutput "$logFile.vs-stdout.txt" `
+                -RedirectStandardError  "$logFile.vs-stderr.txt"
+            $sw = [System.Diagnostics.Stopwatch]::StartNew()
+            while (-not $proc.HasExited) {
+                Write-Host ("`r    ... {0:mm\:ss} elapsed" -f $sw.Elapsed) -NoNewline -ForegroundColor DarkGray
+                Start-Sleep -Seconds 2
+            }
+            Write-Host ''
+            if (Test-Path "$logFile.vs-stderr.txt") {
+                $vsErr = (Get-Content "$logFile.vs-stderr.txt" -Raw).Trim()
+                if ($vsErr) { Write-DbaLog "  VS Installer: $vsErr" 'DarkGray' }
+            }
+            $stillThere = @(foreach ($p in $regPaths) {
+                Get-ItemProperty $p -ErrorAction SilentlyContinue |
+                    Where-Object { $_.DisplayName -like '*SQL Server Management Studio*' -and $_.UninstallString -notmatch '^MsiExec\.exe /I\{' }
+            })
+            return ($stillThere.Count -eq 0)
+        }
+
+        # 1. vswhere — productId + channelId (avoids --installPath entirely)
         if ((Test-Path $vswhere) -and (Test-Path $vsInstaller)) {
             try {
                 $vsProducts  = & $vswhere -all -products '*' -format json 2>&1 | ConvertFrom-Json
@@ -136,38 +160,54 @@ foreach ($entry in $ssmsEntries) {
                     Select-Object -First 1
 
                 if ($ssmsProduct) {
-                    $vsArgs = "uninstall --productId $($ssmsProduct.productId) --channelId $($ssmsProduct.channelId) $uiFlag --norestart$forceFlag"
-                    $proc   = Start-Process -FilePath $vsInstaller -ArgumentList $vsArgs -PassThru `
-                        -RedirectStandardOutput "$logFile.vs-stdout.txt" `
-                        -RedirectStandardError  "$logFile.vs-stderr.txt"
-                    $sw     = [System.Diagnostics.Stopwatch]::StartNew()
-                    while (-not $proc.HasExited) {
-                        Write-Host ("`r    ... {0:mm\:ss} elapsed" -f $sw.Elapsed) -NoNewline -ForegroundColor DarkGray
-                        Start-Sleep -Seconds 2
+                    $channelPart = if ($ssmsProduct.channelId) { " --channelId $($ssmsProduct.channelId)" } else { '' }
+                    $vsArgs = "uninstall --productId $($ssmsProduct.productId)$channelPart $uiFlag --norestart$forceFlag"
+                    if (Invoke-VsUninstall -Exe $vsInstaller -Args $vsArgs) {
+                        $script:uninstallCompletedCleanly = $true
+                        $uninstalled = $true
                     }
-                    Write-Host ''
-                    # Trust registry over exit code — VS Installer can return non-standard codes
-                    # even on a successful uninstall
-                    $stillThere = @(foreach ($p in $regPaths) {
-                        Get-ItemProperty $p -ErrorAction SilentlyContinue |
-                            Where-Object { $_.DisplayName -like '*SQL Server Management Studio*' -and $_.UninstallString -notmatch '^MsiExec\.exe /I\{' }
-                    })
-                    if ($stillThere.Count -eq 0) {
+                } else {
+                    Write-DbaLog '  vswhere: SSMS not found in VS Installer catalogue — trying registry fallback.' 'DarkGray'
+                }
+            }
+            catch { Write-DbaLog "  vswhere error: $($_.Exception.Message)" 'DarkGray' }
+        }
+
+        # 2. Registry passthrough — use the stored VS Installer command but swap --installPath
+        #    for --productId when the installer rejects it (seen on SSMS 21 Preview builds)
+        if (-not $uninstalled) {
+            $rawCmd = if ($entry.QuietUninstallString) { $entry.QuietUninstallString } else { $entry.UninstallString }
+            if ($rawCmd -match 'setup\.exe') {
+                $regExe  = $null; $regArgs = $null
+                if ($rawCmd -match '^"([^"]+)"(.*)$')  { $regExe = $Matches[1]; $regArgs = $Matches[2].Trim() }
+                elseif ($rawCmd -match '^(\S+)(.*)$')   { $regExe = $Matches[1]; $regArgs = $Matches[2].Trim() }
+
+                if ($regExe -and (Test-Path $regExe)) {
+                    # If --installPath is present, try replacing with --productId derived from path
+                    if ($regArgs -match '--installPath\s+"[^"]+"') {
+                        $derivedId  = 'Microsoft.VisualStudio.Product.SSMS'
+                        $regArgs    = $regArgs -replace '--installPath\s+"[^"]+"', "--productId $derivedId"
+                        Write-DbaLog '  Registry fallback: replaced --installPath with --productId.' 'DarkGray'
+                    }
+                    if ($regArgs -notmatch '--quiet|--passive') { $regArgs += " $uiFlag" }
+                    if ($regArgs -notmatch '--norestart')       { $regArgs += ' --norestart' }
+                    if ($forceClose -and $regArgs -notmatch '--force') { $regArgs += ' --force' }
+                    if (Invoke-VsUninstall -Exe $regExe -Args $regArgs.Trim()) {
                         $script:uninstallCompletedCleanly = $true
                         $uninstalled = $true
                     }
                 }
             }
-            catch { }
         }
 
-        # Winget fallback
+        # 3. Winget fallback (tries stable ID then preview ID then display name)
         if (-not $uninstalled) {
             $winget = Get-Command winget.exe -ErrorAction SilentlyContinue
             if ($winget) {
                 $wingetAttempts = @(
-                    @('uninstall', '--id', 'Microsoft.SQLServerManagementStudio', '-e', '--silent', '--accept-source-agreements'),
-                    @('uninstall', '--name', "`"$name`"", '-e', '--silent', '--accept-source-agreements')
+                    @('uninstall', '--id', 'Microsoft.SQLServerManagementStudio',         '-e', '--silent', '--accept-source-agreements'),
+                    @('uninstall', '--id', 'Microsoft.SQLServerManagementStudio.Preview',  '-e', '--silent', '--accept-source-agreements'),
+                    @('uninstall', '--name', "`"$name`"",                                  '-e', '--silent', '--accept-source-agreements')
                 )
                 foreach ($wingetArgs in $wingetAttempts) {
                     $proc = Start-Process -FilePath $winget.Source -ArgumentList $wingetArgs -Wait -PassThru -NoNewWindow
@@ -183,7 +223,9 @@ foreach ($entry in $ssmsEntries) {
         if ($uninstalled) {
             Write-DbaLog '  Uninstall completed.' 'Green'
         } else {
-            Write-DbaLog '  Uninstall failed — remove manually via Settings → Apps or: winget uninstall --id Microsoft.SQLServerManagementStudio -e' 'Red'
+            Write-DbaLog '  Uninstall failed — remove manually via Settings → Apps or:' 'Red'
+            Write-DbaLog '    winget uninstall --id Microsoft.SQLServerManagementStudio.Preview -e' 'DarkGray'
+            Write-DbaLog '    winget uninstall --id Microsoft.SQLServerManagementStudio -e' 'DarkGray'
         }
         continue
     }
