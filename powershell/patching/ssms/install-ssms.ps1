@@ -1,63 +1,23 @@
-﻿<#
-.SYNOPSIS
-Install or update SQL Server Management Studio (SSMS).
-
-.DESCRIPTION
-Detects the currently installed SSMS version, then installs or upgrades via winget
-(preferred) or by downloading the installer directly from Microsoft.
-
-SSMS version notes:
-  SSMS 17–20 — traditional WiX installer (SSMS-Setup-ENU.exe)
-    Silent flags : /install /quiet /norestart
-    winget ID    : Microsoft.SQLServerManagementStudio  (resolves to SSMS 20)
-    Download URL : https://aka.ms/ssmsfullsetup
-
-  SSMS 22+ — Visual Studio Installer bootstrapper (vs_SSMS.exe)
-    Silent flags : --quiet --norestart --wait
-    winget       : not in the winget catalog — use -Method download
-    Download URL : https://aka.ms/ssms/22/release/vs_SSMS.exe  (default)
-    Ref          : https://learn.microsoft.com/en-us/ssms/install/install
-
-  Cannot upgrade SSMS 17-20 in-place to SSMS 22 — the installer framework changed.
-  Run uninstall-ssms.ps1 first, then re-run this script.
-
-.PARAMETER Method
-Install method: 'download' (default) or 'winget'.
-'download' installs SSMS 22 via direct download (default).
-'winget' installs SSMS 20 — use only if you specifically need the legacy version.
-
-.PARAMETER Url
-Override the download URL. Default targets SSMS 22 (aka.ms/ssms/22/release/vs_SSMS.exe).
-Supply a different URL for a specific version or for SSMS 20.
-
-.PARAMETER Passive
-Show the VS Installer progress window during install instead of running fully silent.
-Use when you want visual feedback beyond the console elapsed-time counter.
-
-.PARAMETER DownloadDir
-Folder to save the installer when using -Method download.
-Default: output-files\patches\ssms\ under the repo root.
-
-.PARAMETER UsePreview
-Use the SSMS Preview winget package (Microsoft.SQLServerManagementStudio.Preview)
-instead of the stable one. Only applies to -Method winget.
-
-.PARAMETER WhatIf
-Show what would run without executing.
-
-.EXAMPLE
-# Install SSMS 22 (default)
-.\powershell\patching\ssms\install-ssms.ps1
-
-# Install with VS Installer progress window visible
-.\powershell\patching\ssms\install-ssms.ps1 -Passive
-
-# Install SSMS 20 via winget
-.\powershell\patching\ssms\install-ssms.ps1 -Method winget
-
-# Check what would run, no changes
-.\powershell\patching\ssms\install-ssms.ps1 -WhatIf
-#>
+﻿# install-ssms.ps1 — Install or update SQL Server Management Studio
+#
+# SSMS 22+   (default) : downloads vs_SSMS.exe from aka.ms/ssms/22/release/vs_SSMS.exe
+# SSMS 17-20 (winget)  : winget install Microsoft.SQLServerManagementStudio
+#
+# Cannot upgrade SSMS 17-20 in-place to SSMS 22 — run uninstall-ssms.ps1 first.
+#
+# Parameters:
+#   -Method download|winget  : 'download' = SSMS 22 (default), 'winget' = SSMS 20
+#   -Url <url>               : override download URL
+#   -DownloadDir <path>      : folder to save installer (default: output-files\patches\ssms)
+#   -Passive                 : show VS Installer progress window instead of silent
+#   -UsePreview              : use winget preview package (winget method only)
+#   -WhatIf                  : show what would run, no changes
+#
+# Examples:
+#   .\install-ssms.ps1                          # install SSMS 22
+#   .\install-ssms.ps1 -Passive                 # install with progress window
+#   .\install-ssms.ps1 -Method winget           # install SSMS 20
+#   .\install-ssms.ps1 -WhatIf                  # dry run
 param(
     [ValidateSet('winget', 'download')]
     [string]$Method      = 'download',

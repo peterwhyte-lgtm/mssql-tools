@@ -1,37 +1,18 @@
-﻿<#
-.SYNOPSIS
-Silently uninstall SQL Server Management Studio (SSMS).
-
-.DESCRIPTION
-Detects all installed SSMS versions from the registry and uninstalls silently.
-
-Uninstall approach by version:
-  SSMS 17–20 — traditional WiX installer.
-    Reads UninstallString from registry, appends /uninstall /quiet /norestart.
-
-  SSMS 22+ — Visual Studio Installer (vs_SSMS.exe / setup.exe).
-    WiX flags do not apply. Uses VS Installer CLI discovered via vswhere.exe,
-    with winget as a fallback. Registry is checked after to confirm removal.
-
-.PARAMETER Passive
-Show the VS Installer progress window during uninstall instead of running fully silent.
-
-.PARAMETER WhatIf
-Show what would run without uninstalling.
-
-.PARAMETER Force
-Skip the confirmation prompt before uninstalling.
-
-.EXAMPLE
-# Check what would be uninstalled
-.\powershell\patching\ssms\uninstall-ssms.ps1 -WhatIf
-
-# Uninstall with confirmation prompt
-.\powershell\patching\ssms\uninstall-ssms.ps1
-
-# Uninstall without prompting
-.\powershell\patching\ssms\uninstall-ssms.ps1 -Force
-#>
+﻿# uninstall-ssms.ps1 — Silently uninstall SQL Server Management Studio
+#
+# SSMS 17-20  : WiX installer — reads UninstallString, appends /uninstall /quiet /norestart
+# SSMS 22+    : VS Installer  — uses vswhere to find productId, runs setup.exe uninstall -q
+#               winget is tried as a fallback if vswhere fails
+#
+# Parameters:
+#   -WhatIf   : show what would run, no changes
+#   -Force    : skip confirmation prompts
+#   -Passive  : show VS Installer progress window (default is silent with console timer)
+#
+# Examples:
+#   .\uninstall-ssms.ps1 -WhatIf
+#   .\uninstall-ssms.ps1
+#   .\uninstall-ssms.ps1 -Force
 param(
     [switch]$WhatIf,
     [switch]$Force,
