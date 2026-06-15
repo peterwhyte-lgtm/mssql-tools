@@ -31,10 +31,7 @@ $rebootPending = ($rebootKeys | Where-Object { Test-Path $_ }) -or
     (Get-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager' -Name PendingFileRenameOperations -ErrorAction SilentlyContinue).PendingFileRenameOperations
 
 if ($rebootPending -and -not $WhatIf) {
-    Write-Host 'WARNING: A system reboot is pending on this machine.' -ForegroundColor Yellow
-    Write-Host '  Windows Installer will likely fail (exit 1626) until the machine is rebooted.' -ForegroundColor Yellow
-    $ans = (Read-Host '  Reboot first is strongly recommended. Continue anyway? (yes/no)').Trim()
-    if ($ans -notmatch '^(yes|y)$') { Write-Host 'Aborted. Reboot and re-run.'; exit 0 }
+    Write-Host 'NOTE: A system reboot is pending on this machine.' -ForegroundColor Yellow
 }
 
 # -- Admin check ---------------------------------------------------------------
@@ -308,7 +305,7 @@ foreach ($entry in $ssmsEntries) {
         switch ($proc.ExitCode) {
             0    { Write-DbaLog '  Uninstall completed.' 'Green'; $wixOk = $true }
             3010 { Write-DbaLog '  Uninstall completed - reboot required.' 'Yellow'; $wixOk = $true }
-            1626 { Write-DbaLog "  Exit 1626 - Package Cache likely corrupt or missing. Trying winget..." 'Yellow' }
+            1626 { Write-DbaLog "  Exit 1626 - reboot this machine and retry, or use appwiz.cpl to remove manually." 'Yellow' }
             default { Write-DbaLog "  Uninstall exited with code $($proc.ExitCode) - trying winget fallback..." 'Yellow' }
         }
     }
