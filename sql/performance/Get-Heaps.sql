@@ -11,7 +11,9 @@ Safe        : Read-only
 Impact      : Low
 Requires    : VIEW DATABASE STATE (iterates each user database)
 Notes       : Small read-only lookup tables as heaps are usually acceptable.
-              Prioritise by reserved_mb and forwarded_record_count.
+              Prioritise by reserved_mb and forwarded_fetch_count.
+              forwarded_fetch_count = how often SQL Server chased a forwarded-record pointer
+              since the last restart (IO cost; forwarded_fetch_count was removed in SS 2025).
               has_primary_key = 0 means no PK exists at all — highest priority to fix.
               Fix: add a clustered index on the natural key, or add an identity
               column and cluster on that if no natural candidate exists.
@@ -26,7 +28,7 @@ CREATE TABLE #heaps (
     table_name              sysname       NOT NULL,
     row_count               BIGINT        NOT NULL,
     reserved_mb             DECIMAL(10,2) NOT NULL,
-    forwarded_record_count  BIGINT        NOT NULL,
+    forwarded_fetch_count  BIGINT        NOT NULL,
     has_primary_key         BIT           NOT NULL
 );
 
@@ -34,14 +36,14 @@ DECLARE @sql NVARCHAR(MAX) = N'';
 
 SELECT @sql += N'
 USE ' + QUOTENAME(name) + N';
-INSERT INTO #heaps (database_name, schema_name, table_name, row_count, reserved_mb, forwarded_record_count, has_primary_key)
+INSERT INTO #heaps (database_name, schema_name, table_name, row_count, reserved_mb, forwarded_fetch_count, has_primary_key)
 SELECT
     DB_NAME(),
     s.name,
     t.name,
     SUM(p.rows),
     CAST(SUM(a.total_pages) * 8.0 / 1024 AS DECIMAL(10,2)),
-    ISNULL(SUM(ios.forwarded_record_count), 0),
+    ISNULL(SUM(ios.forwarded_fetch_count), 0),
     CASE WHEN EXISTS (
         SELECT 1 FROM sys.indexes pk
         WHERE pk.object_id = t.object_id AND pk.is_primary_key = 1
@@ -70,7 +72,7 @@ SELECT
     table_name,
     row_count,
     reserved_mb,
-    forwarded_record_count,
+    forwarded_fetch_count,
     has_primary_key
 FROM   #heaps
 ORDER BY has_primary_key ASC, reserved_mb DESC;
