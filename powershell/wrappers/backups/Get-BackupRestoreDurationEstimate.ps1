@@ -20,7 +20,7 @@ Output mode: 'Table' (default) or 'Csv'.
 Optional file path to save the output.
 
 .EXAMPLE
-pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\powershell/backup-automation/Get-BackupRestoreDurationEstimate.ps1
+pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\powershell\wrappers\backups\Get-BackupRestoreDurationEstimate.ps1
 #>
 
 param(

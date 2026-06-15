@@ -1,19 +1,15 @@
 ﻿<#
 .SYNOPSIS
-Generates SQL Agent job DDL for scheduled database backups: full daily, log every 15 minutes,
-and a cleanup job that removes old backup files based on retention.
+Generates SQL Agent job DDL for index maintenance (rebuild/reorganize) and statistics update
+across all online user databases.
 
 .NOTES
 ScriptType   : DDL-generator
 TargetScope  : single server
 RiskLevel    : SAFE
-Purpose      : Produce a ready-to-run SQL script that creates three SQL Agent jobs on the
-               target instance. Review the output before executing.
-
-.DESCRIPTION
-Runs Generate-BackupJobs.sql against the source server and writes the full DDL to a .sql
-file in output-files\maintenance\. Parameters controlling backup path, retention, and
-schedule are declared at the top of the SQL script — edit them before generating.
+Purpose      : Produce a ready-to-run SQL script that creates DBA - Index Maintenance and
+               DBA - Statistics Update agent jobs. Fragmentation thresholds and schedule
+               hours are declared in the SQL script — edit them before generating.
 
 .PARAMETER ServerInstance
 SQL Server instance to query. Defaults to '.' or $env:DBASCRIPTS_SERVER.
@@ -28,17 +24,13 @@ SQL login username. Omit for Windows (integrated) auth.
 SQL login password. Omit for Windows auth.
 
 .PARAMETER OutputPath
-Full path for the generated .sql file. Defaults to output-files\maintenance\backup-jobs-<server>-<ts>.sql.
+Full path for the generated .sql file. Defaults to output-files\maintenance\index-maint-jobs-<server>-<ts>.sql.
 
 .EXAMPLE
-.\powershell\maintenance\Generate-BackupJobs.ps1
+.\powershell\wrappers\maintenance\Generate-IndexMaintenanceJobs.ps1
 
 .EXAMPLE
-.\powershell\maintenance\Generate-BackupJobs.ps1 -ServerInstance PROD01\SQL2019
-
-.EXAMPLE
-.\tools\local-sql\Set-SqlConnection.ps1 -ServerInstance PROD01
-.\powershell\maintenance\Generate-BackupJobs.ps1
+.\powershell\wrappers\maintenance\Generate-IndexMaintenanceJobs.ps1 -ServerInstance PROD01\SQL2019
 #>
 
 param(
@@ -57,8 +49,8 @@ if ($ServerInstance -eq '.' -and $env:DBASCRIPTS_SERVER) { $ServerInstance = $en
 if (-not $Username  -and $env:DBASCRIPTS_USER)            { $Username = $env:DBASCRIPTS_USER }
 if (-not $Password  -and $env:DBASCRIPTS_PASS)            { $Password = $env:DBASCRIPTS_PASS }
 
-$repoRoot  = Resolve-Path (Join-Path $PSScriptRoot '..\..')
-$sqlScript = Join-Path $repoRoot 'sql\maintenance\Generate-BackupJobs.sql'
+$repoRoot  = Resolve-Path (Join-Path $PSScriptRoot '..\..\..')
+$sqlScript = Join-Path $repoRoot 'sql\maintenance\Generate-IndexMaintenanceJobs.sql'
 
 if (-not (Test-Path -LiteralPath $sqlScript)) { throw "SQL script not found: $sqlScript" }
 
@@ -72,11 +64,11 @@ $sqlOutPath = if ($OutputPath) {
     if (-not (Test-Path $d)) { New-Item -ItemType Directory -Path $d -Force | Out-Null }
     $OutputPath
 } else {
-    Join-Path $outDir "backup-jobs-$safeName-$ts.sql"
+    Join-Path $outDir "index-maint-jobs-$safeName-$ts.sql"
 }
 
 Write-Host ''
-Write-Host '[generate] Generating backup job DDL...' -ForegroundColor Cyan
+Write-Host '[generate] Generating index maintenance job DDL...' -ForegroundColor Cyan
 Write-Host "[generate] Server  : $ServerInstance" -ForegroundColor Cyan
 Write-Host "[generate] Output  : $sqlOutPath" -ForegroundColor Cyan
 Write-Host ''
@@ -125,5 +117,5 @@ $lineCount = ($ddlText -split "`n").Count
 Write-Host "[generate] Done — $lineCount lines" -ForegroundColor Green
 Write-Host "[generate] Output : $sqlOutPath" -ForegroundColor Green
 Write-Host ''
-Write-Host 'Edit backup path and retention in the SQL before running on target.' -ForegroundColor Yellow
+Write-Host 'Review fragmentation thresholds and schedule day/hour in the SQL before running on target.' -ForegroundColor Yellow
 Write-Host ''

@@ -175,27 +175,30 @@ Unique scripts with real logic — orchestrators, DDL generators, automation, an
 | Invoke-PreMigrationAssessment | Full pre-migration assessment report |
 | Export-MigrationBaseline | Capture baseline metrics from source for post-migration comparison |
 
-### Maintenance — `powershell/maintenance/`
+
+### Maintenance wrappers — `powershell/wrappers/maintenance/`
 
 | Script | Purpose |
 |--------|---------|
-| Generate-BackupJobs | Generate and write backup job DDL to a .sql file for review before deployment |
-| Generate-IndexMaintenanceJobs | Generate and write index maintenance job DDL to a .sql file |
-| Generate-MaintenanceJobs | Generate and write housekeeping job DDL to a .sql file |
-| Invoke-MaintenanceDeployment | Deploy the maintenance framework across a fleet of servers |
+| Generate-BackupJobs | Generate SQL Agent job DDL for backup automation (full daily, log every 15 mins, cleanup) |
+| Generate-IndexMaintenanceJobs | Generate SQL Agent job DDL for index maintenance and statistics update |
+| Generate-MaintenanceJobs | Generate SQL Agent job DDL for housekeeping (DBCC CHECKDB, history cleanup, error log cycling) |
+| Get-MaintenanceJobStatus | Report last run outcome and next scheduled run for all DBA maintenance jobs |
 
-### Backup automation — `powershell/backup-automation/`
 
 | Script | Purpose |
 |--------|---------|
-| Backup-AllDatabases | Back up all user databases using SMO — supports compression and copy-only |
-| Backup-SqlDatabases | Back up all user databases using SMO with configurable backup type |
-| Restore-AllDatabases | Restore all user databases from a backup folder using SMO (HIGH IMPACT — use with care) |
 | Generate-FullBackupScript | Generate full backup DDL for review and execution in SSMS |
 | Generate-DiffBackupScript | Generate differential backup DDL for review and execution in SSMS |
-| Generate-TLogBackupScript | Generate T-Log backup DDL for review and execution in SSMS |
+| Generate-TLogBackupScript | Generate transaction log backup DDL for review and execution in SSMS |
 | Generate-RestoreScript | Generate restore DDL for DR testing and migration planning |
-| Get-BackupAge | Report age of the most recent backup per user database using msdb history |
+| Get-BackupAge | Report the age of the most recent backup per user database using msdb history |
+| Get-BackupCoverage | Show backup coverage across databases and retention gaps |
+| Get-BackupRestoreDurationEstimate | Estimate restore duration from backup file age and history |
+| Get-BackupRestoreCompletionTime | Monitor current backup and restore operation completion times |
+| Get-DatabaseBackupHistory | Show historical backup activity across databases |
+| Get-BackupEncryptionStatus | Report backup encryption status and algorithm use |
+| Get-BackupChainIntegrity | Validate backup chain integrity and missing log backups |
 
 ### Inventory & OS — `powershell/inventory/`
 

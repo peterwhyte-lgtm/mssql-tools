@@ -84,23 +84,22 @@ powershell/
   reporting/          — Invoke-HealthCheckCollection, Review-HealthCheckOutput, Invoke-AssessmentReport,
                         Invoke-MultiServerHealthCheck, Get-ActiveRequests, Get-BlockingChains
   reporting/multi-server/ — MultiServer-Get*.ps1 scripts (disk, wait stats, patch level, blocking, etc.)
-  monitoring/         — thin wrappers for sql/monitoring/ scripts (Get-DatabaseHealth, Get-WaitStatistics, etc.)
-  performance/        — thin wrappers for sql/performance/ scripts (Get-WaitStatistics, Get-BlockingSessions, etc.)
-  backups/            — thin wrappers for sql/backups/ scripts (Get-BackupCoverage, Get-LastDatabaseBackupTimes, etc.)
-  security/           — thin wrappers for sql/security/ scripts (Get-SysadminMembers, Get-WeakLoginSettings, etc.)
-  high-availability/              — thin wrappers for sql/high-availability/ scripts (Get-AvailabilityGroupReplicaState, etc.)
-  maintenance/        — Generate-BackupJobs, Generate-IndexMaintenanceJobs, Generate-MaintenanceJobs,
-                        Invoke-MaintenanceDeployment, Get-MaintenanceJobStatus
+  disk-space/         — Get-DiskSpaceSummary, Get-LargestFolders, Get-OldestBackupFolderFiles, Get-BackupAge
+  wrappers/
+    backups/          — Generate-FullBackupScript, Generate-DiffBackupScript, Generate-TLogBackupScript, Generate-RestoreScript,
+                        Get-BackupAge, Get-BackupCoverage, Get-DatabaseBackupHistory, Get-BackupChainIntegrity, etc.
+    maintenance/      — Generate-BackupJobs, Generate-IndexMaintenanceJobs, Generate-MaintenanceJobs, Get-MaintenanceJobStatus
+    monitoring/       — thin wrappers for sql/monitoring/ scripts
+    performance/      — thin wrappers for sql/performance/ scripts
+    security/         — thin wrappers for sql/security/ scripts
+    high-availability/ — thin wrappers for sql/high-availability/ scripts
+    migration/        — thin wrappers for sql/migration/ scripts
+  installation/       — install-sql.ps1, configure-sql.ps1, pre-install-check.ps1, post-install-validation.ps1,
+                        uninstall-sql.ps1, generate-install-report.ps1, templates/
   migration/          — Generate-LoginScript, Generate-AgentJobScript, Generate-UserMappingScript,
                         Generate-LinkedServerScript, Generate-RestoreWithMoveScript,
                         Invoke-MigrationExport, Invoke-PreMigrationAssessment, Export-MigrationBaseline,
                         Get-DatabaseInventory, Get-LoginInventory, Get-JobInventory, Get-MigrationRiskAssessment, etc.
-  operations/         — Backup-AllDatabases, Backup-SqlDatabases, Restore-AllDatabases, Get-BackupAge,
-                        Generate-FullBackupScript, Generate-DiffBackupScript, Generate-TLogBackupScript,
-                        Generate-RestoreScript (backup execution and DDL generators)
-  installation/       — install-sql.ps1, configure-sql.ps1, pre-install-check.ps1, post-install-validation.ps1,
-                        uninstall-sql.ps1, generate-install-report.ps1, templates/
-  inventory/          — Get-LargestFolders, Get-DiskSpaceSummary, Get-OldestBackupFolderFiles
   patching/           — patch-summary.ps1 (SQL + SSMS status overview, stays at this level)
     sql/              — Invoke-SqlPatch.ps1 (multi-server auto-patch), patch-config.psd1
     ssms/             — install-ssms.ps1 (handles SSMS ≤20 and 21+), uninstall-ssms.ps1

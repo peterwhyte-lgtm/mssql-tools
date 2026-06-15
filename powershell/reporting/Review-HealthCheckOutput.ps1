@@ -380,7 +380,7 @@ if (Test-Path -LiteralPath $maintJobsFile) {
     $backupJob = $maintJobs | Where-Object { $_.job_name -like 'DBA - Backup - FULL*' }
     if (-not $backupJob) {
         Add-Finding 'WARNING' 'Maintenance Jobs' 'DBA - Backup - FULL' (
-            'Full backup job not found. Run Generate-BackupJobs.sql and Invoke-MaintenanceDeployment.ps1.')
+            'Full backup job not found. Run .\\powershell\\wrappers\\maintenance\\Generate-BackupJobs.ps1.')
     }
     foreach ($row in $maintJobs) {
         if ($row.last_run_status -eq 'Failed') {

@@ -1,14 +1,19 @@
 ﻿<#
 .SYNOPSIS
-Generates SQL Agent job DDL for routine housekeeping: integrity check (DBCC CHECKDB),
-history cleanup (backup/job/mail history), and error log cycling.
+Generates SQL Agent job DDL for scheduled database backups: full daily, log every 15 minutes,
+and a cleanup job that removes old backup files based on retention.
 
 .NOTES
 ScriptType   : DDL-generator
 TargetScope  : single server
 RiskLevel    : SAFE
-Purpose      : Produce a ready-to-run SQL script that creates three housekeeping agent jobs.
-               Retention periods and schedule hours are declared in the SQL — edit before generating.
+Purpose      : Produce a ready-to-run SQL script that creates three SQL Agent jobs on the
+               target instance. Review the output before executing.
+
+.DESCRIPTION
+Runs Generate-BackupJobs.sql against the source server and writes the full DDL to a .sql
+file in output-files\maintenance\. Parameters controlling backup path, retention, and
+schedule are declared at the top of the SQL script — edit them before generating.
 
 .PARAMETER ServerInstance
 SQL Server instance to query. Defaults to '.' or $env:DBASCRIPTS_SERVER.
@@ -23,13 +28,17 @@ SQL login username. Omit for Windows (integrated) auth.
 SQL login password. Omit for Windows auth.
 
 .PARAMETER OutputPath
-Full path for the generated .sql file. Defaults to output-files\maintenance\maintenance-jobs-<server>-<ts>.sql.
+Full path for the generated .sql file. Defaults to output-files\maintenance\backup-jobs-<server>-<ts>.sql.
 
 .EXAMPLE
-.\powershell\maintenance\Generate-MaintenanceJobs.ps1
+.\powershell\wrappers\maintenance\Generate-BackupJobs.ps1
 
 .EXAMPLE
-.\powershell\maintenance\Generate-MaintenanceJobs.ps1 -ServerInstance PROD01\SQL2019
+.\powershell\wrappers\maintenance\Generate-BackupJobs.ps1 -ServerInstance PROD01\SQL2019
+
+.EXAMPLE
+.\tools\local-sql\Set-SqlConnection.ps1 -ServerInstance PROD01
+.\powershell\wrappers\maintenance\Generate-BackupJobs.ps1
 #>
 
 param(
@@ -48,8 +57,8 @@ if ($ServerInstance -eq '.' -and $env:DBASCRIPTS_SERVER) { $ServerInstance = $en
 if (-not $Username  -and $env:DBASCRIPTS_USER)            { $Username = $env:DBASCRIPTS_USER }
 if (-not $Password  -and $env:DBASCRIPTS_PASS)            { $Password = $env:DBASCRIPTS_PASS }
 
-$repoRoot  = Resolve-Path (Join-Path $PSScriptRoot '..\..')
-$sqlScript = Join-Path $repoRoot 'sql\maintenance\Generate-MaintenanceJobs.sql'
+$repoRoot  = Resolve-Path (Join-Path $PSScriptRoot '..\..\..')
+$sqlScript = Join-Path $repoRoot 'sql\maintenance\Generate-BackupJobs.sql'
 
 if (-not (Test-Path -LiteralPath $sqlScript)) { throw "SQL script not found: $sqlScript" }
 
@@ -63,11 +72,11 @@ $sqlOutPath = if ($OutputPath) {
     if (-not (Test-Path $d)) { New-Item -ItemType Directory -Path $d -Force | Out-Null }
     $OutputPath
 } else {
-    Join-Path $outDir "maintenance-jobs-$safeName-$ts.sql"
+    Join-Path $outDir "backup-jobs-$safeName-$ts.sql"
 }
 
 Write-Host ''
-Write-Host '[generate] Generating maintenance job DDL...' -ForegroundColor Cyan
+Write-Host '[generate] Generating backup job DDL...' -ForegroundColor Cyan
 Write-Host "[generate] Server  : $ServerInstance" -ForegroundColor Cyan
 Write-Host "[generate] Output  : $sqlOutPath" -ForegroundColor Cyan
 Write-Host ''
@@ -116,5 +125,5 @@ $lineCount = ($ddlText -split "`n").Count
 Write-Host "[generate] Done — $lineCount lines" -ForegroundColor Green
 Write-Host "[generate] Output : $sqlOutPath" -ForegroundColor Green
 Write-Host ''
-Write-Host 'Review history retention days and schedule hours in the SQL before running on target.' -ForegroundColor Yellow
+Write-Host 'Edit backup path and retention in the SQL before running on target.' -ForegroundColor Yellow
 Write-Host ''

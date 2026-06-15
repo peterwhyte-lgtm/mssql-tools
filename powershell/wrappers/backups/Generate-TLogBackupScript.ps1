@@ -1,18 +1,19 @@
 ﻿<#
 .SYNOPSIS
-Generates a FULL backup T-SQL script for all online user databases.
+Generates a transaction log BACKUP T-SQL script for all eligible online user databases.
 
 .NOTES
 ScriptType   : DDL-generator
 TargetScope  : single server
 RiskLevel    : SAFE
-Purpose      : Generate full backup DDL for review and execution in SSMS.
+Purpose      : Generate transaction log backup DDL for review and execution in SSMS.
 
 .DESCRIPTION
-Executes sql\backups\Generate-FullBackupScript.sql and writes the result to
-output-files\backups\ as a .sql file ready to open in SSMS. When called from
-the web UI (-OutputPath supplied) also writes a single-column CSV so the web UI
-renders the DDL with a Copy button.
+Executes sql\backups\Generate-TLogBackupScript.sql and writes the result to
+output-files\backups\ as a .sql file ready to open in SSMS. Only databases in
+FULL or BULK_LOGGED recovery model are included. When called from the web UI
+(-OutputPath supplied) also writes a single-column CSV so the web UI renders the
+DDL with a Copy button.
 
 .PARAMETER ServerInstance
 SQL Server instance to query. Defaults to '.' or $env:DBASCRIPTS_SERVER if set.
@@ -34,10 +35,10 @@ When supplied (web UI mode), writes a single-column CSV so the web UI can displa
 and copy the generated script.
 
 .EXAMPLE
-pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\powershell\backup-automation\Generate-FullBackupScript.ps1
+pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\powershell\wrappers\backups\Generate-TLogBackupScript.ps1
 
 .EXAMPLE
-pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\powershell\backup-automation\Generate-FullBackupScript.ps1 -ServerInstance PROD01\SQL2019
+pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\powershell\wrappers\backups\Generate-TLogBackupScript.ps1 -ServerInstance PROD01\SQL2019
 #>
 param(
     [string]$ServerInstance = '.',
@@ -55,12 +56,12 @@ if ($ServerInstance -eq '.' -and $env:DBASCRIPTS_SERVER) { $ServerInstance = $en
 if (-not $Username -and $env:DBASCRIPTS_USER)            { $Username = $env:DBASCRIPTS_USER }
 if (-not $Password -and $env:DBASCRIPTS_PASS)            { $Password = $env:DBASCRIPTS_PASS }
 
-$repoRoot  = Resolve-Path (Join-Path $PSScriptRoot '..\..')
-$sqlScript = Join-Path $repoRoot 'sql\backups\Generate-FullBackupScript.sql'
+$repoRoot  = Resolve-Path (Join-Path $PSScriptRoot '..\..\..')
+$sqlScript = Join-Path $repoRoot 'sql\backups\Generate-TLogBackupScript.sql'
 if (-not (Test-Path -LiteralPath $sqlScript)) { throw "SQL script not found: $sqlScript" }
 
-Write-Host '[generate] Generating FULL backup script...' -ForegroundColor Cyan
-Write-Host "[generate] Server : $ServerInstance"         -ForegroundColor Cyan
+Write-Host '[generate] Generating TRANSACTION LOG backup script...' -ForegroundColor Cyan
+Write-Host "[generate] Server : $ServerInstance"                    -ForegroundColor Cyan
 
 $ddlText = $null
 
@@ -88,7 +89,7 @@ if ($invokeSqlcmd) {
 }
 
 if (-not $ddlText -or $ddlText.Trim() -eq '') {
-    Write-Host '[generate] No output — no online user databases found.' -ForegroundColor Yellow
+    Write-Host '[generate] No output — no FULL/BULK_LOGGED databases found on this instance.' -ForegroundColor Yellow
     return
 }
 
@@ -96,7 +97,7 @@ $safeName   = ($ServerInstance -replace '[\\/:*?"<>|]', '-').Trim('-')
 $ts         = Get-Date -Format 'yyyyMMdd-HHmmss'
 $sqlOutDir  = Join-Path $repoRoot 'output-files\backups'
 New-Item -ItemType Directory -Path $sqlOutDir -Force | Out-Null
-$sqlOutPath = Join-Path $sqlOutDir "backup-script-full-$safeName-$ts.sql"
+$sqlOutPath = Join-Path $sqlOutDir "backup-script-tlog-$safeName-$ts.sql"
 [System.IO.File]::WriteAllText($sqlOutPath, $ddlText, [System.Text.Encoding]::UTF8)
 
 if ($OutputPath) {

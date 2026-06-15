@@ -45,9 +45,8 @@ Scripts with genuine logic beyond "run the matching SQL file." Orchestrators, au
 | Folder | Contents |
 |--------|----------|
 | `reporting/` | Invoke-HealthCheckCollection, Review-HealthCheckOutput, Invoke-AssessmentReport, Invoke-MultiServerHealthCheck, Get-ActiveRequests (with -IncludePlan), Get-BlockingChains (with -IncludePlan) |
-| `maintenance/` | Generate-BackupJobs, Generate-IndexMaintenanceJobs, Generate-MaintenanceJobs, Invoke-MaintenanceDeployment |
-| `backup-automation/` | Backup-AllDatabases, Backup-SqlDatabases, Restore-AllDatabases, Generate-FullBackupScript, Generate-DiffBackupScript, Generate-TLogBackupScript, Generate-RestoreScript, Get-BackupAge |
-| `inventory/` | Get-LargestFolders, Get-DiskSpaceSummary, Get-OldestBackupFolderFiles, Get-InstanceSnapshot, Get-InstanceHealthSummary |
+| `wrappers/backups/` | Thin wrappers for sql/backups/ backup DDL generators and health queries |
+| `wrappers/maintenance/` | Thin wrappers for sql/maintenance/ DDL generators (backup jobs, index maintenance, housekeeping) |
 | `multi-server/` | MultiServer-Get*.ps1 and MultiServer-*.ps1 scripts for fleet-wide operations |
 | `lab/` | New-MultipleDatabases, Remove-DatabasesByPrefix, Run-CreateTestDatabases |
 

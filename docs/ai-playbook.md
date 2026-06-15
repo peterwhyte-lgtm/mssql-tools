@@ -114,8 +114,8 @@ The 27 scripts in the healthcheck suite are tagged `HealthCheck : Yes` in their 
 **Orchestrators that collect/report** (`Invoke-HealthCheckCollection`, `Review-HealthCheckOutput`, `Get-BlockingChains`, `Get-ActiveRequests`) — read-only, safe.
 
 **Requires judgment before running:**
-- `powershell/operations/Backup-*`, `Restore-*` — executes backups and restores
-- `powershell/maintenance/` — generates DDL that deploys SQL Agent jobs
+- `powershell/wrappers/backups/Generate-*` — wrappers for SQL backup/restore DDL generators and backup health queries
+- `powershell/wrappers/maintenance/` — generates DDL that deploys SQL Agent jobs
 - `powershell/migration/Generate-*.ps1` — DDL generators, write to files
 - `powershell/installation/` — modifies SQL Server configuration
 - `docs/ops/change-templates/*.sql` — change operations; review before executing
@@ -153,7 +153,7 @@ To clear before a fresh run: `.\tools\maintenance\Clear-OutputFiles.ps1`
 sql/                          ← SQL scripts by category
 powershell/wrappers/          ← thin PS wrappers (one per SQL script; mirrors sql/ categories)
 powershell/migration/         ← migration toolkit (DDL generators, orchestrators)
-powershell/maintenance/       ← maintenance job generators
+powershell/wrappers/maintenance/ ← maintenance job generators (wrappers for sql/maintenance/ DDL generators)
 powershell/reporting/         ← healthcheck collection and reporting
 powershell/collectors/        ← scheduled trend collectors
 docs/ops/                     ← runbooks, change orders, SQL templates
