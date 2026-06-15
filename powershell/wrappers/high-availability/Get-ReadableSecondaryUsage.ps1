@@ -1,17 +1,16 @@
 <#
 .SYNOPSIS
-Shows AG replica synchronisation timing, queue sizes, and replication rates.
+Shows AG replica connection modes and read-only routing configuration.
 
 .NOTES
 ScriptType   : hybrid
 TargetScope  : single server
 RiskLevel    : SAFE
+Purpose      : Confirm which AG replicas allow read workload offloading and whether
+               read-only routing is configured. Returns a status row on non-AG instances.
 
 .PARAMETER ServerInstance
 SQL Server instance to query. Defaults to '.'.
-
-.PARAMETER Database
-Initial database for the session. Defaults to 'master'.
 
 .PARAMETER OutputFormat
 Output mode: 'Table' (default) or 'Csv'.
@@ -20,7 +19,7 @@ Output mode: 'Table' (default) or 'Csv'.
 Optional file path to save the output.
 
 .EXAMPLE
-pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\powershell\wrappers\ha-dr\Get-AvailabilityGroupLatency.ps1
+pwsh -File .\powershell\wrappers\high-availability\Get-ReadableSecondaryUsage.ps1
 #>
 
 param(
@@ -34,11 +33,11 @@ param(
 $ErrorActionPreference = 'Stop'
 
 $repoRoot  = Resolve-Path (Join-Path $PSScriptRoot '..\..\..')
-$sqlScript = Join-Path $repoRoot 'sql\ha-dr\Get-AvailabilityGroupLatency.sql'
+$sqlScript = Join-Path $repoRoot 'sql\high-availability\always-on\Get-ReadableSecondaryUsage.sql'
 $runner    = Join-Path $repoRoot 'tools\local-sql\Invoke-RepoSql.ps1'
 
 if (-not (Test-Path -LiteralPath $sqlScript)) { throw "SQL script not found: $sqlScript" }
 if (-not (Test-Path -LiteralPath $runner))    { throw "Runner not found: $runner" }
 
-Write-Host 'Running AG latency review...' -ForegroundColor Cyan
+Write-Host 'Running readable secondary usage review...' -ForegroundColor Cyan
 & $runner -ScriptPath $sqlScript -ServerInstance $ServerInstance -Database $Database -OutputFormat $OutputFormat -OutputPath $OutputPath

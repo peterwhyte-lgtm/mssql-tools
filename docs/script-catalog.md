@@ -126,7 +126,7 @@ All SQL scripts and unique PowerShell scripts in the repo. Thin PS wrappers exis
 | Get-PostMigrationValidation | Summary of key server state for side-by-side comparison between source and target |
 | Get-VersionUpgradeReadiness | Pre-upgrade readiness summary for SQL Server version upgrades |
 
-### High Availability — `sql/ha-dr/`
+### High Availability — `sql/high-availability/`
 
 | Script | Purpose |
 |--------|---------|
@@ -148,7 +148,7 @@ All SQL scripts and unique PowerShell scripts in the repo. Thin PS wrappers exis
 
 ## PowerShell scripts
 
-Unique scripts with real logic — orchestrators, DDL generators, automation, and OS tools. Thin wrappers (monitoring, performance, security, backups, ha-dr categories) follow the same naming convention as the SQL scripts they wrap.
+Unique scripts with real logic — orchestrators, DDL generators, automation, and OS tools. Thin wrappers (monitoring, performance, security, backups, high-availability categories) follow the same naming convention as the SQL scripts they wrap.
 
 ### Healthcheck & reporting — `powershell/reporting/`
 

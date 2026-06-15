@@ -5,7 +5,7 @@
 Fully functional production DBA toolkit. The repo has a category-first layout: `sql/` for SQL scripts, `powershell/` for wrappers, orchestrators, and automation (categories mirror `sql/`), and `docs/ops/` for operational runbooks and change templates.
 
 **What is complete:**
-- SQL diagnostic layer — 80+ scripts across monitoring, performance, ha-dr, backups, security, maintenance, migration
+- SQL diagnostic layer — 80+ scripts across monitoring, performance, high-availability, backups, security, maintenance, migration
 - Wrapper layer — 81 thin PS wrappers, one per SQL script, colocated with the web UI
 - PowerShell orchestration — healthcheck collection (27 scripts), review, assessment report, multi-server health check
 - Migration toolkit — full pre/post assessment, DDL generators (logins, jobs, linked servers, user mappings), baseline export

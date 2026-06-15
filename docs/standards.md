@@ -52,7 +52,7 @@ The `-- SAFE:` and `-- IMPACT:` annotations on lines after the block comment are
 |----------|--------|
 | Health, memory, jobs, TempDB, DBCC, config | `sql/monitoring/` |
 | Waits, blocking, queries, indexes, I/O | `sql/performance/` |
-| AG health and latency | `sql/ha-dr/` |
+| AG health and latency | `sql/high-availability/` |
 | Backup coverage, history, DR | `sql/backups/` |
 | Roles, logins, permissions, surface area | `sql/security/` |
 | Maintenance job generation and status | `sql/maintenance/` |

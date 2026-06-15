@@ -72,7 +72,7 @@ Migration DDL generators:
 sql/
   monitoring/     — health, memory, MAXDOP, jobs, TempDB, DBCC, suspect pages, instance config
   performance/    — waits, blocking, long queries, missing indexes, I/O, plan cache, active requests
-  ha-dr/          — AG replica state, AG latency (guards against non-AG instances)
+  high-availability/          — AG replica state, AG latency (guards against non-AG instances)
   backups/        — coverage, history, DR estimates, restore generation
   security/       — roles, permissions, orphans, weak logins, surface area
   maintenance/    — maintenance job scripts (Generate-* and Get-MaintenanceJobStatus)
@@ -88,7 +88,7 @@ powershell/
   performance/        — thin wrappers for sql/performance/ scripts (Get-WaitStatistics, Get-BlockingSessions, etc.)
   backups/            — thin wrappers for sql/backups/ scripts (Get-BackupCoverage, Get-LastDatabaseBackupTimes, etc.)
   security/           — thin wrappers for sql/security/ scripts (Get-SysadminMembers, Get-WeakLoginSettings, etc.)
-  ha-dr/              — thin wrappers for sql/ha-dr/ scripts (Get-AvailabilityGroupReplicaState, etc.)
+  high-availability/              — thin wrappers for sql/high-availability/ scripts (Get-AvailabilityGroupReplicaState, etc.)
   maintenance/        — Generate-BackupJobs, Generate-IndexMaintenanceJobs, Generate-MaintenanceJobs,
                         Invoke-MaintenanceDeployment, Get-MaintenanceJobStatus
   migration/          — Generate-LoginScript, Generate-AgentJobScript, Generate-UserMappingScript,
@@ -271,7 +271,7 @@ New orchestrator PS script (has real logic, not a thin wrapper): add to `powersh
 
 ## Important caveats
 
-- AG scripts (`sql/ha-dr/Get-AvailabilityGroupReplicaState.sql`, `Get-AvailabilityGroupLatency.sql`) guard against non-AG instances and return a status row instead of throwing.
+- AG scripts (`sql/high-availability/Get-AvailabilityGroupReplicaState.sql`, `Get-AvailabilityGroupLatency.sql`) guard against non-AG instances and return a status row instead of throwing.
 - Multi-result-set SQL scripts cannot be cleanly exported as a single CSV via `Invoke-RepoSql.ps1`. All scripts in `sql/` are single-result-set by design.
 - `output-files/` CSV files accumulate and should not be committed. Clear with `.\tools\maintenance\Clear-OutputFiles.ps1` before a fresh assessment run.
 - `docs/standards.md` is outdated — it shows an older header format. The header in this file is authoritative.

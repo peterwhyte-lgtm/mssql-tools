@@ -85,7 +85,7 @@ $scripts = @(
     [PSCustomObject]@{ Label = 'backup-coverage';  Path = 'sql\backups\Get-BackupCoverage.sql' }
     [PSCustomObject]@{ Label = 'wait-stats';       Path = 'sql\performance\Get-WaitStatistics.sql' }
     [PSCustomObject]@{ Label = 'io-usage';         Path = 'sql\performance\Get-DatabaseIoUsage.sql' }
-    [PSCustomObject]@{ Label = 'ag-state';         Path = 'sql\ha-dr\Get-AvailabilityGroupReplicaState.sql' }
+    [PSCustomObject]@{ Label = 'ag-state';         Path = 'sql\high-availability\always-on\Get-AvailabilityGroupReplicaState.sql' }
     [PSCustomObject]@{ Label = 'disk-space';       Path = 'sql\monitoring\Get-DiskSpace.sql' }
 )
 

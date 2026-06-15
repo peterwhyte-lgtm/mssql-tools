@@ -30,7 +30,7 @@ All SQL scripts are single-result-set, read-only, and SSMS paste-and-run compati
 | `performance/` | Waits, blocking, long queries, missing indexes, I/O, plan cache, active requests |
 | `backups/` | Coverage, history, DR estimates, restore generation, encryption status |
 | `security/` | Roles, permissions, orphans, weak logins, surface area, linked server security |
-| `ha-dr/` | AG replica state, AG latency, readable secondary usage |
+| `high-availability/` | AG replica state, AG latency, readable secondary usage |
 | `maintenance/` | Index maintenance jobs, backup jobs, housekeeping jobs, job status |
 | `lab/` | Dev/test-only scripts — blocking scenarios, test database creation |
 
@@ -103,7 +103,7 @@ One wrapper per SQL script. Each wrapper resolves the repo root (three levels up
 | `powershell/wrappers/backups/` | All `sql/backups/` scripts |
 | `powershell/wrappers/security/` | All `sql/security/` scripts |
 | `powershell/wrappers/migration/` | All `sql/migration/` Get-* scripts |
-| `powershell/wrappers/ha-dr/` | All `sql/ha-dr/` scripts |
+| `powershell/wrappers/high-availability/` | All `sql/high-availability/` scripts |
 | `powershell/wrappers/maintenance/` | `sql/maintenance/` Get-* scripts |
 
 ---

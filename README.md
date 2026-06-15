@@ -67,7 +67,7 @@ Browse `sql/` and copy directly into SSMS. No parameters, no magic variables, no
 | [`sql/backups/`](sql/backups/) | Coverage by database, history, backup age, encryption status, restore duration estimates |
 | [`sql/security/`](sql/security/) | Sysadmin members, login audit, orphaned users, weak logins, linked server security, database permissions |
 | [`sql/migration/`](sql/migration/) | Risk assessment, compatibility audit, deprecated features, login inventory, DDL generators |
-| [`sql/ha-dr/`](sql/ha-dr/) | AG replica health, sync state, latency, readable secondary usage |
+| [`sql/high-availability/`](sql/high-availability/) | AG replica health, sync state, latency, readable secondary usage |
 | [`sql/maintenance/`](sql/maintenance/) | Generate backup jobs, index maintenance jobs, housekeeping DDL, maintenance job status |
 
 Full list with descriptions: [docs/script-catalog.md](docs/script-catalog.md)

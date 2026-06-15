@@ -86,7 +86,7 @@ $scripts = @(
     [PSCustomObject]@{ Label = 'backup-coverage';     Path = 'sql\backups\Get-BackupCoverage.sql' }
     [PSCustomObject]@{ Label = 'agent-jobs';          Path = 'sql\monitoring\Get-SqlAgentJobOverview.sql' }
     [PSCustomObject]@{ Label = 'linked-servers';      Path = 'sql\monitoring\Get-LinkedServerAndJobInventory.sql' }
-    [PSCustomObject]@{ Label = 'ag-state';            Path = 'sql\ha-dr\Get-AvailabilityGroupReplicaState.sql' }
+    [PSCustomObject]@{ Label = 'ag-state';            Path = 'sql\high-availability\always-on\Get-AvailabilityGroupReplicaState.sql' }
     [PSCustomObject]@{ Label = 'sysadmin-members';    Path = 'sql\security\Get-SysadminMembers.sql' }
     [PSCustomObject]@{ Label = 'security-surface';    Path = 'sql\security\Get-DatabaseMailAndXpCmdShell.sql' }
     [PSCustomObject]@{ Label = 'disk-space';          Path = 'sql\monitoring\Get-DiskSpace.sql' }

@@ -289,7 +289,7 @@ setspn -A MSSQLSvc/AGListenerName.corp.example.com:1433 DOMAIN\NewSqlSvcAcct
 
 # Confirm AG replica sync state
 .\tools\local-sql\Invoke-RepoSql.ps1 `
-    -ScriptPath sql\high-availability\Get-AvailabilityGroupReplicaState.sql `
+    -ScriptPath sql\high-availability\always-on\Get-AvailabilityGroupReplicaState.sql `
     -ServerInstance NEWPRI
 ```
 
