@@ -1,42 +1,73 @@
 /*
 Script Name : Get-FailedLoginSummary
 Category    : security
-Purpose     : Aggregated failed login analysis from the security ring buffer and current
-              lockout state per SQL login. Surfaces brute-force patterns and locked accounts
-              without scanning the full error log. Complements Get-WeakLoginSettings (which
-              checks policy configuration) — this checks what is actually happening.
+Purpose     : Aggregated failed login analysis from the SQL Server error log and current
+              lockout state per SQL login. Surfaces brute-force patterns and locked accounts.
+              Complements Get-WeakLoginSettings (which checks policy configuration) — this
+              checks what is actually happening.
+              Note: SQL Server 2025 does not write 18456 events to RING_BUFFER_SECURITY_ERROR;
+              xp_readerrorlog is the reliable cross-version source for login failures.
 Author      : Peter Whyte (https://sqldba.blog)
 Safe        : Read-only
 Impact      : Low
-Requires    : VIEW SERVER STATE, sysadmin (for LOGINPROPERTY on other logins)
+Requires    : VIEW SERVER STATE, sysadmin (for LOGINPROPERTY on other logins), EXECUTE on xp_readerrorlog
 */
 SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
 
--- Materialise XML parsing first — XML method calls are not allowed in GROUP BY
-WITH ring_events AS (
-    SELECT CAST(record AS XML) AS rec
-    FROM   sys.dm_os_ring_buffers
-    WHERE  ring_buffer_type = 'RING_BUFFER_SECURITY_ERROR'
-),
-parsed AS (
+-- INSERT...EXEC cannot be used inside a CTE so materialise to a temp table first
+CREATE TABLE #failed_logins (
+    log_date     DATETIME,
+    process_info NVARCHAR(100),
+    log_text     NVARCHAR(MAX)
+);
+
+-- Filter to current error log (log# 0), type 1 (SQL Server log), login failure messages only
+INSERT INTO #failed_logins
+EXEC xp_readerrorlog 0, 1, N'Login failed';
+
+WITH parsed AS (
     SELECT
-        rec.value('(//LoginRecord/LoginName)[1]',  'NVARCHAR(128)') AS login_name,
-        rec.value('(//LoginRecord/ClientHost)[1]', 'NVARCHAR(256)') AS client_host,
-        rec.value('(//Error)[1]',                  'INT')           AS error_code,
-        rec.value('(/Record/@time)[1]',            'BIGINT')        AS ring_time_ms
-    FROM ring_events
+        -- Login name sits between the first pair of single quotes
+        SUBSTRING(
+            log_text,
+            CHARINDEX('''', log_text) + 1,
+            CHARINDEX('''', log_text, CHARINDEX('''', log_text) + 1) - CHARINDEX('''', log_text) - 1
+        )                                                           AS login_name,
+        -- Client IP/host is in the trailing [CLIENT: ...] tag
+        CASE
+            WHEN CHARINDEX('[CLIENT: ', log_text) > 0
+            THEN SUBSTRING(
+                log_text,
+                CHARINDEX('[CLIENT: ', log_text) + 9,
+                CHARINDEX(']', log_text, CHARINDEX('[CLIENT: ', log_text))
+                    - CHARINDEX('[CLIENT: ', log_text) - 9
+            )
+            ELSE NULL
+        END                                                         AS client_host,
+        -- Map reason text to the canonical error code
+        CASE
+            WHEN log_text LIKE '%untrusted domain%'           THEN 18452
+            WHEN log_text LIKE '%only administrators%'        THEN 18451
+            WHEN log_text LIKE '%account is disabled%'        THEN 18470
+            WHEN log_text LIKE '%password must be changed%'   THEN 18488
+            WHEN log_text LIKE '%password did not match%'     THEN 18456
+            WHEN log_text LIKE '%could not find a login%'     THEN 18456
+            ELSE                                                    18456
+        END                                                         AS error_code,
+        log_date
+    FROM #failed_logins
 ),
 aggregated AS (
     SELECT
         login_name,
         client_host,
         error_code,
-        COUNT(*)            AS failure_count,
-        MIN(ring_time_ms)   AS first_ring_ms,
-        MAX(ring_time_ms)   AS last_ring_ms
-    FROM parsed
+        COUNT(*)        AS failure_count,
+        MIN(log_date)   AS first_failure,
+        MAX(log_date)   AS last_failure
+    FROM  parsed
     GROUP BY login_name, client_host, error_code
 )
 SELECT
@@ -53,9 +84,8 @@ SELECT
         ELSE            'Error ' + CAST(agg.error_code AS VARCHAR(10))
     END                                                             AS error_description,
     agg.failure_count,
-    -- Approximate wall-clock time from ring buffer offset
-    DATEADD(ms, agg.first_ring_ms - si.ms_ticks, GETDATE())        AS first_failure_approx,
-    DATEADD(ms, agg.last_ring_ms  - si.ms_ticks, GETDATE())        AS last_failure_approx,
+    agg.first_failure                                               AS first_failure_approx,
+    agg.last_failure                                                AS last_failure_approx,
     CASE
         WHEN sl.name IS NOT NULL
         THEN CAST(LOGINPROPERTY(sl.name, 'IsLocked')       AS BIT)
@@ -69,12 +99,13 @@ SELECT
     CASE
         WHEN agg.failure_count >= 50
         THEN 'CRITICAL — ' + CAST(agg.failure_count AS VARCHAR) +
-             ' failures in ring buffer; likely brute-force or application misconfiguration'
+             ' failures in error log; likely brute-force or application misconfiguration'
         WHEN agg.failure_count >= 10
         THEN 'WARN — repeated failures for login [' + ISNULL(agg.login_name, '(unknown)') + ']'
         ELSE 'INFO'
     END                                                             AS status
-FROM aggregated              AS agg
-CROSS JOIN sys.dm_os_sys_info AS si
-LEFT JOIN sys.sql_logins      AS sl ON sl.name = agg.login_name
-ORDER BY agg.failure_count DESC;
+FROM       aggregated  AS agg
+LEFT JOIN  sys.sql_logins AS sl ON sl.name = agg.login_name
+ORDER BY   agg.failure_count DESC;
+
+DROP TABLE #failed_logins;
