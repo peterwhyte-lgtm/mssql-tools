@@ -317,6 +317,29 @@ foreach ($entry in $ssmsEntries) {
             }
         }
         if (-not $wixOk) {
+            # Last resort: find MSI product code directly from registry and call MsiExec /X
+            # bypasses the Burn bootstrapper entirely, useful when Package Cache is corrupt
+            $productCode = $null
+            foreach ($p in $regPaths) {
+                $match = Get-ItemProperty $p -ErrorAction SilentlyContinue |
+                    Where-Object {
+                        $_.DisplayName -eq $name -and
+                        $_.PSChildName -match '^\{[0-9A-F-]+\}$'
+                    } | Select-Object -First 1
+                if ($match) { $productCode = $match.PSChildName; break }
+            }
+            if ($productCode) {
+                Write-DbaLog "  Trying MsiExec direct removal (product code $productCode)..." 'DarkGray'
+                $mp = Start-Process -FilePath 'MsiExec.exe' -ArgumentList "/X$productCode /qn /norestart" -Wait -PassThru
+                if ($mp.ExitCode -in 0, 3010) {
+                    Write-DbaLog '  Uninstall completed via MsiExec.' 'Green'
+                    $wixOk = $true
+                } else {
+                    Write-DbaLog "  MsiExec exited with code $($mp.ExitCode)." 'Yellow'
+                }
+            }
+        }
+        if (-not $wixOk) {
             Write-DbaLog '  Uninstall failed - remove manually via Settings -> Apps or:' 'Red'
             Write-DbaLog "    winget uninstall --name `"$name`" -e" 'DarkGray'
         }
