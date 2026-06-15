@@ -21,6 +21,22 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
+# -- Pending reboot check ------------------------------------------------------
+$rebootKeys = @(
+    'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update\RebootRequired',
+    'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Component Based Servicing\RebootPending',
+    'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Component Based Servicing\RebootInProgress'
+)
+$rebootPending = ($rebootKeys | Where-Object { Test-Path $_ }) -or
+    (Get-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager' -Name PendingFileRenameOperations -ErrorAction SilentlyContinue).PendingFileRenameOperations
+
+if ($rebootPending -and -not $WhatIf) {
+    Write-Host 'WARNING: A system reboot is pending on this machine.' -ForegroundColor Yellow
+    Write-Host '  Windows Installer will likely fail (exit 1626) until the machine is rebooted.' -ForegroundColor Yellow
+    $ans = (Read-Host '  Reboot first is strongly recommended. Continue anyway? (yes/no)').Trim()
+    if ($ans -notmatch '^(yes|y)$') { Write-Host 'Aborted. Reboot and re-run.'; exit 0 }
+}
+
 # -- Admin check ---------------------------------------------------------------
 $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(
     [Security.Principal.WindowsBuiltInRole]::Administrator)
