@@ -10,11 +10,11 @@ Decision-support for AI agents working with this repo. This is not a structure g
 .\run.ps1 <ScriptName>
 ```
 
-`run.ps1` is the repo entry point. It fuzzy-matches by name across `sql/`, `powershell/`, and `powershell/runners/`, finds the script, and executes it. No paths, no params needed unless specifying a server or output format. If the DBA has already run `Set-SqlConnection.ps1`, even the server is implicit.
+`run.ps1` is the repo entry point. It fuzzy-matches by name across `sql/` and `powershell/`, finds the script, and executes it. No paths, no params needed unless specifying a server or output format. If the DBA has already run `Set-SqlConnection.ps1`, even the server is implicit.
 
 Use the direct wrapper path only when scripting a specific invocation or when `run.ps1` returns multiple matches:
 ```powershell
-.\powershell\runners\performance\Get-WaitStatistics.ps1 -ServerInstance PROD01 -OutputFormat Csv
+.\powershell\wrappers\performance\Get-WaitStatistics.ps1 -ServerInstance PROD01 -OutputFormat Csv
 ```
 
 ---
@@ -109,7 +109,7 @@ The 27 scripts in the healthcheck suite are tagged `HealthCheck : Yes` in their 
 
 **Everything in `sql/`** — all read-only, `SET NOCOUNT ON`, no `USE database`, no data modifications. Safe to run in production at any time.
 
-**Everything in `powershell/runners/`** — thin wrappers that call Invoke-RepoSql with the matching SQL script. Same safety level.
+**Everything in `powershell/wrappers/`** — thin wrappers that call Invoke-RepoSql with the matching SQL script. Same safety level as the SQL scripts themselves.
 
 **Orchestrators that collect/report** (`Invoke-HealthCheckCollection`, `Review-HealthCheckOutput`, `Get-BlockingChains`, `Get-ActiveRequests`) — read-only, safe.
 
@@ -150,13 +150,14 @@ To clear before a fresh run: `.\tools\maintenance\Clear-OutputFiles.ps1`
 ## Key paths — quick reference
 
 ```
-sql/                     ← SQL scripts by category
-powershell/runners/         ← PS wrappers (one per SQL script)
-powershell/              ← orchestrators and automation
-powershell/migration/    ← migration toolkit
-powershell/collectors/   ← scheduled trend collectors
-docs/ops/                ← runbooks, change orders, SQL templates
-tools/local-sql/         ← Invoke-RepoSql (core runner), Set-SqlConnection
-tools/triage/            ← Show-RepoOverview, Find-UsefulScript
-output-files/            ← all generated output (gitignored)
+sql/                          ← SQL scripts by category
+powershell/wrappers/          ← thin PS wrappers (one per SQL script; mirrors sql/ categories)
+powershell/migration/         ← migration toolkit (DDL generators, orchestrators)
+powershell/maintenance/       ← maintenance job generators
+powershell/reporting/         ← healthcheck collection and reporting
+powershell/collectors/        ← scheduled trend collectors
+docs/ops/                     ← runbooks, change orders, SQL templates
+tools/local-sql/              ← Invoke-RepoSql (core runner), Set-SqlConnection
+tools/triage/                 ← Show-RepoOverview, Find-UsefulScript
+output-files/                 ← all generated output (gitignored)
 ```

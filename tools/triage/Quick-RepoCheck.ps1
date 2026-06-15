@@ -11,9 +11,9 @@ $repoRoot = Resolve-Path (Join-Path $PSScriptRoot '..\..')
 $required = @(
   'sql',
   'powershell',
+  'powershell\wrappers',
   'powershell\collectors',
   'tools',
-  'powershell\runners',
   'output-files'
 )
 

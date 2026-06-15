@@ -24,12 +24,12 @@ This repository is **not** a collection of scripts — it is an operational tool
 The three entry points, in order of preference:
 
 ```powershell
-# 1. Root launcher — fuzzy name match, searches sql/, powershell/, and powershell/runners/
+# 1. Root launcher — fuzzy name match, searches sql/ and powershell/
 .\run.ps1 Get-WaitStatistics
 .\run.ps1 Get-WaitStatistics -ServerInstance MYSERVER\INST01 -OutputFormat Csv
 
 # 2. Direct wrapper — explicit path, passes all params through
-pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\powershell\runners\performance\Get-WaitStatistics.ps1 -ServerInstance . -OutputFormat Csv
+pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\powershell\wrappers\performance\Get-WaitStatistics.ps1 -ServerInstance . -OutputFormat Csv
 
 # 3. SQL directly via the repo runner (for SSMS-style results in terminal)
 pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\tools\local-sql\Invoke-RepoSql.ps1 -ScriptPath .\sql\performance\Get-WaitStatistics.sql -ServerInstance .
@@ -66,7 +66,7 @@ Migration DDL generators:
 
 ## Layout
 
-**Use `sql/`, `powershell/`, or `powershell/runners/` for all new work.**
+**Use `sql/` or `powershell/` for all new work.**
 
 ```text
 sql/
@@ -84,17 +84,23 @@ powershell/
   reporting/          — Invoke-HealthCheckCollection, Review-HealthCheckOutput, Invoke-AssessmentReport,
                         Invoke-MultiServerHealthCheck, Get-ActiveRequests, Get-BlockingChains
   reporting/multi-server/ — MultiServer-Get*.ps1 scripts (disk, wait stats, patch level, blocking, etc.)
+  monitoring/         — thin wrappers for sql/monitoring/ scripts (Get-DatabaseHealth, Get-WaitStatistics, etc.)
+  performance/        — thin wrappers for sql/performance/ scripts (Get-WaitStatistics, Get-BlockingSessions, etc.)
+  backups/            — thin wrappers for sql/backups/ scripts (Get-BackupCoverage, Get-LastDatabaseBackupTimes, etc.)
+  security/           — thin wrappers for sql/security/ scripts (Get-SysadminMembers, Get-WeakLoginSettings, etc.)
+  ha-dr/              — thin wrappers for sql/ha-dr/ scripts (Get-AvailabilityGroupReplicaState, etc.)
   maintenance/        — Generate-BackupJobs, Generate-IndexMaintenanceJobs, Generate-MaintenanceJobs,
-                        Invoke-MaintenanceDeployment
+                        Invoke-MaintenanceDeployment, Get-MaintenanceJobStatus
+  migration/          — Generate-LoginScript, Generate-AgentJobScript, Generate-UserMappingScript,
+                        Generate-LinkedServerScript, Generate-RestoreWithMoveScript,
+                        Invoke-MigrationExport, Invoke-PreMigrationAssessment, Export-MigrationBaseline,
+                        Get-DatabaseInventory, Get-LoginInventory, Get-JobInventory, Get-MigrationRiskAssessment, etc.
   operations/         — Backup-AllDatabases, Backup-SqlDatabases, Restore-AllDatabases, Get-BackupAge,
                         Generate-FullBackupScript, Generate-DiffBackupScript, Generate-TLogBackupScript,
                         Generate-RestoreScript (backup execution and DDL generators)
   installation/       — install-sql.ps1, configure-sql.ps1, pre-install-check.ps1, post-install-validation.ps1,
                         uninstall-sql.ps1, generate-install-report.ps1, templates/
   inventory/          — Get-LargestFolders, Get-DiskSpaceSummary, Get-OldestBackupFolderFiles
-  migration/          — Generate-LoginScript, Generate-AgentJobScript, Generate-UserMappingScript,
-                        Generate-LinkedServerScript, Generate-RestoreWithMoveScript,
-                        Invoke-MigrationExport, Invoke-PreMigrationAssessment, Export-MigrationBaseline
   patching/           — patch-summary.ps1 (SQL + SSMS status overview, stays at this level)
     sql/              — Invoke-SqlPatch.ps1 (multi-server auto-patch), patch-config.psd1
     ssms/             — install-ssms.ps1 (handles SSMS ≤20 and 21+), uninstall-ssms.ps1
@@ -103,9 +109,6 @@ powershell/
                         files are being migrated to SQL Agent jobs (see sql/collectors/ below).
     Collectors: ag-health, blocking, database-growth, deadlocks, errorlog, index-fragmentation,
                 perfmon, query-store, storage-io, tempdb, vlf-count, wait-stats
-
-powershell/runners/      — thin PS wrappers: one per SQL script; presence here makes a script appear in the web UI
-  monitoring, performance, backups, security, migration, ha-dr, maintenance
 
 web-ui/               — browser UI: Start-WebUi.ps1, Generate-ScriptIndex.ps1
 
@@ -146,7 +149,7 @@ Or pass `-ServerInstance` directly on any individual call:
 
 ```powershell
 .\run.ps1 Get-WaitStatistics -ServerInstance PROD01\SQL2019
-.\powershell\runners\performance\Get-WaitStatistics.ps1 -ServerInstance PROD01\SQL2019 -OutputFormat Csv
+.\powershell\wrappers\performance\Get-WaitStatistics.ps1 -ServerInstance PROD01\SQL2019 -OutputFormat Csv
 ```
 
 Env vars used internally: `$env:DBASCRIPTS_SERVER`, `$env:DBASCRIPTS_USER`, `$env:DBASCRIPTS_PASS`. Explicit params always win over env vars.
@@ -166,17 +169,17 @@ Env vars used internally: `$env:DBASCRIPTS_SERVER`, `$env:DBASCRIPTS_USER`, `$en
 
 ## How PowerShell wrappers work
 
-Every script in `powershell/runners/**/*.ps1` is a thin wrapper:
+Every thin wrapper in `powershell/wrappers/<category>/*.ps1` follows this pattern:
 
-1. Resolves `$repoRoot` as **three** levels up from `$PSScriptRoot` (wrappers sit at `powershell/runners/<category>/`)
+1. Resolves `$repoRoot` as **three** levels up from `$PSScriptRoot` (wrappers sit at `powershell/wrappers/<category>/`)
 2. Builds `$sqlScript = Join-Path $repoRoot 'sql\<category>\<Name>.sql'` (or `sql\migration\` for migration scripts)
 3. Delegates to `tools\local-sql\Invoke-RepoSql.ps1` with `-ScriptPath`, `-ServerInstance`, `-Database`, `-OutputFormat`, `-OutputPath`
 
-**Web UI contract:** A SQL script in `sql/` only appears in the web UI if it has a matching wrapper in `powershell/runners/<same-category>/`. The wrapper IS the web UI entry point — the web UI launches wrappers, not SQL files directly. Every new SQL script in `sql/` must therefore get a paired wrapper.
+**Web UI contract:** A SQL script in `sql/` only appears in the web UI if it has a matching wrapper in `powershell/wrappers/<same-category>/`. The wrapper IS the web UI entry point — the web UI launches wrappers, not SQL files directly. Every new SQL script in `sql/` must therefore get a paired wrapper.
 
 `Invoke-RepoSql.ps1` tries `Invoke-Sqlcmd` first (SqlServer module), falls back to `sqlcmd.exe`. Always writes a CSV to `output-files\reviews\<category>\<scriptname>-<timestamp>.csv` and prints a table preview. If neither tool is available it throws.
 
-`run.ps1` resolves script by name fuzzy match → `& $target @Arguments`. It searches `powershell/`, `powershell/migration/`, `powershell/runners/`, `tools/`, `sql/` recursively. Throws if more than one match — callers must be specific.
+`run.ps1` resolves script by name fuzzy match → `& $target @Arguments`. It searches `powershell/`, `tools/`, `sql/` recursively. Throws if more than one match — callers must be specific.
 
 **PowerShell script rules:**
 - Classify script type in `.NOTES`: `runner` / `automation` / `hybrid`
@@ -222,9 +225,9 @@ Add `HealthCheck : Yes` (after `Requires`) to any script that runs as part of `I
 
 New SQL script: `sql/<category>/Get-Something.sql` using the header above.
 
-New PS wrapper: copy any existing wrapper in `powershell/runners/<category>/` (matching the sql-scripts/ category), update the three variables (`syn`, `$sqlScript` path, `Write-Host` message). Use `$PSScriptRoot '..\..\..'` — wrappers are three levels from root (`powershell/runners/<category>/`). The wrapper must be present for the script to appear in the web UI.
+New PS wrapper: copy any existing wrapper from `powershell/wrappers/<category>/` (matching the sql/ category), update the three variables (`$sqlScript` path, synopsis, `Write-Host` message). Use `$PSScriptRoot '..\..\..'` — wrappers are three levels from root (`powershell/wrappers/<category>/`). The wrapper must be present for the script to appear in the web UI.
 
-New orchestrator PS script (has real logic, not a thin wrapper): add to `powershell/reporting/` for query/reporting scripts or `powershell/inventory/` for environment/config scripts. Use `$PSScriptRoot '..\..\..'` to resolve repo root.
+New orchestrator PS script (has real logic, not a thin wrapper): add to `powershell/<subfolder>/` (e.g. `reporting/`, `maintenance/`, `migration/`). Use `$PSScriptRoot '..\..'` to resolve repo root.
 
 **When refactoring an existing script, summarise:** improved script, risk classification (`SAFE` / `MEDIUM` / `HIGH IMPACT`), key changes (bullets), suggested folder placement.
 

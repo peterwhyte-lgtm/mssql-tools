@@ -552,7 +552,7 @@ function Build-ViewPage([string]$relPath) {
     $isRunnable = $false
     if ($ext -eq '.sql' -and $relPath -match '^sql[\\/]' -and -not $isManualOnly) {
         $isRunnable = $true
-    } elseif ($ext -eq '.ps1' -and $relPath -match '[\\/]runners[\\/]') {
+    } elseif ($ext -eq '.ps1' -and $relPath -match '^powershell[\\/]wrappers[\\/]') {
         $isRunnable = ($content -match 'OutputFormat') -and ($content -match 'OutputPath')
     }
 
@@ -825,9 +825,6 @@ function Build-CsvViewPage([string]$relPath) {
     $ps1Match     = Get-ChildItem "$repoRoot\powershell" -Recurse -Filter "$scriptBase.ps1" -File -ErrorAction SilentlyContinue | Select-Object -First 1
     if (-not $ps1Match) {
         $ps1Match = Get-ChildItem "$repoRoot\powershell\migration" -Filter "$scriptBase.ps1" -File -ErrorAction SilentlyContinue | Select-Object -First 1
-    }
-    if (-not $ps1Match) {
-        $ps1Match = Get-ChildItem "$repoRoot\powershell\runners" -Recurse -Filter "$scriptBase.ps1" -File -ErrorAction SilentlyContinue | Select-Object -First 1
     }
     $srcFile      = if ($sqlMatch) { $sqlMatch } elseif ($ps1Match) { $ps1Match } else { $null }
     $srcScriptRel = if ($srcFile) { $srcFile.FullName.Replace($repoRoot.ToString(), '').TrimStart('\') } else { '' }
@@ -2192,7 +2189,6 @@ try {
                 $sExt   = [IO.Path]::GetExtension($fullRunPath).ToLower()
                 $cat    = if ($p -match '(^|[\\/])sql[\\/]([^\\/]+)[\\/]')             { $Matches[2] }
                           elseif ($p -match '(^|[\\/])powershell[\\/]([^\\/]+)[\\/]') { $Matches[2] }
-                          elseif ($p -match '[\\/]runners[\\/]([^\\/]+)[\\/]')       { $Matches[1] }
                           else { 'general' }
                 $ts      = Get-Date -Format 'yyyyMMdd-HHmmss'
                 $csvDir  = Join-Path $repoRoot "output-files\reviews\$cat$(if ($dryRun) {'\dry-runs'} else {''})"
@@ -2218,7 +2214,7 @@ try {
                                         else                                               { $null }
                         $psWrapper = $null
                         if ($wrapCategory) {
-                            $psWrapper = Get-ChildItem -Path (Join-Path $repoRoot "powershell\runners\$wrapCategory") `
+                            $psWrapper = Get-ChildItem -Path (Join-Path $repoRoot "powershell\wrappers\$wrapCategory") `
                                 -Filter "$sName.ps1" -File -ErrorAction SilentlyContinue |
                                 Select-Object -First 1
                         }

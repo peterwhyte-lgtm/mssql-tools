@@ -3,7 +3,7 @@
 Simple launcher for the repo PowerShell scripts.
 
 .DESCRIPTION
-This helper makes it easier to run scripts from the canonical sql/, powershell/, powershell/runners/, and tools/ layout.
+This helper makes it easier to run scripts from the canonical sql/, powershell/, and tools/ layout.
 #>
 
 param(

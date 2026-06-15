@@ -1,12 +1,12 @@
 ﻿<#
 .SYNOPSIS
-Generates a thin PS wrapper for a SQL script in powershell/runners/.
+Generates a thin PS wrapper for a SQL script in powershell/<category>/.
 
 .DESCRIPTION
 Given a path to a .sql file in sql/ or sql/migration/,
-generates the matching wrapper PS1 in powershell/runners/<category>/ and opens it for review.
+generates the matching wrapper PS1 in powershell/<category>/ and opens it for review.
 
-The wrapper follows the repo standard: resolves repoRoot three levels up, builds the SQL
+The wrapper follows the repo standard: resolves repoRoot two levels up, builds the SQL
 path, validates both files exist, then delegates to Invoke-RepoSql.ps1.
 
 .PARAMETER SqlPath
@@ -63,7 +63,7 @@ $sqlRelForBody = $relPath.Replace('/', '\')   # backslash for Join-Path in the w
 
 # ── Derive names ──────────────────────────────────────────────────────────────
 $name    = $sqlFile.BaseName
-$outDir  = Join-Path $repoRoot "powershell\runners\$category"
+$outDir  = Join-Path $repoRoot "powershell\wrappers\$category"
 $outFile = Join-Path $outDir "$name.ps1"
 
 if (-not (Test-Path $outDir)) {
@@ -110,7 +110,7 @@ Optional file path to save the output.
 .\run.ps1 $name
 
 .EXAMPLE
-.\powershell\runners\$category\$name.ps1 -ServerInstance PROD01\SQL2019 -OutputFormat Csv
+.\powershell\wrappers\$category\$name.ps1 -ServerInstance PROD01\SQL2019 -OutputFormat Csv
 #>
 
 param(
@@ -137,5 +137,5 @@ Write-Host 'Running $name...' -ForegroundColor Cyan
 "@
 
 Set-Content -Path $outFile -Value $content -Encoding UTF8
-Write-Host "Created: powershell\runners\$category\$name.ps1" -ForegroundColor Green
+Write-Host "Created: powershell\wrappers\$category\$name.ps1" -ForegroundColor Green
 Write-Host "Review and adjust the -Database default if needed." -ForegroundColor DarkGray

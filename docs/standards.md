@@ -58,13 +58,13 @@ The `-- SAFE:` and `-- IMPACT:` annotations on lines after the block comment are
 | Maintenance job generation and status | `sql/maintenance/` |
 | Migration assessment and DDL generation | `sql/migration/` |
 
-Every SQL script in `sql/` must have a matching wrapper in `powershell/runners/<same-category>/` — this is what makes it runnable from the web UI and `run.ps1`.
+Every SQL script in `sql/` must have a matching wrapper in `powershell/wrappers/<same-category>/` — this is what makes it runnable from the web UI and `run.ps1`.
 
 ---
 
 ## PowerShell wrappers
 
-Wrappers live in `powershell/runners/<category>/`. They are thin — SQL logic stays in the `.sql` file.
+Wrappers live in `powershell/wrappers/<category>/`. They are thin — SQL logic stays in the `.sql` file.
 
 ```powershell
 param(
@@ -77,7 +77,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-$repoRoot  = Resolve-Path (Join-Path $PSScriptRoot '..\..\..')   # powershell/runners/<cat>/ is 3 levels deep
+$repoRoot  = Resolve-Path (Join-Path $PSScriptRoot '..\..\..')   # powershell/wrappers/<cat>/ is 3 levels deep
 $sqlScript = Join-Path $repoRoot 'sql\<category>\Get-Something.sql'
 $runner    = Join-Path $repoRoot 'tools\local-sql\Invoke-RepoSql.ps1'
 
@@ -90,7 +90,7 @@ Write-Host 'Running...' -ForegroundColor Cyan
 ```
 
 **Key points:**
-- `$PSScriptRoot '..\..\..'` — wrappers sit at `powershell/runners/<category>/`, three levels from root.
+- `$PSScriptRoot '..\..\..'` — wrappers sit at `powershell/wrappers/<category>/`, three levels from root.
 - Migration script wrappers use `sql\migration\` instead of `sql\<category>\`.
 - Always validate with `Test-Path` before invoking — gives a clear error instead of a cryptic PS exception.
 

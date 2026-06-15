@@ -2,7 +2,7 @@
 
 ## Current state (updated 2026-06-14)
 
-Fully functional production DBA toolkit. The repo has a category-first layout: `sql/` for SQL scripts, `powershell/` for orchestrators and automation, `powershell/runners/` for the browser UI entry point, and `docs/ops/` for operational runbooks and change templates.
+Fully functional production DBA toolkit. The repo has a category-first layout: `sql/` for SQL scripts, `powershell/` for wrappers, orchestrators, and automation (categories mirror `sql/`), and `docs/ops/` for operational runbooks and change templates.
 
 **What is complete:**
 - SQL diagnostic layer — 80+ scripts across monitoring, performance, ha-dr, backups, security, maintenance, migration
@@ -56,6 +56,7 @@ For each SQL script in `sql/`: add an inline `README` or blog entry covering:
 
 | Date | Item |
 |------|------|
+| 2026-06-15 | Moved thin wrappers to `powershell/wrappers/<cat>/` — clean separation from orchestrators; PSScriptRoot depth 3 levels; all tooling and docs updated |
 | 2026-06-14 | Repo restructure — category-first layout: `sql/`, `powershell/`, `powershell/runners/`, `docs/ops/`; all path references updated across 132+ files |
 | 2026-06-05 | `wrappers/` top-level folder — 81 thin PS wrappers separated from `powershell/`, mirrors `sql/` category structure |
 | 2026-06-05 | Phase 2 PS standards — `.NOTES` block (ScriptType, TargetScope, RiskLevel, Purpose) added to all remaining non-compliant PS scripts |

@@ -90,21 +90,21 @@ Each collector pairs a `.sql` query with a PowerShell orchestrator (`Collect-*.p
 | `web-ui/Start-WebUi.ps1` | Local web interface for browsing scripts and visualising CSV output |
 | `web-ui/Restart-WebUi.ps1` | Restarts the UI server |
 | `web-ui/Generate-ScriptIndex.ps1` | Regenerates `docs/script-index.md` from script headers |
-| `powershell/runners/` | Thin PS wrappers — one per SQL script; **presence here is what makes a script appear in the web UI** |
+| `powershell/wrappers/` | Thin PS wrappers — one per SQL script; **presence here is what makes a script appear in the web UI** |
 
-### `powershell/runners/` — Thin PS wrappers
+### `powershell/wrappers/` — Thin PS wrappers
 
-One wrapper per SQL script. Each wrapper resolves the repo root (three levels up), locates its matching `.sql` file, and delegates to `tools/local-sql/Invoke-RepoSql.ps1`. Categories mirror `sql/` and `sql/migration/`.
+One wrapper per SQL script. Each wrapper resolves the repo root (three levels up), locates its matching `.sql` file, and delegates to `tools/local-sql/Invoke-RepoSql.ps1`. Category names mirror `sql/`.
 
 | Folder | Wraps |
 |--------|-------|
-| `wrappers/monitoring/` | All `monitoring/` scripts |
-| `wrappers/performance/` | All `performance/` scripts |
-| `wrappers/backups/` | All `backups/` scripts |
-| `wrappers/security/` | All `security/` scripts |
-| `wrappers/migration/` | All `migration/sql/` Get-* scripts |
-| `wrappers/ha-dr/` | All `ha-dr/` scripts |
-| `wrappers/maintenance/` | `maintenance/` Get-* scripts |
+| `powershell/wrappers/monitoring/` | All `sql/monitoring/` scripts |
+| `powershell/wrappers/performance/` | All `sql/performance/` scripts |
+| `powershell/wrappers/backups/` | All `sql/backups/` scripts |
+| `powershell/wrappers/security/` | All `sql/security/` scripts |
+| `powershell/wrappers/migration/` | All `sql/migration/` Get-* scripts |
+| `powershell/wrappers/ha-dr/` | All `sql/ha-dr/` scripts |
+| `powershell/wrappers/maintenance/` | `sql/maintenance/` Get-* scripts |
 
 ---
 
@@ -137,8 +137,8 @@ SQL templates, change orders, checklists, and runbooks for planned DBA work.
 
 **New SQL script:** `sql/<category>/Get-Something.sql` — use the standard header from `CLAUDE.md`.
 
-**New PS wrapper:** Copy any existing wrapper from `powershell/runners/<category>/`, update the SQL path and description. Use `$PSScriptRoot '..\..\..'` — wrappers are three levels from root. The wrapper must exist for the script to appear in the web UI.
+**New PS wrapper:** Copy any existing wrapper from `powershell/wrappers/<category>/`, update the SQL path and description. Use `$PSScriptRoot '..\..\..'` — wrappers are three levels from root. The wrapper must exist for the script to appear in the web UI.
 
-**New unique PS script:** Add to `powershell/<subfolder>/`. Use `$PSScriptRoot '..\..\..'` to resolve the repo root.
+**New unique PS script:** Add to `powershell/<subfolder>/`. Use `$PSScriptRoot '..\..'` to resolve the repo root.
 
 **New collector:** Follow the pattern in any existing `powershell/collectors/<name>/` — one `.sql`, one `Collect-*.ps1`, one `README.md` with SQL Agent T-SQL.

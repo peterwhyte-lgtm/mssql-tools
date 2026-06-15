@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-Root launcher for DBA helper scripts. Fuzzy name match across sql/, powershell/, and powershell/runners/.
+Root launcher for DBA helper scripts. Fuzzy name match across sql/ and powershell/.
 
 .DESCRIPTION
 Finds and runs any script in the repo by name (partial match accepted).
@@ -72,16 +72,6 @@ if ($List -or -not $ScriptName) {
                    Sort-Object Name
         if ($scripts.Count -gt 0) {
             Write-Host "  powershell/$($folder.Name)/" -ForegroundColor Yellow
-            $scripts | ForEach-Object { Write-Host "    $($_.BaseName)" -ForegroundColor DarkGray }
-            Write-Host ''
-        }
-    }
-
-    $wrRoot = Join-Path $repoRoot 'powershell\runners'
-    foreach ($folder in (Get-ChildItem $wrRoot -Directory -ErrorAction SilentlyContinue | Sort-Object Name)) {
-        $scripts = Get-ChildItem $folder.FullName -Filter '*.ps1' -ErrorAction SilentlyContinue | Sort-Object Name
-        if ($scripts.Count -gt 0) {
-            Write-Host "  powershell/runners/$($folder.Name)/" -ForegroundColor DarkGray
             $scripts | ForEach-Object { Write-Host "    $($_.BaseName)" -ForegroundColor DarkGray }
             Write-Host ''
         }
