@@ -1,4 +1,4 @@
-﻿# uninstall-ssms.ps1 — Silently uninstall SQL Server Management Studio
+# uninstall-ssms.ps1 — Silently uninstall SQL Server Management Studio
 #
 # SSMS 17-20  : WiX installer — reads UninstallString, appends /uninstall /quiet /norestart
 # SSMS 22+    : VS Installer  — uses vswhere to find productId, runs setup.exe uninstall -q
