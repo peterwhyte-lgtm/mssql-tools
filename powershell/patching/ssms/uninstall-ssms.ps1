@@ -1,7 +1,7 @@
 # uninstall-ssms.ps1 — Silently uninstall SQL Server Management Studio
 #
 # SSMS 17-20  : WiX installer — reads UninstallString, appends /uninstall /quiet /norestart
-# SSMS 22+    : VS Installer  — uses vswhere to find productId, runs setup.exe uninstall -q
+# SSMS 21+    : VS Installer  — uses vswhere to find productId, runs setup.exe uninstall -q
 #               winget is tried as a fallback if vswhere fails
 #
 # Parameters:
@@ -84,13 +84,13 @@ foreach ($entry in $ssmsEntries) {
     Write-DbaLog "Found : $name  v$version" 'White'
 
     if ($WhatIf) {
-        $method = if ($major -ge 22) { 'VS Installer CLI or winget' } else { 'WiX /uninstall /quiet /norestart' }
+        $method = if ($major -ge 21) { 'VS Installer CLI or winget' } else { 'WiX /uninstall /quiet /norestart' }
         Write-DbaLog "  [WhatIf] Would uninstall '$name' via $method." 'Yellow'
         continue
     }
 
     if (-not $Force) {
-        $answer = Read-Host "  Uninstall '$name' v$version now? (yes/no)"
+        $answer = (Read-Host "  Uninstall '$name' v$version now? (yes/no)").Trim()
         if ($answer -notmatch '^(yes|y)$') {
             Write-DbaLog '  Skipped by user.' 'Yellow'
             continue
@@ -108,7 +108,7 @@ foreach ($entry in $ssmsEntries) {
             $forceClose = $true
         }
         else {
-            $closeAnswer = Read-Host "  Force close SSMS before uninstalling? (yes/no)"
+            $closeAnswer = (Read-Host "  Force close SSMS before uninstalling? (yes/no)").Trim()
             if ($closeAnswer -notmatch '^(yes|y)$') {
                 Write-DbaLog "  Skipped — close SSMS manually and re-run." 'Yellow'
                 continue
@@ -117,8 +117,8 @@ foreach ($entry in $ssmsEntries) {
         }
     }
 
-    # ── SSMS 22+ (Visual Studio Installer) ───────────────────────────────────
-    if ($major -ge 22) {
+    # ── SSMS 21+ (Visual Studio Installer) ───────────────────────────────────
+    if ($major -ge 21) {
         Write-DbaLog "  Uninstalling '$name'..." 'Cyan'
         $uninstalled = $false
         $forceFlag   = if ($forceClose) { ' --force' } else { '' }
