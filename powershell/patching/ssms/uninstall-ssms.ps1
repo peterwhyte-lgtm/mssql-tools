@@ -279,6 +279,8 @@ foreach ($entry in $ssmsEntries) {
     $script:anyAttempted = $true
     $script:attemptedNames.Add($name)
     Write-DbaLog "  Uninstalling '$name'..." 'Cyan'
+    Write-DbaLog "  Running: $exePath $finalArgs" 'DarkGray'
+    $wixOk = $false
     try {
         $proc = Start-Process -FilePath $exePath -ArgumentList $finalArgs -PassThru
         $sw   = [System.Diagnostics.Stopwatch]::StartNew()
@@ -288,13 +290,36 @@ foreach ($entry in $ssmsEntries) {
         }
         Write-Host ''
         switch ($proc.ExitCode) {
-            0    { Write-DbaLog '  Uninstall completed.' 'Green' }
-            3010 { Write-DbaLog '  Uninstall completed - reboot required.' 'Yellow' }
-            default { Write-DbaLog "  Uninstall exited with code $($proc.ExitCode) - verify manually." 'Yellow' }
+            0    { Write-DbaLog '  Uninstall completed.' 'Green'; $wixOk = $true }
+            3010 { Write-DbaLog '  Uninstall completed - reboot required.' 'Yellow'; $wixOk = $true }
+            1626 { Write-DbaLog "  Exit 1626 - Package Cache likely corrupt or missing. Trying winget..." 'Yellow' }
+            default { Write-DbaLog "  Uninstall exited with code $($proc.ExitCode) - trying winget fallback..." 'Yellow' }
         }
     }
     catch {
         Write-DbaLog "  ERROR during uninstall: $($_.Exception.Message)" 'Red'
+    }
+
+    if (-not $wixOk) {
+        $winget = Get-Command winget.exe -ErrorAction SilentlyContinue
+        if ($winget) {
+            $wingetAttempts = @(
+                @('uninstall', '--id',   'Microsoft.SQLServerManagementStudio',   '-e', '--silent', '--accept-source-agreements'),
+                @('uninstall', '--name', "`"$name`"",                              '-e', '--silent', '--accept-source-agreements')
+            )
+            foreach ($wingetArgs in $wingetAttempts) {
+                $wp = Start-Process -FilePath $winget.Source -ArgumentList $wingetArgs -Wait -PassThru -NoNewWindow
+                if ($wp.ExitCode -in 0, 3010) {
+                    Write-DbaLog '  Uninstall completed via winget.' 'Green'
+                    $wixOk = $true
+                    break
+                }
+            }
+        }
+        if (-not $wixOk) {
+            Write-DbaLog '  Uninstall failed - remove manually via Settings -> Apps or:' 'Red'
+            Write-DbaLog "    winget uninstall --name `"$name`" -e" 'DarkGray'
+        }
     }
 }
 
