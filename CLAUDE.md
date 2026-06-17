@@ -1,27 +1,52 @@
 ﻿# CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file is the working operating guide for this repository.
 
-## What this repo is
+## Purpose
 
-A production SQL Server DBA toolkit for Peter Whyte (sqldba.blog). It contains read-only diagnostic SQL scripts, PowerShell orchestration wrappers, a healthcheck collection and review workflow, security audit scripts, and migration inventory helpers. All scripts target SQL Server 2012+. Output goes to `output-files/`.
+This repo is a production SQL Server DBA toolkit for Peter Whyte (sqldba.blog). Its job is to help a DBA investigate, troubleshoot, review, and safely operate SQL Server environments.
 
-This repository is **not** a collection of scripts — it is an operational toolkit for managing SQL Server estates. Everything fits into one of three layers:
+The repo is built around three core ideas:
 
-1. **SQL layer** — DMV queries, performance analysis, configuration inspection, backup validation, blocking/locking analysis
-2. **PowerShell layer** — automation across servers, execution of SQL at scale, scheduling, orchestration, reporting, environment-level operations
-3. **Hybrid layer** — PowerShell executes SQL scripts, results collected, transformed, and reported; operational workflows (backup checks, inventory, monitoring)
+1. **Scripts first** — the repo exists to provide usable DBA tooling.
+2. **Run it directly when possible** — scripts should be understandable and runnable in isolation.
+3. **Docs and outputs matter** — the repo should explain what a script does, what it returns, and what to do next.
 
-## Core principles
+The web UI is useful, especially for health checks and discovery, but it is not the primary definition of the repo. The main value is still the scripts, the workflow, and the operational guidance.
 
-- Do **not** change business logic unless required for correctness or safety
-- Preserve intent of all scripts
-- Prioritise production safety over clever optimisation
-- Avoid overengineering
+## Operating rules
+
+These rules apply across the repo:
+
+- Prefer scripts that can be run from the repo **and** copied/pasted into a normal DBA workflow.
+- Default to `.` / localhost unless a server is explicitly supplied.
+- Preserve the intent of the script; do not change logic unless needed for safety, correctness, or readability.
+- Prefer deterministic, readable, production-safe logic over clever shortcuts.
+- Document purpose, permissions, expected output, and when **not** to use a script.
+- Keep script docs and script behavior aligned so the output is trustworthy.
+- Treat `output-files/` as generated runtime output, not permanent source content.
+- Keep scripts easy to understand in isolation, even if the repo provides wrappers or launchers.
+- Treat multi-server tooling as optional convenience, not as the main model for every script.
+- Avoid overengineering and avoid adding complexity that hides operational intent.
+
+## Naming and classification
+
+- Prefer script names that describe the operational outcome first.
+- Use one primary category per script or post.
+- If a script is strong enough for a blog post, document it in a way that explains the problem, the output, and the DBA takeaway.
+- Prefer one clear post per concept; avoid duplicating similar material.
 
 ## How to run scripts
 
-The three entry points, in order of preference:
+Use the simplest path that preserves clarity:
+
+- a script should be runnable directly from the repo
+- a script should also be easy to copy/paste into a DBA workflow
+- if a script targets a specific server, the script or wrapper should make that explicit
+- the output should be understandable even without the web UI
+- another DBA should be able to explain the script confidently during troubleshooting
+
+The preferred entry points are:
 
 ```powershell
 # 1. Root launcher — fuzzy name match, searches sql/ and powershell/
@@ -63,6 +88,101 @@ Migration DDL generators:
 .\powershell\migration\Generate-UserMappingScript.ps1
 # Output: output-files\migration\*.sql
 ```
+
+## Blog / content guidance
+
+Scripts that merit a blog post should follow a practical, reader-focused structure rather than a generic template dump. The goal is to explain the operational value of the script, not just paste SQL.
+
+The repo should also reflect the intended blog taxonomy so that scripts and posts can be organized consistently over time, while keeping the main repo focused on usable DBA tooling.
+
+### Blog category framework
+
+Use the following primary categories when deciding where a script or post belongs:
+
+1. **Core DBA operations**
+   - performance
+   - monitoring
+   - maintenance
+   - backup-recovery
+   - security
+   - high-availability
+   - migration-upgrades
+   - troubleshooting
+2. **Production operations**
+   - incident-response
+   - capacity-planning
+   - change-management
+   - data-integrity
+   - auditing-compliance
+3. **Engineering & architecture**
+   - data-architecture
+   - diagnostics
+   - environment-setup
+   - automation
+4. **Script ecosystem**
+   - scripts
+5. **Experimental & learning**
+   - labs
+6. **Meta / system thinking**
+   - engineering-notes
+   - ai-systems
+7. **Personal / optional**
+   - life-work
+8. **Future extensions**
+   - cloud (inactive unless needed)
+
+This framework is mainly an internal reference model for repo organization and content planning. It does not need to be exposed in a rigid way to every user, but it should guide how scripts and docs are classified and how future content is prioritized.
+
+### Script post standard (for blog-worthy scripts)
+
+Use the following structure when a script is worth publishing as a post:
+
+- **Overview** — what the script does, what problem it solves, when to use it
+- **Why This Matters** — real production impact, what breaks without visibility, why DBAs care
+- **What The Script Returns** — what the output tells you, without dumping SQL
+- **SQL Script** — the full production-ready script, clearly labeled and runnable
+
+### How to choose a primary category
+
+When a script is added or updated, choose the single best primary category based on its main operational intent:
+
+- Use the category that best matches the main question the script answers
+- If the script is primarily about investigation, use the category that matches the investigation area
+- If the script is primarily about execution or automation, use the category that matches the operational workflow it supports
+- If the script is mainly a reusable utility, classify it based on the practical DBA task it helps with, not the implementation detail
+
+A script should not be spread across multiple categories just because it touches several topics.
+
+### Title rules
+
+Use one of these patterns only:
+- Get [Thing] for SQL Server
+- Check [Thing] in SQL Server
+- Analyze [Thing] in SQL Server
+- Find [Thing] in SQL Server
+- SQL Server [Thing] Overview (rare cases only)
+
+### Content rules
+
+- Do not duplicate a blog post if a similar script already covers the same operational idea
+- Prefer one authoritative post per concept; if two scripts overlap, consolidate or clarify the distinction
+- Use the repo path to point to the real script location
+- Keep the post practical, not promotional, and focused on DBA outcomes
+- For similar concepts, prefer a clear distinction such as summary vs detailed drill-down (for example, a high-level summary script and a deeper script should be explained separately)
+- When a script is created or refined, classify it under the most appropriate primary category and keep that classification consistent across repo docs and any related post material
+- Treat the repo script as the operational artifact and the blog post as the explanatory artifact; they are related, but they are not the same thing
+
+### Additional recommendations
+
+- Add a short note to new scripts explaining what problem they solve, what permissions they need, and when not to use them
+- Prefer clear names that describe the DBA outcome, not just the internal implementation path
+- Keep the script and its surrounding documentation aligned so a reader can understand both the purpose and the expected output
+- If a script is likely to be used often, favour a stable, readable interface over clever shortcuts
+- Use the repo taxonomy to guide future planning, but do not let taxonomy become a barrier to practical action
+- Aim for scripts that are safe to review quickly by another DBA during an incident
+- Prefer defaults that reduce surprise and avoid hidden environment assumptions
+- Where a script is likely to be reused, make the expected inputs and outputs obvious from the script name and surrounding comments
+- When in doubt, choose the version that is easier to understand, debug, and explain under pressure
 
 ## Layout
 
