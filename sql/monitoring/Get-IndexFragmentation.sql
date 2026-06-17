@@ -3,8 +3,6 @@ Script Name : Get-IndexFragmentation
 Category    : maintenance-and-reliability
 Purpose     : Top fragmented indexes across all user databases, ranked by fragmentation pct.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Medium
 Requires    : VIEW SERVER STATE
 Notes       : Iterates every online user database and collects into a single result set.
               Uses LIMITED scan mode — faster than SAMPLED/DETAILED but still proportional
@@ -12,9 +10,9 @@ Notes       : Iterates every online user database and collects into a single res
               Indexes under 1000 pages are excluded; fragmentation threshold is 10%.
               Run off-peak where possible.
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Medium
+SET NOCOUNT ON;
 -- Fixes : sql\maintenance\Generate-IndexMaintenanceScript.sql
 
 CREATE TABLE #frag (

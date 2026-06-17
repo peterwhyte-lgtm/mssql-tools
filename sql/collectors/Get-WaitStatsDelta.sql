@@ -7,13 +7,11 @@ Purpose     : Computes interval wait deltas between the two most recent snapshot
               by heaviest waiter descending. Detects SQL Server restarts between
               snapshots and suppresses invalid deltas.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : SELECT on [DBAMonitor].[collector].[WaitStats]
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 -- ── Parameters ────────────────────────────────────────────────────────────────
 DECLARE @TargetDatabase sysname       = N'DBAMonitor';

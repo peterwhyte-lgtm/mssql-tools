@@ -6,6 +6,7 @@ Shows when each user database last had a successful DBCC CHECKDB.
 ScriptType   : hybrid
 TargetScope  : single server
 RiskLevel    : SAFE
+Purpose      : Show when each user database last had a successful DBCC CHECKDB run.
 
 .PARAMETER ServerInstance
 SQL Server instance to query. Defaults to '.'.

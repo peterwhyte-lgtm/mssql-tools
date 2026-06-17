@@ -8,14 +8,12 @@ Purpose     : Generates DDL to create the DBA - Collect TempDB SQL Agent job.
               (row_type = 'session') in a single table using the row_type discriminator.
               Edit parameters, review output, then run on the target instance.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : sysadmin (to run generated DDL); VIEW SERVER STATE, VIEW DATABASE STATE at job runtime
 Notes       : Default interval: every 10 minutes.
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 -- ── Parameters ────────────────────────────────────────────────────────────────
 DECLARE @TargetDatabase  sysname       = N'DBAMonitor';   -- created if absent

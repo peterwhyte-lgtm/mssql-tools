@@ -3,14 +3,12 @@ Script Name : Get-RecentErrorLogEntries
 Category    : maintenance-and-reliability
 Purpose     : Show SQL Server error log entries from the last 24 hours, filtering routine noise.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW SERVER STATE (xp_readerrorlog; sysadmin in practice for most instances)
 HealthCheck : Yes
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 IF OBJECT_ID('tempdb..#error_log') IS NOT NULL DROP TABLE #error_log;
 

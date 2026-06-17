@@ -3,15 +3,13 @@ Script Name : Get-IndexUsageStats
 Category    : performance-troubleshooting
 Purpose     : Show how indexes across all user databases are being used — seeks, scans, lookups, updates.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW SERVER STATE, VIEW ANY DATABASE
 Notes       : Usage counters reset on SQL Server restart. High user_updates with low reads =
               candidate for removal. high user_scans = possible missing index on that table.
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 SELECT
     DB_NAME(ius.database_id)                                                AS database_name,

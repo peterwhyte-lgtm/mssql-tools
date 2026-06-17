@@ -7,8 +7,6 @@ Purpose     : Generates DDL to create the DBA - Collector Alert SQL Agent job.
               (causing the step to fail and triggering Agent notification routing).
               Edit parameters, review output, then run on the target instance.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : sysadmin (to run generated DDL); SELECT on [DBAMonitor].[collector].* at job runtime
 Notes       : Thresholds match Invoke-CollectorAlert.ps1:
                 wait-stats  PAGEIOLATCH_* >40% CRITICAL / >20% WARNING
@@ -20,9 +18,9 @@ Notes       : Thresholds match Invoke-CollectorAlert.ps1:
                 db-growth   AT_LIMIT CRITICAL / NEAR_LIMIT WARNING
                 vlf-count   >10000 CRITICAL / >1000 WARNING
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 -- ── Parameters ────────────────────────────────────────────────────────────────
 DECLARE @TargetDatabase  sysname       = N'DBAMonitor';

@@ -5,13 +5,11 @@ Purpose     : CDC (Change Data Capture) and Change Tracking enabled databases wi
               cleanup settings, and latency indicators. Both features impact transaction log
               growth and can stall if cleanup jobs are absent or delayed.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW ANY DATABASE, VIEW SERVER STATE, SELECT on msdb
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 -- CDC: database-level enablement (from sys.databases) plus cleanup job presence
 SELECT

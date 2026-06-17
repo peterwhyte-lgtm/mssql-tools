@@ -3,17 +3,15 @@ Script Name : Get-LastDbccCheckdb
 Category    : maintenance-and-reliability
 Purpose     : Show when each user database last had a successful DBCC CHECKDB run.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW ANY DATABASE
 Notes       : Uses DATABASEPROPERTYEX('LastGoodCheckDbTime') — available SQL Server 2012+.
               NULL means CHECKDB has never completed successfully on this instance for that database.
               Microsoft recommends running CHECKDB at least weekly.
 HealthCheck : Yes
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 SELECT
     d.name                                                                  AS database_name,

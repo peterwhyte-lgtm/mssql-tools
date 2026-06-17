@@ -8,14 +8,12 @@ Purpose     : Generates DDL to create the DBA - Collect Database Growth SQL Agen
               to measure growth and forecast when files will hit configured limits.
               Edit parameters, review output, then run on the target instance.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : sysadmin (to run generated DDL); VIEW ANY DATABASE, VIEW DATABASE STATE at job runtime
 Notes       : Default interval: every 60 minutes. growth_status flags AT_LIMIT / NEAR_LIMIT / UNLIMITED.
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 -- ── Parameters ────────────────────────────────────────────────────────────────
 DECLARE @TargetDatabase  sysname       = N'DBAMonitor';   -- created if absent

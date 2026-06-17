@@ -6,13 +6,11 @@ Purpose     : Per-AG, per-database failover readiness with quantified RPO and RT
               RTO = estimated seconds to drain redo queue at current redo rate.
               RPO = log send queue size (data that would be lost if primary fails now).
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW SERVER STATE, VIEW ANY DATABASE
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 IF NOT EXISTS (SELECT 1 FROM sys.availability_groups)
 BEGIN

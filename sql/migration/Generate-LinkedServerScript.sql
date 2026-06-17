@@ -4,13 +4,11 @@ Category    : migration
 Purpose     : Generate sp_addlinkedserver + sp_addlinkedsrvlogin DDL for all linked servers.
               Run on SOURCE server. Execute the output on TARGET after migration.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW ANY DEFINITION or sysadmin
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 /*
   DESIGN: Linked server login mappings with stored remote credentials cannot have passwords

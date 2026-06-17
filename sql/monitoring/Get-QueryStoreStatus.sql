@@ -4,13 +4,11 @@ Category    : monitoring
 Purpose     : Query Store enablement, fill ratio, capture mode, and health across all user databases.
               Surfaces databases where QS is off, full, or auto-switched to READ_ONLY.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW ANY DATABASE, VIEW DATABASE STATE
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 CREATE TABLE #qs_status (
     database_name            SYSNAME,

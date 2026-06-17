@@ -6,8 +6,6 @@ Purpose     : Reads autogrowth events from the SQL Server default trace.
               frequent events indicate the growth increment is too small.
               Use this to right-size initial file sizes and growth increments.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW SERVER STATE, ALTER TRACE (to read trace files)
 Notes       : Default trace rolls over; history depth depends on server activity.
               Typically covers the last few days to weeks.
@@ -15,9 +13,9 @@ Notes       : Default trace rolls over; history depth depends on server activity
               Fix: pre-size files to expected peak size and set a fixed MB growth
               increment (not percent) via ALTER DATABASE ... MODIFY FILE.
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 DECLARE @tracepath NVARCHAR(256);
 

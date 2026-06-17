@@ -6,8 +6,6 @@ Purpose     : Identifies non-clustered indexes with zero read activity but non-z
               every INSERT, UPDATE, and DELETE on the table without benefiting any query.
               Run in the context of the database you want to audit.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW SERVER STATE, VIEW DATABASE STATE
 Notes       : Usage stats reset on SQL Server restart — run only after several days
               of representative workload to avoid false positives.
@@ -17,9 +15,9 @@ Notes       : Usage stats reset on SQL Server restart — run only after several
               Review write_count vs total_reads ratio. Drop candidates: write_count
               high, total_reads = 0, and size_mb large.
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 -- SCOPE:CurrentDatabase
 
 SELECT

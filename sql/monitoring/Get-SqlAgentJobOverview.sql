@@ -3,13 +3,11 @@ Script Name : Get-SqlAgentJobOverview
 Category    : configuration-and-environment
 Purpose     : Show all SQL Agent jobs with enabled state, owner, and last run outcome.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : db_datareader on msdb
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 SELECT
     j.name                                                          AS job_name,

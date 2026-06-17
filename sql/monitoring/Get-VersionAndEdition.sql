@@ -3,14 +3,12 @@ Script Name : Get-VersionAndEdition
 Category    : configuration-and-environment
 Purpose     : Display core instance version, edition, cluster status, and patch level.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : Public (no special permissions required)
 HealthCheck : Yes
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 SELECT
     SERVERPROPERTY('MachineName') AS machine_name,

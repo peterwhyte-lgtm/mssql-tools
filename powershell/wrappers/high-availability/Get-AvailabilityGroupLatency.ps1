@@ -6,6 +6,7 @@ Shows AG replica synchronisation timing, queue sizes, and replication rates.
 ScriptType   : hybrid
 TargetScope  : single server
 RiskLevel    : SAFE
+Purpose      : Display AG replica synchronization timing, queue health, and replication rates.
 
 .PARAMETER ServerInstance
 SQL Server instance to query. Defaults to '.'.

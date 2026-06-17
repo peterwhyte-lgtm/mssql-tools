@@ -3,15 +3,13 @@ Script Name : Get-DeadlockSummary
 Category    : performance-troubleshooting
 Purpose     : Show recent deadlock events from the system_health XEvent ring buffer.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW SERVER STATE
 Notes       : Ring buffer holds recent events only (typically last 30–60 min). For full
               history, query the system_health .xel files directly in SSMS.
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 WITH ring_buffer AS (
     SELECT

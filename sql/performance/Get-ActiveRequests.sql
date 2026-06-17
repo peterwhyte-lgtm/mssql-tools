@@ -7,13 +7,11 @@ Purpose     : Point-in-time snapshot of all active requests — sessions with a
               current executing statement. Excludes idle sessions and the
               diagnostic session itself.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW SERVER STATE
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 SELECT
     r.session_id,

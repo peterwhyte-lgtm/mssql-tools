@@ -6,6 +6,7 @@ Identifies stale, low-sample, and never-updated statistics in a user database.
 ScriptType   : hybrid
 TargetScope  : single server
 RiskLevel    : SAFE
+Purpose      : Identifies stale, low-sample, and never-updated statistics in the current database.
 
 .DESCRIPTION
 Wraps sql\performance\Get-StatisticsHealth.sql. Statistics are per-database — pass

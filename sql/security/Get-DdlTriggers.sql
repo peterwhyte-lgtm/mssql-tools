@@ -5,13 +5,11 @@ Purpose     : Server-level DDL triggers. These fire on schema changes (CREATE/AL
               and are often unknown to incoming DBAs. Can block DDL, audit changes, or
               enforce naming conventions — a hidden dependency on inherited servers.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW ANY DEFINITION
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 SELECT
     t.name                                          AS trigger_name,

@@ -9,15 +9,13 @@ Purpose     : Generates DDL to create the DBA - Collect Index Fragmentation SQL 
               Indexes smaller than 100 pages and heaps are excluded.
               Edit parameters, review output, then run on the target instance.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low — SAMPLED mode; avoid scheduling during peak hours
 Requires    : sysadmin (to run generated DDL); VIEW DATABASE STATE per database at job runtime
 Notes       : Default schedule: weekly, Saturday at 01:00.
               Thresholds: >=30% REBUILD, 10-29% REORGANIZE, <10% NONE.
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 -- ── Parameters ────────────────────────────────────────────────────────────────
 DECLARE @TargetDatabase  sysname       = N'DBAMonitor';   -- created if absent

@@ -6,6 +6,7 @@ Pre-CHECKDB readiness: database states, recovery models, and last backup times.
 ScriptType   : hybrid
 TargetScope  : single server
 RiskLevel    : SAFE
+Purpose      : Pre-check database readiness and configuration for integrity validation runs.
 
 .PARAMETER ServerInstance
 SQL Server instance to query. Defaults to '.'.

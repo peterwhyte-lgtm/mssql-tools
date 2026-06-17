@@ -6,17 +6,15 @@ Purpose     : Generates ALTER INDEX REBUILD / REORGANIZE statements for fragment
               maintenance_statement column in a maintenance window.
               Does not execute any maintenance — read-only.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Medium  (LIMITED scan iterates all databases; run off-peak)
 Requires    : VIEW SERVER STATE
 Notes       : REBUILD threshold >= 30 pct, REORGANIZE 10-29 pct.
               Indexes under 1000 pages excluded — fragmentation is not meaningful below this.
               ONLINE = ON requires Enterprise or Developer edition.
               Remove the WITH (ONLINE = ON) clause when running on Standard edition.
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Medium
+SET NOCOUNT ON;
 
 DECLARE @rebuild_pct  DECIMAL(5,1) = 30.0;  -- >= this %  → REBUILD
 DECLARE @reorg_pct    DECIMAL(5,1) = 10.0;  -- >= this %  → REORGANIZE

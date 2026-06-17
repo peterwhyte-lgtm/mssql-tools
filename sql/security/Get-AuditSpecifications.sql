@@ -7,13 +7,11 @@ Purpose     : SQL Server Audit objects and specifications with compliance gap an
               Surfaces missing critical action groups (FAILED_LOGIN_GROUP, privilege changes)
               and database-level audit specifications across all user databases.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW ANY DATABASE, VIEW ANY DEFINITION, CONTROL SERVER
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 CREATE TABLE #audit_info (
     result_type         NVARCHAR(30),

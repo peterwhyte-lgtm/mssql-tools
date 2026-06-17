@@ -1,18 +1,16 @@
-﻿/*
+/*
 Script Name : Get-LinkedServerSecurity
 Category    : security
 Purpose     : Lists linked servers with their security context — how local logins are
               mapped to remote logins. Catch-all mappings with stored credentials are
               the highest-risk configuration.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW ANY DEFINITION or sysadmin
 HealthCheck : Yes
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 /*
   DESIGN: sys.linked_logins contains one row per mapping. A NULL local_login_name

@@ -3,13 +3,11 @@ Script Name : Generate-AgentJobScript
 Category    : migration
 Purpose     : Generate sp_add_job DDL to recreate all SQL Agent jobs on the target server.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : SQLAgentUserRole in msdb (or sysadmin)
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 DECLARE @ddl  NVARCHAR(MAX) = N'';
 DECLARE @crlf NCHAR(2)      = CHAR(13) + CHAR(10);

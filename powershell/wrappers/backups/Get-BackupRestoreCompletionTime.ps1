@@ -6,6 +6,7 @@ Monitors active backup and restore operations with estimated completion time.
 ScriptType   : hybrid
 TargetScope  : single server
 RiskLevel    : SAFE
+Purpose      : Monitor active backup and restore operations with estimated completion time.
 
 .PARAMETER ServerInstance
 SQL Server instance to query. Defaults to '.'.

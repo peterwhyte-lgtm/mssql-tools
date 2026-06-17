@@ -6,13 +6,11 @@ Purpose     : LSN continuity analysis for each user database. Verifies the log b
               means point-in-time restore is impossible for that window — coverage scripts
               only check recency, not continuity. Also surfaces damaged backup sets.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : SELECT on msdb, VIEW ANY DATABASE
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 WITH
 last_full AS (

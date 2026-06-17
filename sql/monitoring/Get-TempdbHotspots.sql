@@ -3,13 +3,11 @@ Script Name : Get-TempdbHotspots
 Category    : maintenance-and-reliability
 Purpose     : Identify sessions consuming the most TempDB space for contention and spill triage.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW SERVER STATE
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 SELECT
     ssu.session_id,

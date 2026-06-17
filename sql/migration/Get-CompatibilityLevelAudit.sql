@@ -3,13 +3,11 @@ Script Name : Get-CompatibilityLevelAudit
 Category    : migration
 Purpose     : Lists all user databases with current compatibility level, equivalent SQL version name, and the instance's native compatibility level. Use to plan compat level upgrades before or after migration.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW ANY DATABASE
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 DECLARE @instance_major   INT      = CAST(SERVERPROPERTY('ProductMajorVersion') AS INT);
 DECLARE @instance_compat  SMALLINT =

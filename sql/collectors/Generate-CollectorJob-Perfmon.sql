@@ -8,15 +8,13 @@ Purpose     : Generates DDL to create the DBA - Collect Perfmon SQL Agent job.
               connections, locks, plan cache). Rate counters require delta analysis.
               Edit parameters, review output, then run on the target instance.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : sysadmin (to run generated DDL); VIEW SERVER STATE at job runtime
 Notes       : Default interval: every 5 minutes.
               cntr_type column preserved: 65792 = gauge, 272696576 = cumulative rate counter.
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 -- ── Parameters ────────────────────────────────────────────────────────────────
 DECLARE @TargetDatabase  sysname       = N'DBAMonitor';   -- created if absent

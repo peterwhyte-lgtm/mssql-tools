@@ -7,8 +7,6 @@ Purpose     : Generates SQL Agent DDL to create three scheduled maintenance jobs
               DBA - Backup - Cleanup  removes old backup files based on retention policy
               Edit the parameters section, review the output, then run on the target instance.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW ANY DATABASE
 Notes       : Output requires sysadmin or SQLAgentOperatorRole on the target instance.
               The backup root path must exist on the SQL Server host before jobs first run.
@@ -18,9 +16,9 @@ Notes       : Output requires sysadmin or SQLAgentOperatorRole on the target ins
               On AGs: use @FullBackupPreference to avoid full backups on the wrong replica;
               this script backs up whatever instance it runs on.
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 -- ── Parameters ────────────────────────────────────────────────────────────────
 DECLARE @BackupRootPath    nvarchar(260) = N'D:\SQLBackups';

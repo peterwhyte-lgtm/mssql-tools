@@ -19,7 +19,7 @@ This folder contains the production-focused helpers for running SQL scripts from
 ## Example: top wait statistics
 
 ```powershell
-pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\powershell\reporting\Get-WaitStatistics.ps1
+pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\powershell\wrappers\performance\Get-WaitStatistics.ps1
 ```
 
 ## Extra high-value review wrappers

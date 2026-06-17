@@ -18,9 +18,9 @@ Purpose     : One-line description of what this returns.
 Author      : Peter Whyte (https://sqldba.blog)
 Requires    : VIEW SERVER STATE
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 ```
 
 **Block comment fields:**
@@ -30,7 +30,7 @@ SET NOCOUNT ON;
 | `Requires` | Comma-separated permissions (`VIEW SERVER STATE`, `VIEW ANY DATABASE`, `sysadmin`, etc.) |
 | `HealthCheck` | `Yes` — optional. Add only if this script runs as part of `Invoke-HealthCheckCollection.ps1`. Drives the Health Check Suite section in the web UI. Place after `Requires`. |
 
-**Inline annotations** (parsed by `Review-HealthCheckOutput.ps1` and the web UI — must appear immediately after `SET NOCOUNT ON;`):
+**Inline annotations** (parsed by `Review-HealthCheckOutput.ps1` and the web UI — placed between the closing `*/` and `SET NOCOUNT ON;`):
 
 | Annotation | Allowed values |
 |------------|---------------|
@@ -64,7 +64,7 @@ Every SQL script in `sql/` must have a matching wrapper in `powershell/wrappers/
 
 ### Blog posts
 
-A SQL script that merits a post gets a companion `blog/<slug>/index.md`. Use `blog/_template/index.md` as the starting point. Title must follow one of the approved patterns: `Get [Thing] for SQL Server`, `Check [Thing] in SQL Server`, `Analyze [Thing] in SQL Server`, `Find [Thing] in SQL Server`. Full content, category, and SEO rules are in `CLAUDE.md`.
+`blog/` is a drafting workspace — it has no public output. Scripts are documented publicly on sqldba.blog; Peter drafts in `blog/<slug>/index.md` using `blog/_template/index.md` and adds the live URL to `docs/script-catalog.md` once published. Title and content rules are in `CLAUDE.md`.
 
 ---
 

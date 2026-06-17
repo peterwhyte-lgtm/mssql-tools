@@ -8,15 +8,13 @@ Purpose     : Generates DDL to create the DBA - Collect VLF Count SQL Agent job.
               Collect daily to catch accumulation before it becomes critical.
               Edit parameters, review output, then run on the target instance.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : sysadmin (to run generated DDL); VIEW SERVER STATE, VIEW DATABASE STATE at job runtime
 Notes       : Default schedule: daily at 02:00. Requires SQL Server 2016+ (sys.dm_db_log_info).
               Thresholds: <100 OK, 100-999 MONITOR, 1000+ WARNING, 10000+ CRITICAL.
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 -- ── Parameters ────────────────────────────────────────────────────────────────
 DECLARE @TargetDatabase  sysname       = N'DBAMonitor';   -- created if absent

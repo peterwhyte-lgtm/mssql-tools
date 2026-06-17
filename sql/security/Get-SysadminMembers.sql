@@ -3,13 +3,11 @@ Script Name : Get-SysadminMembers
 Category    : security-and-permissions
 Purpose     : List members of the sysadmin fixed server role for audits and privilege review.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW ANY DATABASE
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 SELECT
     sp.name AS login_name,

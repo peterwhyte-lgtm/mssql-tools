@@ -1,18 +1,16 @@
-﻿/*
+/*
 Script Name : Get-TempDbConfiguration
 Category    : monitoring
 Purpose     : Reviews TempDB file configuration — file count, sizing parity, autogrowth
               settings, and max server memory context. Surfaces common misconfigurations
               that cause allocation contention on busy OLTP servers.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW SERVER STATE
 HealthCheck : Yes
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 /*
   DESIGN: Best practice guidance embedded in status columns:

@@ -3,13 +3,11 @@ Script Name : Get-TopIoQueries
 Category    : performance-troubleshooting
 Purpose     : Top 20 queries by total logical reads since last restart — primary I/O pressure source.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW SERVER STATE
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 SELECT TOP 20
     DB_NAME(st.dbid)                                                        AS database_name,

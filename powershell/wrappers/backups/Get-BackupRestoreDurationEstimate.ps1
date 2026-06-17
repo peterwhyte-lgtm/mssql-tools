@@ -6,6 +6,7 @@ Shows backup duration and throughput metrics from msdb for baseline planning.
 ScriptType   : hybrid
 TargetScope  : single server
 RiskLevel    : SAFE
+Purpose      : Analyze backup duration and throughput metrics from msdb for performance baseline.
 
 .PARAMETER ServerInstance
 SQL Server instance to query. Defaults to '.'.

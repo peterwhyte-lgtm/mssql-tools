@@ -3,14 +3,12 @@ Script Name : Get-DatabaseMailAndXpCmdShell
 Category    : security-and-permissions
 Purpose     : Review whether Database Mail, xp_cmdshell, and CLR are enabled for security audits.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW SERVER STATE (sysadmin to see xp_cmdshell value_in_use)
 HealthCheck : Yes
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 -- Queries sys.configurations directly — no sp_configure RECONFIGURE needed.
 
 SELECT

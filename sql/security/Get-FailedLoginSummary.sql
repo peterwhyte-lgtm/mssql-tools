@@ -8,13 +8,11 @@ Purpose     : Aggregated failed login analysis from the SQL Server error log and
               Note: SQL Server 2025 does not write 18456 events to RING_BUFFER_SECURITY_ERROR;
               xp_readerrorlog is the reliable cross-version source for login failures.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW SERVER STATE, sysadmin (for LOGINPROPERTY on other logins), EXECUTE on xp_readerrorlog
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 -- INSERT...EXEC cannot be used inside a CTE so materialise to a temp table first
 CREATE TABLE #failed_logins (

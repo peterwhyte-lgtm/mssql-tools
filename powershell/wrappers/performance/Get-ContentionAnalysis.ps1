@@ -6,6 +6,7 @@ Unified contention summary — lock waits, latch waits, TempDB allocation pressu
 ScriptType   : hybrid
 TargetScope  : single server
 RiskLevel    : SAFE
+Purpose      : Unified contention summary across lock waits, latch waits, TempDB allocation
 
 .PARAMETER ServerInstance
 SQL Server instance to query. Defaults to '.'.

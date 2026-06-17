@@ -7,15 +7,13 @@ Purpose     : Generates DDL to create the DBA - Collect Wait Stats SQL Agent job
               sys.dm_os_wait_stats is cumulative — diff adjacent snapshots for interval rates.
               Edit parameters, review output, then run on the target instance.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : sysadmin (to run generated DDL); VIEW SERVER STATE at job runtime
 Notes       : Default interval: every 15 minutes. Each run appends one snapshot batch.
               sqlserver_start_time column enables restart detection in delta analysis.
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 -- ── Parameters ────────────────────────────────────────────────────────────────
 DECLARE @TargetDatabase  sysname       = N'DBAMonitor';   -- created if absent

@@ -3,13 +3,11 @@ Script Name : Get-AvailabilityGroupLatency
 Category    : high-availability-and-disaster-recovery
 Purpose     : Display AG replica synchronization timing, queue health, and replication rates.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW SERVER STATE
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 IF SERVERPROPERTY('IsHadrEnabled') = 0
     OR NOT EXISTS (SELECT 1 FROM sys.availability_groups)

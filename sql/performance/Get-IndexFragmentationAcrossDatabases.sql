@@ -3,13 +3,11 @@ Script Name : Get-IndexFragmentationAcrossDatabases
 Category    : performance-troubleshooting
 Purpose     : Check index fragmentation details across all user databases for maintenance planning.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Medium
 Requires    : VIEW DATABASE STATE on each target database
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Medium
+SET NOCOUNT ON;
 
 DECLARE @sql NVARCHAR(MAX) = N'';
 

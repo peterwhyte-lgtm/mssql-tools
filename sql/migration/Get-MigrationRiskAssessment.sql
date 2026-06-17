@@ -3,13 +3,11 @@ Script Name : Get-MigrationRiskAssessment
 Category    : migration
 Purpose     : Pre-migration risk scan — returns categorised HIGH/MEDIUM/INFO findings for compatibility, database settings, linked server dependencies, and sizing.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW ANY DATABASE, VIEW SERVER STATE
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 DECLARE @instance_compat SMALLINT;
 SELECT @instance_compat =

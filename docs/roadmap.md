@@ -20,24 +20,26 @@ Fully functional production DBA toolkit. The repo has a category-first layout: `
 
 ## Active backlog
 
-### Phase 3 — Per-script documentation (not started)
+### Phase 3 — Script blog coverage (ongoing, Peter-driven)
 
-For each SQL script in `sql/`: add an inline `README` or blog entry covering:
-- Purpose in operational terms (not just what the columns are)
-- Example output interpretation — what does a bad result look like?
-- When **not** to use it
-- Required permissions
-- Known caveats (e.g. DMV resets on restart, AG guard behaviour)
+Per-script public documentation lives on sqldba.blog, not in the repo. For each script that merits a post:
 
-### Phase 4 — CI and quality gates (not started)
+1. Draft in `blog/<slug>/index.md` using `blog/_template/index.md`
+2. Publish to sqldba.blog
+3. Optionally add the live URL to the script's row in `docs/script-catalog.md`
 
-| Item | Notes |
-|------|-------|
-| GitHub Actions: Pester | `Invoke-Pester tests/` on push |
-| GitHub Actions: PS syntax check | `[System.Management.Automation.Language.Parser]::ParseFile()` per .ps1 |
-| GitHub Actions: markdownlint | `.markdownlint.jsonc` is present, not wired to CI |
-| SQLFluff T-SQL linting | Flag `NOLOCK`, deprecated catalog views, non-standard patterns |
-| Broken link / path checker | Catch stale cross-references in docs and wrapper SQL paths |
+The repo's internal documentation layer is the script header only (Purpose, Requires, SAFE/IMPACT annotations). Internal docs otherwise stay light and general — no per-script READMEs or sidecars.
+
+### Phase 4 — CI and quality gates (complete 2026-06-17)
+
+| Item | Status | Notes |
+|------|--------|-------|
+| GitHub Actions: Pester | ✅ | `Invoke-Pester tests/` on push — SqlPathResolution, WrapperParity, New-MultiServerScript |
+| GitHub Actions: PSScriptAnalyzer | ✅ | Covers all `.ps1` under sql/, powershell/, web-ui/, tools/ |
+| GitHub Actions: markdownlint | ✅ | `.markdownlint.jsonc` wired via ci.yaml (excludes blog/ and CLAUDE.md) |
+| GitHub Actions: SQL standards audit | ✅ | `Get-StandardsAudit.ps1 -FailsOnly` — fails CI on any FAIL status |
+| GitHub Actions: secrets scan | ✅ | gitleaks on full history |
+| SQLFluff | — | Not added — Get-StandardsAudit covers NOLOCK, deprecated views, USE, GO |
 
 ---
 
@@ -56,6 +58,8 @@ For each SQL script in `sql/`: add an inline `README` or blog entry covering:
 
 | Date | Item |
 |------|------|
+| 2026-06-17 | Phase 4 CI — SQL standards audit job added to ci.yaml; Get-StandardsAudit.ps1 updated to exit 1 on failures and validate annotation position; WrapperParity.Tests.ps1 added; blog/ role and Phase 3 definition clarified in CLAUDE.md, roadmap, and standards.md; sub-READMEs (tools/, powershell/, tools/local-sql/) updated to remove stale script references |
+| 2026-06-17 | CLAUDE.md update — SQL header standard revised: Safe/Impact removed from block comment, inline annotations moved above SET NOCOUNT ON; 146 SQL scripts, 3 doc files, CONTRIBUTING.md, and Get-StandardsAudit.ps1 updated to match; blog posts corruption fixed (40 files); repo-structure.md, standards.md, quick-start.md aligned to CLAUDE.md layout; Get-Databases.ps1 wrapper added |
 | 2026-06-15 | Moved thin wrappers to `powershell/wrappers/<cat>/` — clean separation from orchestrators; PSScriptRoot depth 3 levels; all tooling and docs updated |
 | 2026-06-14 | Repo restructure — category-first layout: `sql/`, `powershell/`, `powershell/runners/`, `docs/ops/`; all path references updated across 132+ files |
 | 2026-06-05 | `wrappers/` top-level folder — 81 thin PS wrappers separated from `powershell/`, mirrors `sql/` category structure |

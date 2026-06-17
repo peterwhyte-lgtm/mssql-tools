@@ -6,13 +6,11 @@ Purpose     : Unified contention summary across lock waits, latch waits, TempDB 
               SQL Server restart — high counts on a recently restarted instance are not
               necessarily concerning.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW SERVER STATE
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 DECLARE @min_wait_count  BIGINT = 100;   -- suppress trivial entries with fewer wait occurrences
 DECLARE @min_spinlock_collisions BIGINT = 50000;  -- only flag high-volume spinlocks

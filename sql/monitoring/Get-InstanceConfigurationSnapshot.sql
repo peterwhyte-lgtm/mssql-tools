@@ -3,13 +3,11 @@ Script Name : Get-InstanceConfigurationSnapshot
 Category    : configuration-and-environment
 Purpose     : Capture all sp_configure settings for baseline review and change tracking.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW SERVER STATE
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 SELECT
     name,

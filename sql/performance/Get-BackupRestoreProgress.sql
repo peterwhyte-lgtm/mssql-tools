@@ -3,13 +3,11 @@ Script Name : Get-BackupRestoreProgress
 Category    : performance-troubleshooting
 Purpose     : Show active backup/restore progress and estimated completion for long-running operations.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW SERVER STATE
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 SELECT 
     er.command AS command,

@@ -3,13 +3,11 @@ Script Name : Get-DatabaseInventory
 Category    : migration
 Purpose     : Inventory user databases for migration readiness — compatibility level, recovery model, state.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW ANY DATABASE
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 SELECT
     d.name AS database_name,
     d.database_id,

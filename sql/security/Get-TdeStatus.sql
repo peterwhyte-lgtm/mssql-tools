@@ -5,13 +5,11 @@ Purpose     : Transparent Data Encryption (TDE) status across all databases. Inc
               encryption state, key algorithm, encryptor type, and tempdb encryption
               side-effect awareness.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW ANY DATABASE, VIEW SERVER STATE
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 SELECT
     d.name                                              AS database_name,

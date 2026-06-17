@@ -5,14 +5,12 @@ Purpose     : Returns all explicit object- and schema-level GRANT/DENY permissio
               current database. Shows grantee, permission, object, and grantor. Run in the
               context of each user database — does not iterate across databases.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW DATABASE STATE or membership in db_securityadmin
               Run against each target database: -Database YourDatabase
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 /*
   DESIGN: sys.database_permissions covers three major classes here:

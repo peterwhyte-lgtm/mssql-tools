@@ -7,14 +7,12 @@ Purpose     : Data and log file sizes with used and free space for all online us
               The original CTE approach querying sys.master_files from master caused
               FILEPROPERTY to return NULL for other databases' files.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW ANY DATABASE
 HealthCheck : Yes
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 CREATE TABLE #sizes (
     database_name  sysname        NOT NULL,

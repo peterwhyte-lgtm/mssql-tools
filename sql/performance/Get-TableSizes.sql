@@ -5,13 +5,11 @@ Purpose     : Largest tables across all online user databases by total size (dat
               Essential for getting to know a new instance — identifies the major data consumers
               and tables most likely to impact I/O, backup times, and index maintenance windows.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW ANY DATABASE, VIEW DATABASE STATE
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 DECLARE @top_per_db INT = 20;  -- top N tables per database
 

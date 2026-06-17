@@ -6,6 +6,7 @@ Inventories logins, linked servers, and SQL Agent jobs for pre-migration review.
 ScriptType   : hybrid
 TargetScope  : single server
 RiskLevel    : SAFE
+Purpose      : Inventory logins, linked servers, and SQL Agent jobs for pre-migration reviews.
 
 .PARAMETER ServerInstance
 SQL Server instance to query. Defaults to '.'.

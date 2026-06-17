@@ -3,14 +3,12 @@ Script Name : Get-DatabaseIoUsage
 Category    : performance-troubleshooting
 Purpose     : Database I/O totals with percentage share, MB read/written, and latency breakdown.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW SERVER STATE
 HealthCheck : Yes
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 WITH io_stats AS
 (

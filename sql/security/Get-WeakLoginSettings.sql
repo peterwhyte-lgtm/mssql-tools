@@ -3,14 +3,12 @@ Script Name : Get-WeakLoginSettings
 Category    : security-and-permissions
 Purpose     : Identify SQL logins with weak security settings: policy off, expiration off, or sa enabled.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW ANY DATABASE, sysadmin to see LOGINPROPERTY details
 HealthCheck : Yes
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 SELECT
     sl.name                                                     AS login_name,

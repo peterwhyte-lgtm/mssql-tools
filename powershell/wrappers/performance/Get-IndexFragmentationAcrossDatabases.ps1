@@ -6,6 +6,7 @@ Checks index fragmentation across all user databases — run off-peak on busy in
 ScriptType   : hybrid
 TargetScope  : single server
 RiskLevel    : SAFE
+Purpose      : Check index fragmentation details across all user databases for maintenance planning.
 
 .PARAMETER ServerInstance
 SQL Server instance to query. Defaults to '.'.

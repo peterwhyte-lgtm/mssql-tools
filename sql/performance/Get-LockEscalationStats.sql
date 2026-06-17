@@ -4,13 +4,11 @@ Category    : performance
 Purpose     : Shows tables with the most lock escalations since last restart.
               Lock escalation converts row/page locks to a table lock, increasing blocking.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW SERVER STATE
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 /*
   DESIGN: sys.dm_db_index_operational_stats with NULL parameters covers all databases

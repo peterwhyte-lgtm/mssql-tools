@@ -6,13 +6,11 @@ Purpose     : Shows Availability Group replica connection modes and read-only ro
               and whether routing is configured. Returns a status row on standalone
               instances (no AG).
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW SERVER STATE
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 /*
   DESIGN: Guards against non-AG instances — returns a single NO_AG row so the script

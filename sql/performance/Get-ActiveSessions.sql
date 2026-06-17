@@ -3,14 +3,12 @@ Script Name : Get-ActiveSessions
 Category    : performance-troubleshooting
 Purpose     : Show all active user sessions with current wait type, blocking, elapsed time, and statement.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW SERVER STATE
 HealthCheck : Yes
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 SELECT
     s.session_id,

@@ -6,6 +6,7 @@ Shows MAXDOP and cost threshold for parallelism alongside current CPU topology.
 ScriptType   : hybrid
 TargetScope  : single server
 RiskLevel    : SAFE
+Purpose      : Show MAXDOP and cost threshold settings alongside current CPU topology.
 
 .PARAMETER ServerInstance
 SQL Server instance to query. Defaults to '.'.

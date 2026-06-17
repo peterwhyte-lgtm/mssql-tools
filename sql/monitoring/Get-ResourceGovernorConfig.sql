@@ -5,13 +5,11 @@ Purpose     : Resource Governor configuration — enabled state, resource pools,
               and classifier function. An active but misconfigured RG can silently throttle
               queries or starve the DBA's own sessions on an inherited server.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW SERVER STATE
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 SELECT
     c.is_enabled                                                            AS rg_enabled,

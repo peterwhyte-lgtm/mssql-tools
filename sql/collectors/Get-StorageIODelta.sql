@@ -6,13 +6,11 @@ Purpose     : Computes interval I/O deltas between the two most recent snapshots
               bytes transferred, and derived average latency for the interval.
               Detects SQL Server restarts and suppresses invalid deltas.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : SELECT on [DBAMonitor].[collector].[StorageIO]
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 -- ── Parameters ────────────────────────────────────────────────────────────────
 DECLARE @TargetDatabase sysname       = N'DBAMonitor';

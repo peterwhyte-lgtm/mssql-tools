@@ -6,6 +6,7 @@ Inventories SQL Agent jobs with owner for migration dependency checks.
 ScriptType   : hybrid
 TargetScope  : single server
 RiskLevel    : SAFE
+Purpose      : Inventory SQL Agent jobs with owner for migration dependency checks.
 
 .PARAMETER ServerInstance
 SQL Server instance to query. Defaults to '.'.

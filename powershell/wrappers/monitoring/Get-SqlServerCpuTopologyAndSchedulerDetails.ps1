@@ -6,6 +6,7 @@ CPU topology, NUMA, scheduler summary, and parallelism config in one row.
 ScriptType   : hybrid
 TargetScope  : single server
 RiskLevel    : SAFE
+Purpose      : CPU topology, NUMA layout, scheduler summary, and parallelism configuration in one row.
 
 .PARAMETER ServerInstance
 SQL Server instance to query. Defaults to '.'.

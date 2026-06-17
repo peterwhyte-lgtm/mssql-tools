@@ -9,15 +9,13 @@ Purpose     : Generates DDL to create the DBA - Collect Query Store SQL Agent jo
               runtime stats interval. Databases without QS are silently skipped.
               Edit parameters, review output, then run on the target instance.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : sysadmin (to run generated DDL); VIEW DATABASE STATE per database at job runtime
 Notes       : Default interval: every 30 minutes.
               Query Store must be enabled on each target database to collect data.
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 -- ── Parameters ────────────────────────────────────────────────────────────────
 DECLARE @TargetDatabase  sysname       = N'DBAMonitor';   -- created if absent

@@ -6,6 +6,7 @@ Active user sessions with CPU/elapsed time and current worker thread pool utilis
 ScriptType   : hybrid
 TargetScope  : single server
 RiskLevel    : SAFE
+Purpose      : Active user sessions with CPU, elapsed time, and current worker thread pool usage.
 
 .PARAMETER ServerInstance
 SQL Server instance to query. Defaults to '.'.

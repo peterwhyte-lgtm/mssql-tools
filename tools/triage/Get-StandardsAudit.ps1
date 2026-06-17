@@ -5,16 +5,17 @@
 .DESCRIPTION
     Checks every .sql file under sql/ for:
       PASS/FAIL: block comment header present
-      PASS/FAIL: required header fields (Script Name, Category, Purpose, Author, Safe, Impact)
+      PASS/FAIL: required header fields (Script Name, Category, Purpose, Author, Requires)
       PASS/FAIL: SET NOCOUNT ON
-      PASS/FAIL: -- SAFE: annotation
-      PASS/FAIL: -- IMPACT: annotation
+      PASS/FAIL: -- SAFE: annotation present and before SET NOCOUNT ON
+      PASS/FAIL: -- IMPACT: annotation present and before SET NOCOUNT ON
       WARN: WITH (NOLOCK) usage
       WARN: deprecated catalog views (sys.sysprocesses, sys.sysobjects, etc.)
       WARN: USE <database> statement (not supported by Invoke-RepoSql)
       WARN: GO batch separator (not supported by Invoke-Sqlcmd)
 
-    Useful for tracking Phase 2 compliance and finding scripts that still need work.
+    Exits with code 1 if any FAIL is found — suitable for use as a CI quality gate.
+    Useful for local compliance checks and pre-commit validation.
 
 .PARAMETER Category
     Filter to a single category folder (monitoring, performance, backups, security, migration).
@@ -49,7 +50,7 @@ $sqlRoot     = Join-Path $repoRoot 'sql'
 $migrationRoot = Join-Path $repoRoot 'sql\migration'
 
 # Required header fields
-$requiredFields = @('Script Name', 'Category', 'Purpose', 'Author', 'Safe', 'Impact')
+$requiredFields = @('Script Name', 'Category', 'Purpose', 'Author', 'Requires')
 
 # Deprecated compatibility catalog views (SQL Server 2005-era aliases for modern sys.* views).
 # Does NOT include msdb tables (sysjobs, sysjobsteps, etc.) — those are correct modern tables.
@@ -110,6 +111,18 @@ $results = foreach ($file in $sqlFiles) {
     }
     if ($content -notmatch '(?m)^-- IMPACT:') {
         $fails.Add('no -- IMPACT: annotation')
+    }
+
+    # Annotations must appear before SET NOCOUNT ON
+    if ($content -match '(?m)^-- SAFE:' -and $content -match '(?m)^SET NOCOUNT ON;') {
+        if ($content.IndexOf('-- SAFE:') -gt $content.IndexOf('SET NOCOUNT ON;')) {
+            $fails.Add('-- SAFE: must appear before SET NOCOUNT ON')
+        }
+    }
+    if ($content -match '(?m)^-- IMPACT:' -and $content -match '(?m)^SET NOCOUNT ON;') {
+        if ($content.IndexOf('-- IMPACT:') -gt $content.IndexOf('SET NOCOUNT ON;')) {
+            $fails.Add('-- IMPACT: must appear before SET NOCOUNT ON')
+        }
     }
 
     # ── WARN checks ───────────────────────────────────────────────────────────
@@ -192,3 +205,5 @@ if ($OutputFormat -eq 'Csv') {
         Write-Host ""
     }
 }
+
+if ($failing -gt 0) { exit 1 }

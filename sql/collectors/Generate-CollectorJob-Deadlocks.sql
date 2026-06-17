@@ -9,15 +9,13 @@ Purpose     : Generates DDL to create the DBA - Collect Deadlocks SQL Agent job.
               already stored for this server, preventing duplicate rows.
               Edit parameters, review output, then run on the target instance.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : sysadmin (to run generated DDL); VIEW SERVER STATE at job runtime
 Notes       : Default interval: every 5 minutes.
               Full deadlock XML preserved in deadlock_xml for post-incident investigation.
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 -- ── Parameters ────────────────────────────────────────────────────────────────
 DECLARE @TargetDatabase  sysname       = N'DBAMonitor';   -- created if absent

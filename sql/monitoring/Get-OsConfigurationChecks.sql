@@ -6,14 +6,12 @@ Purpose     : DMV-accessible OS and hardware configuration checks: Lock Pages in
               Surfaces common misconfigurations invisible from inside SQL Server.
               Pair with Test-OsConfiguration.ps1 for power plan and page file checks.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW SERVER STATE
 HealthCheck : Yes
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 WITH numa_summary AS (
     SELECT

@@ -7,13 +7,11 @@ Purpose     : Exact duplicate and overlapping (prefix) indexes across all user d
               usually mean B makes A redundant. Combines with usage stats to flag duplicates
               that are also unused — the highest priority to remove.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW ANY DATABASE, VIEW DATABASE STATE
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 CREATE TABLE #idx (
     database_name       SYSNAME,

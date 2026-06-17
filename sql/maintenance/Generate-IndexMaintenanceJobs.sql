@@ -10,17 +10,15 @@ Purpose     : Generates SQL Agent DDL for:
                                         (tables that had rows modified since last update only).
               Edit the parameters section, review the output, then run on the target instance.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW ANY DATABASE, VIEW DATABASE STATE
 Notes       : Index maintenance runtime varies widely with database count and size.
               Schedule outside peak hours. On a busy 3 000-database estate, consider
               splitting the job across multiple days or server groups.
               Online rebuild requires Enterprise or Developer edition — detected at job runtime.
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 -- ── Parameters ────────────────────────────────────────────────────────────────
 DECLARE @FragReorgThreshold   decimal(5,1) = 10.0;   -- frag% >= this: REORGANIZE

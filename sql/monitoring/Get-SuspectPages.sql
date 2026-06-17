@@ -3,17 +3,15 @@ Script Name : Get-SuspectPages
 Category    : maintenance-and-reliability
 Purpose     : Show any pages recorded in msdb.dbo.suspect_pages — evidence of I/O or corruption errors.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : db_datareader on msdb
 Notes       : Any rows here indicate a serious integrity concern. Cross-reference with
               the error log and run DBCC CHECKDB immediately on the affected database.
               Entries persist until manually cleared or the database is restored clean.
 HealthCheck : Yes
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 SELECT
     DB_NAME(sp.database_id)                                         AS database_name,

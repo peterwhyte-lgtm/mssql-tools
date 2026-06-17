@@ -6,14 +6,12 @@ Purpose     : Reports last run outcome, duration, and next scheduled run for all
               Use after deploying the maintenance framework to confirm jobs are
               running on schedule and not failing silently.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : SQLAgentReaderRole or sysadmin
 HealthCheck : Yes
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 SELECT
     j.name                                                           AS job_name,

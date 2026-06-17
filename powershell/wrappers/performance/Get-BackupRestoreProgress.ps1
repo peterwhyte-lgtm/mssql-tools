@@ -6,6 +6,7 @@ Shows active backup/restore progress and estimated completion times.
 ScriptType   : hybrid
 TargetScope  : single server
 RiskLevel    : SAFE
+Purpose      : Show active backup/restore progress and estimated completion for long-running operations.
 
 .PARAMETER ServerInstance
 SQL Server instance to query. Defaults to '.'.

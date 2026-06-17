@@ -7,13 +7,11 @@ Purpose     : Generate a transaction log backup script for all online user datab
               @ts in the generated script resolves at execution time so filenames
               include the backup timestamp, not the script generation timestamp.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW ANY DATABASE
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 DECLARE @BackupPath    nvarchar(260) = N'D:\SQL-Backups';
 DECLARE @Compression   bit           = 1;

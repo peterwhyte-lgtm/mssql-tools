@@ -3,13 +3,11 @@ Script Name : Get-InstanceConfigurationScore
 Category    : monitoring
 Purpose     : Scores the SQL Server instance across ~20 key configuration checks. Returns PASS/WARN/FAIL per item with finding and recommended action. Run this first when taking ownership of a new instance.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW ANY DATABASE, VIEW SERVER STATE
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 DECLARE @max_server_memory        BIGINT  = (SELECT CAST(value_in_use AS BIGINT) FROM sys.configurations WHERE name = 'max server memory (MB)');
 DECLARE @maxdop                   INT     = (SELECT CAST(value_in_use AS INT) FROM sys.configurations WHERE name = 'max degree of parallelism');

@@ -6,6 +6,7 @@ Inventories server logins by type and status for migration and access review.
 ScriptType   : hybrid
 TargetScope  : single server
 RiskLevel    : SAFE
+Purpose      : Inventory server logins by type and status for migration and access review.
 
 .PARAMETER ServerInstance
 SQL Server instance to query. Defaults to '.'.

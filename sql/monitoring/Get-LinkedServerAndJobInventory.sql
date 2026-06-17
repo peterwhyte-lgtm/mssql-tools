@@ -3,15 +3,13 @@ Script Name : Get-LinkedServerAndJobInventory
 Category    : configuration-and-environment
 Purpose     : Inventory logins, linked servers, and SQL Agent jobs for pre-migration reviews.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW ANY DATABASE, db_datareader on msdb
 Notes       : Returns three result sets (logins, linked servers, jobs). Run in SSMS or
               use the individual focused scripts for CSV export.
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 SELECT
     'LOGIN'           AS object_type,

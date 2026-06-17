@@ -3,13 +3,11 @@ Script Name : Get-LongRunningQueries
 Category    : performance-troubleshooting
 Purpose     : Active requests with elapsed and wait details — ordered by elapsed time descending.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW SERVER STATE
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 SELECT
     r.session_id,

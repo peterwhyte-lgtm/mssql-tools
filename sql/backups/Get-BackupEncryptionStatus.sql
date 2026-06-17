@@ -5,13 +5,11 @@ Purpose     : Shows TDE status and backup encryption coverage per database. Iden
               databases where TDE is on but backups are not encrypted, or where neither
               TDE nor backup encryption is used.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW DATABASE STATE; VIEW SERVER STATE for sys.dm_database_encryption_keys
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 /*
   DESIGN: Joins sys.databases → sys.dm_database_encryption_keys (TDE state) →

@@ -6,6 +6,7 @@ Inventories linked servers for migration and connectivity dependency mapping.
 ScriptType   : hybrid
 TargetScope  : single server
 RiskLevel    : SAFE
+Purpose      : Inventory linked servers for migration and connectivity dependency mapping.
 
 .PARAMETER ServerInstance
 SQL Server instance to query. Defaults to '.'.

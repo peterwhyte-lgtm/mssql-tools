@@ -3,13 +3,11 @@ Script Name : Get-BackupRestoreCompletionTime
 Category    : backups-and-recovery
 Purpose     : Monitor active backup and restore operations with estimated completion time.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW SERVER STATE
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 SELECT
     r.command,

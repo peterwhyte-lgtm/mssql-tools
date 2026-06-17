@@ -5,13 +5,11 @@ Purpose     : Identifies stale, low-sample, and never-updated statistics in the 
               Returns the UPDATE STATISTICS command per row for direct copy-paste remediation.
               Run in the context of the target user database.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low  (OUTER APPLY on dm_db_stats_properties can be slow on very large databases)
 Requires    : VIEW DATABASE STATE
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 -- SCOPE:CurrentDatabase
 -- Fixes : the update_statement column contains the ready-to-run UPDATE STATISTICS command
 

@@ -1,42 +1,115 @@
-﻿# Script Templates
+# Script templates
 
-Use these as the standard format for new DBA scripts.
+Starting points for new scripts. See `docs/standards.md` for the full rules and `tools/scaffolding/New-Wrapper.ps1` to generate a wrapper automatically.
 
-## SQL Script Template
+---
+
+## SQL diagnostic script
 
 ```sql
--- Purpose: Describe what the script checks or fixes.
--- Use: Copy into SSMS and run against the target instance or database.
--- Prerequisites: Mention required permissions, database context, or connected instance.
--- Notes: Mention expected output, caveats, and what action the DBA should take next.
+/*
+Script Name : Get-Something
+Category    : performance
+Purpose     : One-line description of what this returns.
+Author      : Peter Whyte (https://sqldba.blog)
+Requires    : VIEW SERVER STATE
+*/
+-- SAFE:ReadOnly
+-- IMPACT:Low
+SET NOCOUNT ON;
 
 SELECT
-    1 AS example_result;
+    -- query here
 ```
 
-## Script Standards We Want to Keep
+`-- SAFE:` values: `ReadOnly` / `WritesData` / `CreatesObjects`  
+`-- IMPACT:` values: `Low` / `Medium` / `High`
 
-- Keep scripts simple and production-friendly.
-- Prefer SSMS-first SQL scripts for investigation and reporting.
-- Add brief metadata headers and safety annotations directly in the script itself.
-- Make PowerShell helpers easy to run locally without extra setup.
-- Use docs/ops/ for production-ready operational templates (runbooks, change orders, checklists) that are intentionally copy/paste friendly.
-- Keep long narrative notes in the repo docs only when they describe workflows, standards, or repo structure.
+Add `HealthCheck : Yes` (after `Requires`) if this script belongs in the daily healthcheck suite.
 
-## PowerShell Script Template
+---
+
+## PowerShell wrapper
+
+Wrappers sit at `powershell/wrappers/<category>/` — three levels from root.
 
 ```powershell
 <#
 .SYNOPSIS
-Short description of the helper.
+One-line description matching the SQL script Purpose.
 
-.DESCRIPTION
-What the script does and when to use it.
+.NOTES
+ScriptType   : hybrid
+TargetScope  : single server
+RiskLevel    : SAFE
+Purpose      : One-line description.
+
+.PARAMETER ServerInstance
+SQL Server instance to query. Defaults to '.' or $env:DBASCRIPTS_SERVER.
+
+.PARAMETER OutputFormat
+Output mode: 'Table' (default) or 'Csv'.
+
+.PARAMETER OutputPath
+Optional file path to save the output.
+
+.EXAMPLE
+.\powershell\wrappers\<category>\Get-Something.ps1
+
+.EXAMPLE
+.\powershell\wrappers\<category>\Get-Something.ps1 -ServerInstance PROD01 -OutputFormat Csv
 #>
 
 param(
-    [string]$SqlInstance = '.\\SQLSERVER'
+    [string]$ServerInstance = '.',
+    [ValidateSet('Table', 'Csv')]
+    [string]$OutputFormat   = 'Table',
+    [string]$OutputPath
 )
 
-Write-Host 'Script ready to extend.' -ForegroundColor Cyan
+$ErrorActionPreference = 'Stop'
+
+$repoRoot  = Resolve-Path (Join-Path $PSScriptRoot '..\..\..')
+$sqlScript = Join-Path $repoRoot 'sql\<category>\Get-Something.sql'
+$runner    = Join-Path $repoRoot 'tools\local-sql\Invoke-RepoSql.ps1'
+
+if (-not (Test-Path -LiteralPath $sqlScript)) { throw "SQL script not found: $sqlScript" }
+if (-not (Test-Path -LiteralPath $runner))    { throw "Runner not found: $runner" }
+
+Write-Host 'Running...' -ForegroundColor Cyan
+& $runner -ScriptPath $sqlScript -ServerInstance $ServerInstance -Database 'master' `
+          -OutputFormat $OutputFormat -OutputPath $OutputPath
+```
+
+Use `.\tools\scaffolding\New-Wrapper.ps1 -SqlPath sql\<category>\Get-Something.sql` to generate this automatically.
+
+---
+
+## PowerShell orchestrator
+
+Orchestrators sit at `powershell/<subfolder>/` — two levels from root. Use when real logic is needed beyond "run the SQL file."
+
+```powershell
+<#
+.SYNOPSIS
+One-line description.
+
+.NOTES
+ScriptType   : automation
+TargetScope  : single server
+RiskLevel    : SAFE
+Purpose      : One-line description.
+
+.PARAMETER ServerInstance
+SQL Server instance to query. Defaults to '.' or $env:DBASCRIPTS_SERVER.
+#>
+
+param(
+    [string]$ServerInstance = '.'
+)
+
+$ErrorActionPreference = 'Stop'
+
+$repoRoot = Resolve-Path (Join-Path $PSScriptRoot '..\..')
+# ... orchestration logic here
 ```

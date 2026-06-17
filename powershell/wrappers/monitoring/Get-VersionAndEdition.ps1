@@ -6,6 +6,7 @@ Shows SQL Server version, edition, patch level, and instance details.
 ScriptType   : hybrid
 TargetScope  : single server
 RiskLevel    : SAFE
+Purpose      : Display core instance version, edition, cluster status, and patch level.
 
 .PARAMETER ServerInstance
 SQL Server instance to query. Defaults to '.'.

@@ -6,6 +6,7 @@ Scores the SQL Server instance across key configuration checks — returns PASS/
 ScriptType   : hybrid
 TargetScope  : single server
 RiskLevel    : SAFE
+Purpose      : Scores the SQL Server instance across ~20 key configuration checks. Returns PASS/WARN/FAIL per item with finding and recommended action. Run this first when taking ownership of a new instance.
 
 .PARAMETER ServerInstance
 SQL Server instance to query. Defaults to '.'.

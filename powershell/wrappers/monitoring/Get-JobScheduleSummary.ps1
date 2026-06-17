@@ -6,6 +6,7 @@ Shows enabled SQL Agent jobs with their schedules and next scheduled run time.
 ScriptType   : hybrid
 TargetScope  : single server
 RiskLevel    : SAFE
+Purpose      : Show enabled SQL Agent jobs with their schedules and next scheduled run time.
 
 .PARAMETER ServerInstance
 SQL Server instance to query. Defaults to '.'.

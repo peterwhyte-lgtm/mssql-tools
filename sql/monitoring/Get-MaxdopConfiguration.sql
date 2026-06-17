@@ -3,13 +3,11 @@ Script Name : Get-MaxdopConfiguration
 Category    : configuration-and-environment
 Purpose     : Show MAXDOP and cost threshold settings alongside current CPU topology.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW SERVER STATE
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 SELECT
     (SELECT value_in_use FROM sys.configurations WHERE name = 'max degree of parallelism')     AS maxdop,

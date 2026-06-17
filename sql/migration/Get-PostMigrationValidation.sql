@@ -5,13 +5,11 @@ Purpose     : Run on both SOURCE and TARGET and compare the CSV outputs to confi
               migration is complete and consistent. Surfaces database count mismatches,
               databases not ONLINE, orphaned users, and login count deltas.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW ANY DATABASE, VIEW SERVER STATE
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 /*
   DESIGN: Returns a single summary result set with one row per check category.

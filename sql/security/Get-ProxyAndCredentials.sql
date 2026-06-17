@@ -5,13 +5,11 @@ Purpose     : Lists SQL Agent proxies and server-level credentials with their id
               and associated subsystems. Proxies that use stored credentials to run Agent
               steps under a different account are a common privilege escalation path.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW SERVER STATE; membership in sysadmin or SQLAgentOperatorRole in msdb
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 /*
   DESIGN: Two row sources unified via UNION ALL:

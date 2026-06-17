@@ -3,14 +3,12 @@ Script Name : Get-DatabaseFilesDetail
 Category    : storage-capacity-management
 Purpose     : Show per-file details for all user databases: path, size, max size, growth settings.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW ANY DATABASE
 HealthCheck : Yes
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 SELECT
     d.name                                                             AS database_name,

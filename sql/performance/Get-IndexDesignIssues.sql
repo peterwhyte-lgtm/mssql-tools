@@ -6,13 +6,11 @@ Purpose     : Tables with index design problems: excessive index count (write am
               and tables where Missing Index DMV has > 3 recommendations (optimizer giving up
               on existing index coverage). Complements Get-DuplicateIndexes.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW ANY DATABASE, VIEW DATABASE STATE
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 CREATE TABLE #issues (
     database_name       SYSNAME,

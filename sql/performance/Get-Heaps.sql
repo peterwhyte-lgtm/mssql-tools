@@ -7,8 +7,6 @@ Purpose     : Lists tables with no clustered index (heaps) across all online use
               deleted row space without a REBUILD. Common source of hidden IO pressure
               that grows silently as data volumes increase.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW DATABASE STATE (iterates each user database)
 Notes       : Small read-only lookup tables as heaps are usually acceptable.
               Prioritise by reserved_mb and forwarded_fetch_count.
@@ -18,9 +16,9 @@ Notes       : Small read-only lookup tables as heaps are usually acceptable.
               Fix: add a clustered index on the natural key, or add an identity
               column and cluster on that if no natural candidate exists.
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 CREATE TABLE #heaps (
     database_name           sysname       NOT NULL,

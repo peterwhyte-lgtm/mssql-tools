@@ -3,13 +3,11 @@ Script Name : Get-LoginInventory
 Category    : migration
 Purpose     : Inventory server logins by type and status for migration and access review.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW ANY DATABASE
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 SELECT
     sp.name AS login_name,
     sp.type_desc AS login_type,

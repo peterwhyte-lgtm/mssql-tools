@@ -5,13 +5,11 @@ Purpose     : Generate RESTORE DATABASE scripts with WITH MOVE for all online us
               Run on SOURCE server. Supply the backup path and path prefix mappings for
               data and log files before executing the output on TARGET.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW ANY DATABASE, VIEW SERVER STATE
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 /*
   DESIGN: Reads file layout from source server's sys.master_files to generate WITH MOVE

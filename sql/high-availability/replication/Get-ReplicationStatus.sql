@@ -3,13 +3,11 @@ Script Name : Get-ReplicationStatus
 Category    : high-availability
 Purpose     : Show transactional replication status for local publisher and distributor.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW SERVER STATE
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 SELECT
     s.name AS publication_db,

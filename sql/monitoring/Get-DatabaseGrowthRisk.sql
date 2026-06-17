@@ -3,14 +3,12 @@ Script Name : Get-DatabaseGrowthRisk
 Category    : storage-capacity-management
 Purpose     : Flag databases approaching their configured file size limits.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW ANY DATABASE
 HealthCheck : Yes
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 WITH db_sizes AS (
     SELECT

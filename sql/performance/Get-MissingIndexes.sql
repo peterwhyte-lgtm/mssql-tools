@@ -3,16 +3,14 @@ Script Name : Get-MissingIndexes
 Category    : performance-troubleshooting
 Purpose     : Missing index candidates from DMVs, ranked by impact score (seeks x cost x impact).
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW SERVER STATE, VIEW ANY DATABASE
 Notes       : Impact scores reset on SQL Server restart. Review carefully — DMVs suggest
               individual queries; creating every suggestion causes index bloat and write overhead.
 HealthCheck : Yes
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 -- Fixes : the suggested_statement column contains the ready-to-run CREATE INDEX command
 
 SELECT

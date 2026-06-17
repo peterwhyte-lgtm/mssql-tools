@@ -6,6 +6,7 @@ Shows recent autogrowth events from the default trace for capacity planning.
 ScriptType   : hybrid
 TargetScope  : single server
 RiskLevel    : SAFE
+Purpose      : Show recent autogrowth events from the default trace for capacity planning.
 
 .PARAMETER ServerInstance
 SQL Server instance to query. Defaults to '.'.

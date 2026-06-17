@@ -6,6 +6,7 @@ Shows sessions consuming the most TempDB space right now.
 ScriptType   : hybrid
 TargetScope  : single server
 RiskLevel    : SAFE
+Purpose      : Identify sessions consuming the most TempDB space for contention and spill triage.
 
 .PARAMETER ServerInstance
 SQL Server instance to query. Defaults to '.'.

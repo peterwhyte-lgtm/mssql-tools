@@ -6,13 +6,11 @@ Purpose     : Top queries by memory grant spills to TempDB. Spills occur when SQ
               results to disk. Invisible in wait stats — shows as TempDB I/O pressure
               or RESOURCE_SEMAPHORE waits. Requires SQL Server 2016+ (total_spills column).
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW SERVER STATE
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 IF CAST(SERVERPROPERTY('ProductMajorVersion') AS INT) < 13
 BEGIN

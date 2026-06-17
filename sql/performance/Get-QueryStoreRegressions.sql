@@ -6,13 +6,11 @@ Purpose     : Queries that regressed in the last 24 hours vs their 7-day average
               — queries running >2x slower or using >2x more CPU than their recent baseline.
               Run in the context of the target database (-Database <dbname>).
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW DATABASE STATE
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 DECLARE @regression_factor DECIMAL(5,2) = 2.0;
 DECLARE @min_executions    INT          = 5;

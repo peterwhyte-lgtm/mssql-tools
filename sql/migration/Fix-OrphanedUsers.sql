@@ -5,13 +5,11 @@ Purpose     : Generate ALTER USER statements to re-map orphaned database users t
               matching server-level logins across all user databases. Run on TARGET after
               databases are restored and logins are created.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only (generates statements — does not execute them)
-Impact      : Low
 Requires    : VIEW ANY DATABASE, VIEW SERVER STATE
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 /*
   DESIGN: After restoring databases from a source server, SQL logins are re-created with the

@@ -9,16 +9,14 @@ Purpose     : Generates SQL Agent DDL for routine housekeeping jobs:
                                       and prevent it growing unbounded (weekly)
               Edit the parameters section, review the output, then run on the target instance.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW ANY DATABASE
 Notes       : DBCC CHECKDB is resource-intensive. Schedule on a quiet period.
               On a large estate, consider reducing to monthly or running per-filegroup.
               History Cleanup deletes msdb rows permanently — retention periods are minimums.
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 -- ── Parameters ────────────────────────────────────────────────────────────────
 DECLARE @BackupHistoryDays  int           = 90;     -- backup/restore history kept this many days

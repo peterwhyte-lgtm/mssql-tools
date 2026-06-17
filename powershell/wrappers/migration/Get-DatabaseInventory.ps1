@@ -6,6 +6,7 @@ Inventories user databases for migration readiness — compatibility, recovery m
 ScriptType   : hybrid
 TargetScope  : single server
 RiskLevel    : SAFE
+Purpose      : Inventory user databases for migration readiness — compatibility level, recovery model, state.
 
 .PARAMETER ServerInstance
 SQL Server instance to query. Defaults to '.'.

@@ -5,13 +5,11 @@ Purpose     : Top queries from Query Store by CPU, duration, execution count, or
               Change @sort_by at the top to switch modes. Must run in the context of the target
               database — change the database in SSMS or pass -Database <dbname> via the PS wrapper.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW DATABASE STATE
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 DECLARE @top            INT         = 25;
 DECLARE @hours          INT         = 24;     -- look-back window in hours (0 = all history)

@@ -3,13 +3,11 @@ Script Name : Get-UserPermissionsAudit
 Category    : security-and-permissions
 Purpose     : List all SQL Server logins by type and disabled state for permissions review.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW ANY DATABASE
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 SELECT
     sp.name                                                             AS login_name,

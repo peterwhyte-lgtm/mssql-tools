@@ -3,13 +3,11 @@ Script Name : Get-JobInventory
 Category    : migration
 Purpose     : Inventory SQL Agent jobs with owner for migration dependency checks.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : db_datareader on msdb
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 SELECT
     j.name AS job_name,
     CASE WHEN j.enabled = 1 THEN 'Enabled' ELSE 'Disabled' END AS status,

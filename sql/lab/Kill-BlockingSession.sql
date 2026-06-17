@@ -5,8 +5,6 @@ Purpose     : Template for terminating a blocking session after confirming it is
               safe to do so. Always run Get-BlockingChains first to identify the
               head blocker and understand the impact before killing anything.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Writes data
-Impact      : High  *** CONFIRM SESSION ID AND INTENT BEFORE RUNNING ***
 Requires    : ALTER ANY CONNECTION (or sysadmin)
 */
 -- SAFE:WritesData

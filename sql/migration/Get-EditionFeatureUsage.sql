@@ -5,13 +5,11 @@ Purpose     : Audits Enterprise-only features in active use on this instance.
               Run before any edition downgrade (Enterprise → Standard, Standard → Web).
               Each row describes a feature, whether it is in use, and what breaks on the target edition.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW ANY DATABASE, VIEW SERVER STATE, VIEW ANY DEFINITION
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 /*
   DESIGN: Returns one row per feature category with:

@@ -3,13 +3,11 @@ Script Name : Get-BackupRestoreDurationEstimate
 Category    : backups-and-recovery
 Purpose     : Analyze backup duration and throughput metrics from msdb for performance baseline.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : db_datareader on msdb
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 SELECT
     bs.database_name,

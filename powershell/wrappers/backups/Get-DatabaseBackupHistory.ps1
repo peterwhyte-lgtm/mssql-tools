@@ -6,6 +6,7 @@ Shows detailed backup history for all databases over the last 2 months.
 ScriptType   : hybrid
 TargetScope  : single server
 RiskLevel    : SAFE
+Purpose      : Review detailed backup history for all databases over the last 2 months.
 
 .PARAMETER ServerInstance
 SQL Server instance to query. Defaults to '.'.

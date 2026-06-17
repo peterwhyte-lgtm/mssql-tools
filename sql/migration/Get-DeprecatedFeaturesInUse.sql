@@ -3,13 +3,11 @@ Script Name : Get-DeprecatedFeaturesInUse
 Category    : migration
 Purpose     : Lists deprecated SQL Server features used since the last service restart, ranked by usage count. Zero rows means no deprecated features have been called.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW SERVER STATE
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 SELECT
     pc.instance_name                                            AS deprecated_feature,

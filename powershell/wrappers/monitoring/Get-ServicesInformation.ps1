@@ -6,6 +6,7 @@ Shows SQL Server service state, startup type, and service accounts.
 ScriptType   : hybrid
 TargetScope  : single server
 RiskLevel    : SAFE
+Purpose      : SQL Server services — startup type, running status, and service account with
 
 .PARAMETER ServerInstance
 SQL Server instance to query. Defaults to '.'.

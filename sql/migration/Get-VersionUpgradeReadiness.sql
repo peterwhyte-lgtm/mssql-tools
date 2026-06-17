@@ -5,13 +5,11 @@ Purpose     : Pre-upgrade readiness summary for SQL Server version upgrades.
               Complements Get-DeprecatedFeaturesInUse.sql (feature detail) and
               Get-MigrationRiskAssessment.sql (per-database risk). Run on SOURCE.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW ANY DATABASE, VIEW SERVER STATE
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 /*
   DESIGN: Returns four result sets:

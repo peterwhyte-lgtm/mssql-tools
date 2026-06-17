@@ -3,13 +3,11 @@ Script Name : Get-LoginPermissions
 Category    : security-and-permissions
 Purpose     : Show explicit server-level permissions granted or denied to logins.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW ANY DATABASE
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 SELECT
     sp.name                                                     AS grantee,

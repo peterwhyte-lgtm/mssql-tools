@@ -7,13 +7,11 @@ Purpose     : Forced plans in Query Store with failure counts, plan age, forcing
               queries you think are protected are not.
               Run in the context of the target database (-Database <dbname>).
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW DATABASE STATE
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 IF ISNULL((SELECT actual_state_desc FROM sys.database_query_store_options), 'OFF')
    NOT IN ('READ_WRITE', 'READ_ONLY')

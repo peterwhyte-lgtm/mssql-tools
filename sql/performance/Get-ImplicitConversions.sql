@@ -6,13 +6,11 @@ Purpose     : Scans the plan cache for implicit conversion warnings. These cause
               column compared to NVARCHAR parameter, or INT column compared to VARCHAR.
               NOTE: scans plan XML — runs for 10–30 seconds on busy servers with large plan caches.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Medium
 Requires    : VIEW SERVER STATE
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Medium
+SET NOCOUNT ON;
 
 DECLARE @top INT = 50;  -- reduce if plan cache is very large
 

@@ -6,8 +6,6 @@ Purpose     : Same as Get-BlockingChains.sql with the addition of query_plan for
               extract plans to individual XML files. Plan will be NULL for idle
               head blockers (no active request) and sessions still in parse/compile.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW SERVER STATE
 
 Performance note: dm_exec_requests is materialised into #ar once to avoid
@@ -15,9 +13,9 @@ repeated DMV scans. downstream_waiters is pre-aggregated rather than computed
 via a correlated subquery. dm_exec_connections is joined only for sessions
 that have no active request (idle head blockers).
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 DROP TABLE IF EXISTS #ar;
 

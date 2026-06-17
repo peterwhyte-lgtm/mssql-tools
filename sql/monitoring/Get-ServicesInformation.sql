@@ -5,14 +5,12 @@ Purpose     : SQL Server services — startup type, running status, and service 
               risk flags. Surfaces manual/disabled startup on critical services and
               high-privilege service accounts (LocalSystem, SYSTEM, NetworkService).
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW SERVER STATE
 HealthCheck : Yes
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 SELECT
     servicename,

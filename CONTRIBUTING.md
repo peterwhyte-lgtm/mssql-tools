@@ -34,17 +34,14 @@ Script Name : Get-ExampleScript
 Category    : performance-troubleshooting
 Purpose     : One-line description of what this returns.
 Author      : Your Name
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW SERVER STATE
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 ```
 
-`Safe` values: `Read-only` / `Writes data` / `Creates objects`
-`Impact` values: `Low` / `Medium` / `High`
+`-- SAFE:` values: `ReadOnly` / `WritesData` / `CreatesObjects` — `-- IMPACT:` values: `Low` / `Medium` / `High`
 
 Additional rules:
 

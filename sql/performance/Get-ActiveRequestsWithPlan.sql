@@ -6,13 +6,11 @@ Purpose     : Point-in-time snapshot of all active requests with XML execution
               query_plan from sys.dm_exec_query_plan. Use the PowerShell wrapper
               to extract plans to individual XML files for SSMS analysis.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW SERVER STATE
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 SELECT
     r.session_id,

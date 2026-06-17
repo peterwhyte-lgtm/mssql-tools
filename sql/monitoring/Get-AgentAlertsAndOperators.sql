@@ -4,13 +4,11 @@ Category    : monitoring
 Purpose     : SQL Agent alerts and operators with severity gap analysis. Surfaces instances
               with no alerts for severity 19-25 (critical errors go unnoticed without these).
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW SERVER STATE, SELECT on msdb
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 -- Severity coverage: which of 17–25 have at least one enabled alert?
 WITH severity_alerts AS (

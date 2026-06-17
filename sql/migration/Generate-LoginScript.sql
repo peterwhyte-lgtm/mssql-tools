@@ -3,13 +3,11 @@ Script Name : Generate-LoginScript
 Category    : migration
 Purpose     : Generate CREATE LOGIN DDL for all non-system logins with SIDs and hashed passwords preserved.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW SERVER STATE, CONTROL SERVER (for password_hash column)
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 DECLARE @ddl  NVARCHAR(MAX) = N'';
 DECLARE @crlf NCHAR(2)      = CHAR(13) + CHAR(10);

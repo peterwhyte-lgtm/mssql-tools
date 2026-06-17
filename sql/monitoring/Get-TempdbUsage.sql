@@ -3,14 +3,12 @@ Script Name : Get-TempdbUsage
 Category    : maintenance-and-reliability
 Purpose     : Show TempDB file sizes, free space, and allocation breakdown per file.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW SERVER STATE
 HealthCheck : Yes
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 SELECT
     df.file_id,

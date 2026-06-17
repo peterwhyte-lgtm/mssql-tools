@@ -6,13 +6,11 @@ Purpose     : Lists all databases with key properties and allocated file sizes.
               Data and log sizes reflect allocated file space, not space used.
               Run Get-DatabaseSizesAndFreeSpace for used vs free breakdown.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW ANY DATABASE
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 SELECT
     d.name                                                                          AS database_name,

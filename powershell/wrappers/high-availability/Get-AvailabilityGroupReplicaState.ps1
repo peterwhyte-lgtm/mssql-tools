@@ -6,6 +6,7 @@ Shows AG replica health, connection state, and synchronisation status.
 ScriptType   : hybrid
 TargetScope  : single server
 RiskLevel    : SAFE
+Purpose      : Show AG replica health, connection state, and synchronization status for failover readiness.
 
 .PARAMETER ServerInstance
 SQL Server instance to query. Defaults to '.'.

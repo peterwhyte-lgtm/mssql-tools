@@ -5,8 +5,6 @@ Purpose     : Reports SQL Server version, Cumulative Update level, edition, and 
               number for patch-level tracking across an estate.
               Run on each server to build a patch compliance inventory.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : Public (no elevated permissions required)
 Notes       : product_update_level returns the CU number (e.g. CU12) on SQL 2012+.
               For SQL 2012 RTM this column may be NULL.
@@ -15,9 +13,9 @@ Notes       : product_update_level returns the CU number (e.g. CU12) on SQL 2012
               build_clr_version is included because CLR version changes affect assembly
               compatibility during upgrades.
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 DECLARE @productVersion   varchar(20) = CAST(SERVERPROPERTY('ProductVersion')         AS varchar(20));
 DECLARE @majorVer         int         = CAST(PARSENAME(@productVersion, 4)             AS int);

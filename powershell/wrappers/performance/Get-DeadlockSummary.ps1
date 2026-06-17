@@ -6,6 +6,7 @@ Shows recent deadlock events from the system_health XEvent ring buffer.
 ScriptType   : hybrid
 TargetScope  : single server
 RiskLevel    : SAFE
+Purpose      : Show recent deadlock events from the system_health XEvent ring buffer.
 
 .PARAMETER ServerInstance
 SQL Server instance to query. Defaults to '.'.

@@ -8,15 +8,13 @@ Purpose     : Generates DDL to create the DBA - Collect Error Log SQL Agent job.
               stored for this server, preventing duplicate rows.
               Edit parameters, review output, then run on the target instance.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : sysadmin (to run generated DDL); VIEW SERVER STATE, EXECUTE xp_readerrorlog at job runtime
 Notes       : Default interval: every 10 minutes.
               Login succeeded and backup messages are suppressed (noisy, low signal).
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 -- ── Parameters ────────────────────────────────────────────────────────────────
 DECLARE @TargetDatabase  sysname       = N'DBAMonitor';   -- created if absent

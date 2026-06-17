@@ -107,7 +107,7 @@ The 27 scripts in the healthcheck suite are tagged `HealthCheck : Yes` in their 
 
 ## What is safe to run immediately
 
-**Everything in `sql/`** — all read-only, `SET NOCOUNT ON`, no `USE database`, no data modifications. Safe to run in production at any time.
+**Everything in `sql/monitoring/`, `sql/performance/`, `sql/backups/`, `sql/security/`, `sql/high-availability/`** — all read-only, `SET NOCOUNT ON`, no `USE database`. Safe to run in production at any time. (`sql/lab/` and `sql/maintenance/Generate-*` are excluded — those write data or create objects.)
 
 **Everything in `powershell/wrappers/`** — thin wrappers that call Invoke-RepoSql with the matching SQL script. Same safety level as the SQL scripts themselves.
 

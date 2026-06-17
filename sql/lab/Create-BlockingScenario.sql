@@ -4,8 +4,6 @@ Category    : lab
 Purpose     : Controlled blocking scenario for testing Get-BlockingChains, Get-BlockingSessions,
               and blocking analysis tools.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Writes data
-Impact      : Medium  *** DEV / TEST INSTANCES ONLY ***
 Requires    : CREATE TABLE, INSERT, UPDATE, DROP TABLE
 */
 -- SAFE:WritesData

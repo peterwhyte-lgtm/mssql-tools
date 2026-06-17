@@ -4,13 +4,11 @@ Category    : monitoring
 Purpose     : Active global and session trace flags with descriptions. Reveals undocumented
               tuning decisions and flags inherited from previous DBAs.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW SERVER STATE
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 CREATE TABLE #trace_flags (
     TraceFlag INT,

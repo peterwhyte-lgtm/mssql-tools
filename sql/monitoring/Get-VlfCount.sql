@@ -6,8 +6,6 @@ Purpose     : Reports virtual log file (VLF) count per database transaction log,
               performance, and redo during AG synchronisation. Often caused by many
               small autogrowth events accumulating over time.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW SERVER STATE
 Notes       : Target: < 50 VLFs per database. > 200 is elevated. > 1000 is severe.
               Fix: shrink the log to near-zero, then grow it in one large fixed-MB
@@ -17,9 +15,9 @@ Notes       : Target: < 50 VLFs per database. > 200 is elevated. > 1000 is sever
               Fallback cursor path (DBCC LOGINFO): SQL Server 2012+.
 HealthCheck : Yes
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 IF EXISTS (SELECT 1 FROM sys.system_objects WHERE name = 'dm_db_log_info' AND type = 'IF')
 BEGIN

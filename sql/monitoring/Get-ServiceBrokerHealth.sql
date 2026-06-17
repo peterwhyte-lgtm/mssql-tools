@@ -7,13 +7,11 @@ Purpose     : Service Broker health across all user databases. Orphaned/disconne
               AG health checks use it). Surfaces conversation endpoint counts by state,
               transmission queue depth, and queue activation status.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW ANY DATABASE, VIEW DATABASE STATE
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 CREATE TABLE #sb_health (
     database_name               SYSNAME,

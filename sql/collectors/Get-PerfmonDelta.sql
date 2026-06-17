@@ -6,13 +6,11 @@ Purpose     : Computes interval deltas for cumulative performance counters
               [DBAMonitor].[collector].[Perfmon]. Point-in-time gauges
               (cntr_type 65792) are shown as their current value.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : SELECT on [DBAMonitor].[collector].[Perfmon]
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 -- ── Parameters ────────────────────────────────────────────────────────────────
 DECLARE @TargetDatabase sysname       = N'DBAMonitor';

@@ -3,13 +3,11 @@ Script Name : Generate-UserMappingScript
 Category    : migration
 Purpose     : Generate CREATE USER and role membership DDL for all user databases.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW ANY DATABASE, VIEW DEFINITION on each database
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 DECLARE @ddl    NVARCHAR(MAX) = N'';
 DECLARE @crlf   NCHAR(2)     = CHAR(13) + CHAR(10);

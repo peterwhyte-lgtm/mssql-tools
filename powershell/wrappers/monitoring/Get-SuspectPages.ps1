@@ -6,6 +6,7 @@ Shows any pages in msdb.dbo.suspect_pages -- evidence of corruption or I/O error
 ScriptType   : hybrid
 TargetScope  : single server
 RiskLevel    : SAFE
+Purpose      : Show any pages recorded in msdb.dbo.suspect_pages — evidence of I/O or corruption errors.
 
 .PARAMETER ServerInstance
 SQL Server instance to query. Defaults to '.'.

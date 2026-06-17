@@ -6,6 +6,7 @@ Shows the latest full, diff, and log backup timestamp and age per database.
 ScriptType   : hybrid
 TargetScope  : single server
 RiskLevel    : SAFE
+Purpose      : Display the latest backup timestamp per type (Full, Differential, Log) per database.
 
 .PARAMETER ServerInstance
 SQL Server instance to query. Defaults to '.'.

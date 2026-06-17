@@ -3,16 +3,14 @@ Script Name : Get-DatabaseGrowthEvents
 Category    : maintenance-and-reliability
 Purpose     : Show recent autogrowth events from the default trace for capacity planning.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : ALTER TRACE or sysadmin (to read default trace path and files)
 Notes       : The default trace covers the last 20 MB of trace data (rolling). It was
               deprecated in SQL Server 2022 — on 2022+ instances use the system_health
               XEvent session or query sys.fn_xe_file_target_read_file instead.
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 DECLARE @trace_path NVARCHAR(4000);
 

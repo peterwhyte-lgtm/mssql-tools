@@ -91,9 +91,9 @@ Migration DDL generators:
 
 ## Blog / content guidance
 
-Scripts that merit a blog post should follow a practical, reader-focused structure rather than a generic template dump. The goal is to explain the operational value of the script, not just paste SQL.
+`blog/` is a back-end drafting workspace. It assists Peter in writing posts for sqldba.blog — it has no public-facing output and is not a documentation layer for the repo. The live sqldba.blog post is the public documentation artifact for each script. Links to live posts are added by Peter after publishing, not generated automatically.
 
-The repo should also reflect the intended blog taxonomy so that scripts and posts can be organized consistently over time, while keeping the main repo focused on usable DBA tooling.
+The repo should reflect the intended blog taxonomy so that scripts and posts can be organized consistently over time, while keeping the main repo focused on usable DBA tooling.
 
 ### Blog category framework
 
@@ -319,9 +319,9 @@ Purpose     : One-line description of what this returns.
 Author      : Peter Whyte (https://sqldba.blog)
 Requires    : VIEW SERVER STATE
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 ```
 
 `-- SAFE:` values: `ReadOnly` / `WritesData` / `CreatesObjects` — `-- IMPACT:` values: `Low` / `Medium` / `High`

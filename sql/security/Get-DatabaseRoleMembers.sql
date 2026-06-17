@@ -3,13 +3,11 @@ Script Name : Get-DatabaseRoleMembers
 Category    : security-and-permissions
 Purpose     : List database role memberships across all online user databases.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW ANY DATABASE, VIEW DEFINITION on each target database
 */
-SET NOCOUNT ON;
 -- SAFE:ReadOnly
 -- IMPACT:Low
+SET NOCOUNT ON;
 
 IF OBJECT_ID('tempdb..#role_members') IS NOT NULL DROP TABLE #role_members;
 

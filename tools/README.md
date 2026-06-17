@@ -1,46 +1,39 @@
-﻿# Helpers
+# Tools
 
-This folder is the quick-access layer for the DBA repo during day-to-day operations, local validation, and AI-assisted troubleshooting.
-It is the first place to go when you want to run, inspect, or route a script without digging through the full repo tree.
+Repo support utilities for local execution, triage, scaffolding, and maintenance.
 
-## What belongs here
+## Layout
 
-- Repo navigation and triage helpers
-- Local SQL connectivity and script execution helpers
-- Output cleanup and task routing utilities
+- **local-sql/** — core runner (`Invoke-RepoSql.ps1`), connection helper (`Set-SqlConnection.ps1`), connectivity check (`Test-SqlConnectivity.ps1`)
+- **triage/** — repo inventory and standards validation (`Show-RepoOverview.ps1`, `Find-UsefulScript.ps1`, `Get-StandardsAudit.ps1`)
+- **scaffolding/** — new script and wrapper generation (`New-Wrapper.ps1`, `New-MultiServerScript.ps1`)
+- **maintenance/** — output cleanup (`Clear-OutputFiles.ps1`)
 
-## Useful commands
-
-From the repo root, the short forms are now:
+## Common commands
 
 ```powershell
+# Run any script by fuzzy name — searches powershell/, sql/, tools/
 .\run.ps1 Get-WaitStatistics
-.\run.ps1 Get-LongRunningQueries
-.\run.ps1 powershell\reporting\Get-WaitStatistics.ps1
+.\run.ps1 Get-WaitStatistics -ServerInstance PROD01 -OutputFormat Csv
+
+# Verify SQL connectivity before running scripts
+.\tools\local-sql\Test-SqlConnectivity.ps1 -ServerInstance .
+
+# Set a session-level target server (avoids repeating -ServerInstance)
+.\tools\local-sql\Set-SqlConnection.ps1 -ServerInstance PROD01\SQL2019
+
+# Discover scripts by keyword
+.\tools\triage\Find-UsefulScript.ps1 -Keyword blocking
+
+# Inventory the repo — script counts by category
+.\tools\triage\Show-RepoOverview.ps1
+
+# Validate SQL headers and PS .NOTES blocks across the repo
+.\tools\triage\Get-StandardsAudit.ps1
+
+# Generate a wrapper for a new SQL script
+.\tools\scaffolding\New-Wrapper.ps1 -SqlPath sql\performance\Get-Something.sql
+
+# Clear generated output before a fresh run
+.\tools\maintenance\Clear-OutputFiles.ps1
 ```
-
-You can also call the helper directly:
-
-```powershell
-.\tools\Run-Helper.ps1 -ScriptName Get-WaitStatistics
-.\tools\Run-Helper.ps1 -ScriptPath .\powershell\reporting\Get-WaitStatistics.ps1
-```
-
-## Helper layout
-
-- local-sql/ - direct SQL execution, connectivity checks, and repo script runners
-- triage/ - repo sanity checks, discovery, and quick inventory helpers
-- scaffolding/ - starter script and helper generation for new DBA work
-- maintenance/ - output cleanup and environment maintenance helpers
-
-## Helpful helpers
-
-- local-sql/Test-SqlConnectivity.ps1 - verify SQL connectivity and server details before running scripts
-- local-sql/Invoke-RepoSql.ps1 - run repo SQL scripts locally against your SQL Server instance with CSV or terminal output
-- triage/Quick-RepoCheck.ps1 - verify the repo is ready
-- triage/Find-UsefulScript.ps1 - locate the most relevant existing script for a keyword
-- triage/Quick-TaskRouter.ps1 - route a DBA task to the best category
-- scaffolding/Generate-NextScript.ps1 - scaffold a new SQL starter script for a task
-- scaffolding/Generate-NextPowerShell.ps1 - scaffold a new PowerShell starter helper for a task
-- triage/Show-RepoOverview.ps1 - inventory the repo structure
-- maintenance/Clear-OutputFiles.ps1 - clean generated output
