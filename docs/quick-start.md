@@ -124,7 +124,7 @@ For a scored client report:
 An optional local web interface for browsing, running, and visualising script output:
 
 ```powershell
-.\tools\web-ui\Start-WebUi.ps1
+.\web-ui\Start-WebUi.ps1
 # Opens http://localhost:8787
 ```
 

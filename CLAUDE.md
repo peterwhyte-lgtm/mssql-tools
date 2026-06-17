@@ -317,8 +317,6 @@ Script Name : Get-ExampleScript
 Category    : performance-troubleshooting
 Purpose     : One-line description of what this returns.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW SERVER STATE
 */
 SET NOCOUNT ON;
@@ -326,8 +324,7 @@ SET NOCOUNT ON;
 -- IMPACT:Low
 ```
 
-`Safe` values: `Read-only` / `Writes data` / `Creates objects`  
-`Impact` values: `Low` / `Medium` / `High`
+`-- SAFE:` values: `ReadOnly` / `WritesData` / `CreatesObjects` — `-- IMPACT:` values: `Low` / `Medium` / `High`
 
 Add `HealthCheck : Yes` (after `Requires`) to any script that runs as part of `Invoke-HealthCheckCollection.ps1`. This tag drives the "Health Check Suite" section in the web UI and makes membership machine-readable without needing a separate folder.
 

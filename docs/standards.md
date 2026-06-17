@@ -16,8 +16,6 @@ Script Name : Get-ExampleScript
 Category    : performance-troubleshooting
 Purpose     : One-line description of what this returns.
 Author      : Peter Whyte (https://sqldba.blog)
-Safe        : Read-only
-Impact      : Low
 Requires    : VIEW SERVER STATE
 */
 SET NOCOUNT ON;
@@ -25,16 +23,19 @@ SET NOCOUNT ON;
 -- IMPACT:Low
 ```
 
-**Field values:**
+**Block comment fields:**
 
 | Field | Allowed values |
 |-------|---------------|
-| `Safe` | `Read-only` / `Writes data` / `Creates objects` |
-| `Impact` | `Low` / `Medium` / `High` |
 | `Requires` | Comma-separated permissions (`VIEW SERVER STATE`, `VIEW ANY DATABASE`, `sysadmin`, etc.) |
-| `HealthCheck` | `Yes` — optional. Add only if this script runs as part of `Invoke-HealthCheckCollection.ps1`. Drives the Health Check Suite section in the web UI. |
+| `HealthCheck` | `Yes` — optional. Add only if this script runs as part of `Invoke-HealthCheckCollection.ps1`. Drives the Health Check Suite section in the web UI. Place after `Requires`. |
 
-The `-- SAFE:` and `-- IMPACT:` annotations on lines after the block comment are parsed by `Review-HealthCheckOutput.ps1` and the web UI. They must exactly match the pattern `-- SAFE:ReadOnly` / `-- SAFE:WritesData` / `-- SAFE:CreatesObjects` and `-- IMPACT:Low` / `-- IMPACT:Medium` / `-- IMPACT:High`.
+**Inline annotations** (parsed by `Review-HealthCheckOutput.ps1` and the web UI — must appear immediately after `SET NOCOUNT ON;`):
+
+| Annotation | Allowed values |
+|------------|---------------|
+| `-- SAFE:` | `ReadOnly` / `WritesData` / `CreatesObjects` |
+| `-- IMPACT:` | `Low` / `Medium` / `High` |
 
 ### Rules
 
@@ -57,8 +58,13 @@ The `-- SAFE:` and `-- IMPACT:` annotations on lines after the block comment are
 | Roles, logins, permissions, surface area | `sql/security/` |
 | Maintenance job generation and status | `sql/maintenance/` |
 | Migration assessment and DDL generation | `sql/migration/` |
+| Collector job creation scripts | `sql/collectors/` |
 
 Every SQL script in `sql/` must have a matching wrapper in `powershell/wrappers/<same-category>/` — this is what makes it runnable from the web UI and `run.ps1`.
+
+### Blog posts
+
+A SQL script that merits a post gets a companion `blog/<slug>/index.md`. Use `blog/_template/index.md` as the starting point. Title must follow one of the approved patterns: `Get [Thing] for SQL Server`, `Check [Thing] in SQL Server`, `Analyze [Thing] in SQL Server`, `Find [Thing] in SQL Server`. Full content, category, and SEO rules are in `CLAUDE.md`.
 
 ---
 
@@ -114,7 +120,7 @@ Purpose      : One-line description.
 
 ## PowerShell orchestrators
 
-Scripts in `powershell/` have real logic — they are not thin wrappers. Same `.NOTES` fields apply. Resolve repo root with `$PSScriptRoot '..\..\..'` (also three levels deep).
+Scripts in `powershell/<subfolder>/` have real logic — they are not thin wrappers. Same `.NOTES` fields apply. Resolve repo root with `$PSScriptRoot '..\..'` (two levels up from `powershell/<subfolder>/`).
 
 ---
 

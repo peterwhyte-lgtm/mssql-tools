@@ -32,6 +32,7 @@ All SQL scripts are single-result-set, read-only, and SSMS paste-and-run compati
 | `security/` | Roles, permissions, orphans, weak logins, surface area, linked server security |
 | `high-availability/` | AG replica state, AG latency, readable secondary usage |
 | `maintenance/` | Index maintenance jobs, backup jobs, housekeeping jobs, job status |
+| `collectors/` | `Generate-CollectorJob-*.sql` — one script per collector, creates SQL Agent job and DBAMonitor table |
 | `lab/` | Dev/test-only scripts — blocking scenarios, test database creation |
 
 Migration SQL scripts live separately at `sql/migration/`. See [script-catalog.md](script-catalog.md) for the full list.
@@ -40,15 +41,20 @@ Migration SQL scripts live separately at `sql/migration/`. See [script-catalog.m
 
 ## `powershell/` — Unique PowerShell scripts
 
-Scripts with genuine logic beyond "run the matching SQL file." Orchestrators, automation, and OS-level tools.
+Scripts with genuine logic beyond "run the matching SQL file." Orchestrators, automation, and OS-level tools. (Thin wrappers live under `wrappers/` — see the web UI section below.)
 
 | Folder | Contents |
 |--------|----------|
-| `reporting/` | Invoke-HealthCheckCollection, Review-HealthCheckOutput, Invoke-AssessmentReport, Invoke-MultiServerHealthCheck, Get-ActiveRequests (with -IncludePlan), Get-BlockingChains (with -IncludePlan) |
-| `wrappers/backups/` | Thin wrappers for sql/backups/ backup DDL generators and health queries |
-| `wrappers/maintenance/` | Thin wrappers for sql/maintenance/ DDL generators (backup jobs, index maintenance, housekeeping) |
-| `multi-server/` | MultiServer-Get*.ps1 and MultiServer-*.ps1 scripts for fleet-wide operations |
-| `lab/` | New-MultipleDatabases, Remove-DatabasesByPrefix, Run-CreateTestDatabases |
+| `reporting/` | Invoke-HealthCheckCollection, Review-HealthCheckOutput, Invoke-AssessmentReport, Invoke-MultiServerHealthCheck, Get-ActiveRequests, Get-BlockingChains |
+| `reporting/multi-server/` | MultiServer-Get*.ps1 scripts for fleet-wide operations (disk, wait stats, patch level, blocking, etc.) |
+| `disk-space/` | Get-DiskSpaceSummary, Get-LargestFolders, Get-OldestBackupFolderFiles, Get-BackupAge |
+| `installation/` | install-sql.ps1, configure-sql.ps1, pre-install-check.ps1, post-install-validation.ps1, uninstall-sql.ps1, generate-install-report.ps1, templates/ |
+| `migration/` | Generate-LoginScript, Generate-AgentJobScript, Generate-UserMappingScript, Generate-LinkedServerScript, Generate-RestoreWithMoveScript, Invoke-MigrationExport, Invoke-PreMigrationAssessment, Export-MigrationBaseline, Get-DatabaseInventory, Get-LoginInventory, Get-JobInventory, Get-MigrationRiskAssessment |
+| `patching/` | patch-summary.ps1 (SQL + SSMS status overview) |
+| `patching/sql/` | Invoke-SqlPatch.ps1 (multi-server auto-patch), patch-config.psd1 |
+| `patching/ssms/` | install-ssms.ps1 (handles SSMS ≤20 and 21+), uninstall-ssms.ps1 |
+| `collectors/` | Collector SQL queries (`<name>.sql`) kept for ad-hoc use; `Collect-*.ps1` files are being migrated to SQL Agent jobs — see `sql/collectors/` |
+| `lab/` | Lab and test database scripts (dev/test only) |
 
 ---
 
@@ -57,13 +63,13 @@ Scripts with genuine logic beyond "run the matching SQL file." Orchestrators, au
 | Location | Contents |
 |----------|----------|
 | `sql/migration/` | Get-MigrationRiskAssessment, Get-DeprecatedFeaturesInUse, Get-CompatibilityLevelAudit, Generate-LoginScript, Generate-AgentJobScript, and other migration assessment and DDL generator SQL scripts |
-| `powershell/migration/` | Generate-LoginScript, Generate-AgentJobScript, Generate-UserMappingScript, Generate-LinkedServerScript, Generate-RestoreWithMoveScript, Invoke-MigrationExport, Invoke-PreMigrationAssessment, Export-MigrationBaseline |
+| `powershell/migration/` | Generate-LoginScript, Generate-AgentJobScript, Generate-UserMappingScript, Generate-LinkedServerScript, Generate-RestoreWithMoveScript, Invoke-MigrationExport, Invoke-PreMigrationAssessment, Export-MigrationBaseline, Get-DatabaseInventory, Get-LoginInventory, Get-JobInventory, Get-MigrationRiskAssessment |
 
 ---
 
-## `powershell/collectors/` — Scheduled monitoring
+## `powershell/collectors/` — Collector tooling (in transition)
 
-Each collector pairs a `.sql` query with a PowerShell orchestrator (`Collect-*.ps1`) for scheduled historical data collection. They append timestamped rows to daily CSV files in `output-files/collectors/`.
+Collector SQL queries (`<name>.sql`) for ad-hoc use are held here. `Collect-*.ps1` orchestrators are being migrated to SQL Agent jobs — new collector jobs live in `sql/collectors/` as `Generate-CollectorJob-*.sql` scripts that create a SQL Agent job and a DBAMonitor table when executed.
 
 | Collector | Data captured |
 |-----------|---------------|
@@ -111,10 +117,10 @@ One wrapper per SQL script. Each wrapper resolves the repo root (three levels up
 
 | Folder | Contents |
 |--------|----------|
-| `tools/local-sql/` | `Invoke-RepoSql.ps1` (core runner), `Test-SqlConnectivity.ps1`, `Set-SqlConnection.ps1`, `Install-Prerequisites.ps1` |
-| `tools/triage/` | `Show-RepoOverview.ps1`, `Find-UsefulScript.ps1`, `Quick-TaskRouter.ps1` |
-| `tools/scaffolding/` | `New-MultiServerScript.ps1` — wraps any SQL or PS in a multi-server foreach loop |
-| `tools/maintenance/` | `Clear-OutputFiles.ps1`, `update-powershell.ps1` |
+| `tools/local-sql/` | `Invoke-RepoSql.ps1` (core runner), `Set-SqlConnection.ps1`, `Test-SqlConnectivity.ps1` |
+| `tools/triage/` | `Show-RepoOverview.ps1`, `Find-UsefulScript.ps1`, `Get-StandardsAudit.ps1` |
+| `tools/scaffolding/` | `New-Wrapper.ps1`, `New-MultiServerScript.ps1` |
+| `tools/maintenance/` | `Clear-OutputFiles.ps1` |
 
 ---
 
@@ -140,4 +146,4 @@ SQL templates, change orders, checklists, and runbooks for planned DBA work.
 
 **New unique PS script:** Add to `powershell/<subfolder>/`. Use `$PSScriptRoot '..\..'` to resolve the repo root.
 
-**New collector:** Follow the pattern in any existing `powershell/collectors/<name>/` — one `.sql`, one `Collect-*.ps1`, one `README.md` with SQL Agent T-SQL.
+**New collector job:** Add a `sql/collectors/Generate-CollectorJob-<name>.sql` that creates a SQL Agent job and DBAMonitor table when executed. Keep a matching `<name>.sql` query in `powershell/collectors/` for ad-hoc use.
