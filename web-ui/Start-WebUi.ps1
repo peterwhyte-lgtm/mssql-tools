@@ -677,6 +677,7 @@ function Build-TriagePage {
         [ordered]@{ Title='Right Now'; When='First stop during any active incident — see what is running, waiting, or blocked this moment'; Scripts=@(
             [ordered]@{P='sql\performance\Get-ActiveRequests.sql';                T='SQL'}
             [ordered]@{P='sql\performance\Get-ActiveRequestsWithPlan.sql';        T='SQL'}
+            [ordered]@{P='sql\performance\Get-OpenTransactions.sql';              T='SQL'}
             [ordered]@{P='sql\performance\Get-WorkerThreadsAndActiveSessions.sql';T='SQL'}
             [ordered]@{P='sql\performance\Get-BackupRestoreProgress.sql';         T='SQL'}
             [ordered]@{P='sql\monitoring\Get-TempdbHotspots.sql';                 T='SQL'}
@@ -689,14 +690,15 @@ function Build-TriagePage {
             [ordered]@{P='sql\performance\Get-DeadlockSummary.sql';       T='SQL'}
             [ordered]@{P='sql\performance\Get-ContentionAnalysis.sql';    T='SQL'}
         )}
-        [ordered]@{ Title='Slow Queries & High CPU'; When='CPU high, specific queries regressed, plan cache pollution, IO pressure, parameter sniffing suspected'; Scripts=@(
-            [ordered]@{P='sql\performance\Get-TopCpuQueries.sql';        T='SQL'}
-            [ordered]@{P='sql\performance\Get-TopIoQueries.sql';         T='SQL'}
-            [ordered]@{P='sql\performance\Get-LongRunningQueries.sql';   T='SQL'}
-            [ordered]@{P='sql\performance\Get-QueryVariance.sql';        T='SQL'}
-            [ordered]@{P='sql\performance\Get-SlowQueriesFromCache.sql'; T='SQL'}
-            [ordered]@{P='sql\performance\Get-DatabaseIoUsage.sql';      T='SQL'}
-            [ordered]@{P='sql\performance\Get-QueryStoreTopQueries.sql'; T='SQL'}
+        [ordered]@{ Title='Slow Queries & High CPU'; When='CPU high, specific queries regressed, plan cache pollution, IO pressure, parameter sniffing suspected, slow stored procedures'; Scripts=@(
+            [ordered]@{P='sql\performance\Get-TopCpuQueries.sql';              T='SQL'}
+            [ordered]@{P='sql\performance\Get-TopIoQueries.sql';               T='SQL'}
+            [ordered]@{P='sql\performance\Get-LongRunningQueries.sql';         T='SQL'}
+            [ordered]@{P='sql\performance\Get-QueryVariance.sql';              T='SQL'}
+            [ordered]@{P='sql\performance\Get-StoredProcedurePerformance.sql'; T='SQL'}
+            [ordered]@{P='sql\performance\Get-SlowQueriesFromCache.sql';       T='SQL'}
+            [ordered]@{P='sql\performance\Get-DatabaseIoUsage.sql';            T='SQL'}
+            [ordered]@{P='sql\performance\Get-QueryStoreTopQueries.sql';       T='SQL'}
         )}
         [ordered]@{ Title='Wait Statistics'; When='Unexplained slowness — identify the bottleneck category before digging deeper into queries'; Scripts=@(
             [ordered]@{P='sql\performance\Get-WaitStatistics.sql'; T='SQL'}
@@ -730,14 +732,17 @@ function Build-TriagePage {
             [ordered]@{P='sql\backups\Generate-FullBackupScript.sql';   T='SQL'; Fix=$true}
             [ordered]@{P='sql\backups\Generate-RestoreScript.sql';      T='SQL'; Fix=$true}
         )}
-        [ordered]@{ Title='Jobs & Errors'; When='Agent job failures, unexpected error log entries, maintenance jobs not running on schedule, silent duration creep'; Scripts=@(
+        [ordered]@{ Title='Jobs & Errors'; When='Agent job failures, unexpected error log entries, maintenance jobs not running on schedule, silent duration creep, error pattern analysis'; Scripts=@(
+            [ordered]@{P='sql\monitoring\Get-ErrorLogPatterns.sql';          T='SQL'}
             [ordered]@{P='sql\monitoring\Get-SqlAgentJobFailureSummary.sql'; T='SQL'}
             [ordered]@{P='sql\monitoring\Get-JobDurationTrends.sql';         T='SQL'}
             [ordered]@{P='sql\monitoring\Get-RecentErrorLogEntries.sql';     T='SQL'}
             [ordered]@{P='sql\monitoring\Get-SqlAgentJobOverview.sql';       T='SQL'}
+            [ordered]@{P='sql\monitoring\Get-SchemaChangeHistory.sql';       T='SQL'}
         )}
-        [ordered]@{ Title='Security'; When='Permissions audit, sysadmin membership review, orphaned users, weak password policy, expiring certificates'; Scripts=@(
+        [ordered]@{ Title='Security'; When='Permissions audit, sysadmin membership review, orphaned users, weak password policy, expiring certificates, login activity review'; Scripts=@(
             [ordered]@{P='sql\security\Get-SysadminMembers.sql';            T='SQL'}
+            [ordered]@{P='sql\monitoring\Get-LoginLastActivity.sql';         T='SQL'}
             [ordered]@{P='sql\security\Get-WeakLoginSettings.sql';          T='SQL'}
             [ordered]@{P='sql\security\Get-UserPermissionsAudit.sql';       T='SQL'}
             [ordered]@{P='sql\security\Get-OrphanedUsers.sql';              T='SQL'}
@@ -756,7 +761,8 @@ function Build-TriagePage {
             [ordered]@{P='sql\monitoring\Get-DatabaseHealth.sql';              T='SQL'}
         )}
         [ordered]@{ Title='Decommission & Traces'; When='Retiring a server or database, profiling what stored procedures are being called, auditing who connects and from where — run Get-ActiveConnectionsByDatabase first'; Scripts=@(
-            [ordered]@{P='sql\monitoring\Get-ActiveConnectionsByDatabase.sql'; T='SQL'}
+            [ordered]@{P='sql\monitoring\Get-ActiveConnectionsByDatabase.sql';  T='SQL'}
+            [ordered]@{P='sql\monitoring\Get-CrossDatabaseDependencies.sql';    T='SQL'}
             [ordered]@{P='sql\traces\Get-ActiveXeSessions.sql';              T='SQL'}
             [ordered]@{P='sql\traces\Create-DecommissionAuditSession.sql';   T='SQL'}
             [ordered]@{P='sql\traces\Create-LoginActivitySession.sql';       T='SQL'}
@@ -970,6 +976,13 @@ const CHART_HINTS={
   'Get-ActiveConnectionsByDatabase': {type:'bar',h:true,  prefer:['total_sessions','active_requests','open_transactions']},
   'Get-QueryVariance':               {type:'bar',h:true,  prefer:['max_to_min_ratio','variance_ms','max_ms']},
   'Get-BackupSizeTrend':             {type:'bar',h:false, prefer:['avg_size_gb','avg_compressed_gb']},
+  // Batch 4
+  'Get-ErrorLogPatterns':            {type:'doughnut',    prefer:['occurrences']},
+  'Get-SchemaChangeHistory':         {type:'bar',h:false, prefer:[]},
+  'Get-LoginLastActivity':           {type:'bar',h:true,  prefer:['active_sessions']},
+  'Get-OpenTransactions':            {type:'bar',h:true,  prefer:['tran_age_sec','log_used_mb']},
+  'Get-StoredProcedurePerformance':  {type:'bar',h:true,  prefer:['total_elapsed_ms','avg_ms','execution_count']},
+  'Get-CrossDatabaseDependencies':   {type:'bar',h:false, prefer:[]},
 };
 
 const COLORS=['#58a6ff','#3fb950','#f78166','#d2a8ff','#ffa657','#79c0ff','#56d364','#ff7b72',
