@@ -43,13 +43,16 @@ if (-not $isAdmin -and -not $WhatIf) {
 }
 
 # -- Logging -------------------------------------------------------------------
-# Falls back to a logs\ folder next to the script when run standalone (not in the repo)
-$_repoOutputDir = Join-Path $PSScriptRoot '..\..\..\output-files'
-$logDir = [System.IO.Path]::GetFullPath($(if (Test-Path $_repoOutputDir) {
+# When run from the repo the log goes to output-files\patches\ssms\.
+# When run standalone (copied to any folder) it falls back to a logs\ subfolder
+# next to the script. Handles empty $PSScriptRoot (copy-pasted into console).
+$_scriptRoot    = if ($PSScriptRoot) { $PSScriptRoot } else { $PWD.Path }
+$_repoOutputDir = [System.IO.Path]::GetFullPath((Join-Path $_scriptRoot '..\..\..\output-files'))
+$logDir = if (Test-Path $_repoOutputDir) {
     Join-Path $_repoOutputDir 'patches\ssms'
 } else {
-    Join-Path $PSScriptRoot 'logs'
-}))
+    Join-Path $_scriptRoot 'logs'
+}
 New-Item -ItemType Directory -Path $logDir -Force | Out-Null
 $ts       = Get-Date -Format 'yyyyMMdd-HHmmss'
 $logFile  = Join-Path $logDir "ssms-install-$ts.log"

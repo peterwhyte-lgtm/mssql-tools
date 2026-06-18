@@ -457,7 +457,7 @@ function Build-HomePage {
         [ordered]@{P='sql\performance\Get-ActiveRequests.sql';             Desc='Queries running right now — incident first look'}
         [ordered]@{P='sql\performance\Get-TopCpuQueries.sql';              Desc='Highest CPU queries from plan cache'}
         [ordered]@{P='sql\performance\Get-MissingIndexes.sql';             Desc='High-impact missing index recommendations'}
-        [ordered]@{P='sql\monitoring\Get-DatabaseSizesAndFreeSpace.sql';   Desc='All databases — sizes and free space'}
+        [ordered]@{P='sql\monitoring\Get-DatabaseFreeSpaceSummary.sql';    Desc='All databases — allocated, used, and free space ordered by free space'}
         [ordered]@{P='sql\backups\Get-BackupCoverage.sql';                 Desc='Backup currency across all databases'}
         [ordered]@{P='sql\monitoring\Get-SqlAgentJobFailureSummary.sql';   Desc='Recent job failures and duration outliers'}
         [ordered]@{P='sql\monitoring\Get-IndexFragmentation.sql';          Desc='Index fragmentation — maintenance candidate list'}
@@ -689,10 +689,11 @@ function Build-TriagePage {
             [ordered]@{P='sql\performance\Get-DeadlockSummary.sql';       T='SQL'}
             [ordered]@{P='sql\performance\Get-ContentionAnalysis.sql';    T='SQL'}
         )}
-        [ordered]@{ Title='Slow Queries & High CPU'; When='CPU high, specific queries regressed, plan cache pollution, IO pressure'; Scripts=@(
+        [ordered]@{ Title='Slow Queries & High CPU'; When='CPU high, specific queries regressed, plan cache pollution, IO pressure, parameter sniffing suspected'; Scripts=@(
             [ordered]@{P='sql\performance\Get-TopCpuQueries.sql';        T='SQL'}
             [ordered]@{P='sql\performance\Get-TopIoQueries.sql';         T='SQL'}
             [ordered]@{P='sql\performance\Get-LongRunningQueries.sql';   T='SQL'}
+            [ordered]@{P='sql\performance\Get-QueryVariance.sql';        T='SQL'}
             [ordered]@{P='sql\performance\Get-SlowQueriesFromCache.sql'; T='SQL'}
             [ordered]@{P='sql\performance\Get-DatabaseIoUsage.sql';      T='SQL'}
             [ordered]@{P='sql\performance\Get-QueryStoreTopQueries.sql'; T='SQL'}
@@ -709,40 +710,59 @@ function Build-TriagePage {
             [ordered]@{P='sql\performance\Get-StatisticsHealth.sql';            T='SQL'; Fix=$true}
             [ordered]@{P='sql\maintenance\Generate-IndexMaintenanceScript.sql'; T='SQL'; Fix=$true}
         )}
-        [ordered]@{ Title='Disk & Space'; When='Disk alerts, databases growing unexpectedly, transaction log filling up, autogrowth events'; Scripts=@(
+        [ordered]@{ Title='Disk & Space'; When='Disk alerts, databases growing unexpectedly, transaction log filling up, autogrowth events, filegroup pressure, forgotten snapshots'; Scripts=@(
             [ordered]@{P='sql\monitoring\Get-DiskSpace.sql';                  T='SQL'}
+            [ordered]@{P='sql\monitoring\Get-DatabaseFreeSpaceSummary.sql';   T='SQL'}
+            [ordered]@{P='sql\monitoring\Get-FilegroupSpace.sql';             T='SQL'}
+            [ordered]@{P='sql\monitoring\Get-DatabaseSnapshotInventory.sql';  T='SQL'}
             [ordered]@{P='sql\monitoring\Get-DatabaseSizesAndFreeSpace.sql';  T='SQL'}
             [ordered]@{P='sql\monitoring\Get-TransactionLogSizeAndUsage.sql'; T='SQL'}
             [ordered]@{P='sql\monitoring\Get-VlfCount.sql';                   T='SQL'}
             [ordered]@{P='sql\monitoring\Get-AutogrowthHistory.sql';          T='SQL'}
             [ordered]@{P='sql\monitoring\Get-DatabaseGrowthRisk.sql';         T='SQL'}
         )}
-        [ordered]@{ Title='Backups'; When='Verifying coverage, investigating a missed backup, planning or scripting a restore'; Scripts=@(
+        [ordered]@{ Title='Backups'; When='Verifying coverage, investigating a missed backup, planning or scripting a restore, validating DR restore tests, sizing backup storage'; Scripts=@(
             [ordered]@{P='sql\backups\Get-BackupCoverage.sql';          T='SQL'}
             [ordered]@{P='sql\backups\Get-LastDatabaseBackupTimes.sql'; T='SQL'}
+            [ordered]@{P='sql\backups\Get-LastRestoreHistory.sql';      T='SQL'}
+            [ordered]@{P='sql\backups\Get-BackupSizeTrend.sql';         T='SQL'}
             [ordered]@{P='sql\backups\Get-DatabaseBackupHistory.sql';   T='SQL'}
             [ordered]@{P='sql\backups\Generate-FullBackupScript.sql';   T='SQL'; Fix=$true}
             [ordered]@{P='sql\backups\Generate-RestoreScript.sql';      T='SQL'; Fix=$true}
         )}
-        [ordered]@{ Title='Jobs & Errors'; When='Agent job failures, unexpected error log entries, maintenance jobs not running on schedule'; Scripts=@(
+        [ordered]@{ Title='Jobs & Errors'; When='Agent job failures, unexpected error log entries, maintenance jobs not running on schedule, silent duration creep'; Scripts=@(
             [ordered]@{P='sql\monitoring\Get-SqlAgentJobFailureSummary.sql'; T='SQL'}
+            [ordered]@{P='sql\monitoring\Get-JobDurationTrends.sql';         T='SQL'}
             [ordered]@{P='sql\monitoring\Get-RecentErrorLogEntries.sql';     T='SQL'}
             [ordered]@{P='sql\monitoring\Get-SqlAgentJobOverview.sql';       T='SQL'}
         )}
-        [ordered]@{ Title='Security'; When='Permissions audit, sysadmin membership review, orphaned users, weak password policy'; Scripts=@(
-            [ordered]@{P='sql\security\Get-SysadminMembers.sql';      T='SQL'}
-            [ordered]@{P='sql\security\Get-WeakLoginSettings.sql';    T='SQL'}
-            [ordered]@{P='sql\security\Get-UserPermissionsAudit.sql'; T='SQL'}
-            [ordered]@{P='sql\security\Get-OrphanedUsers.sql';        T='SQL'}
+        [ordered]@{ Title='Security'; When='Permissions audit, sysadmin membership review, orphaned users, weak password policy, expiring certificates'; Scripts=@(
+            [ordered]@{P='sql\security\Get-SysadminMembers.sql';            T='SQL'}
+            [ordered]@{P='sql\security\Get-WeakLoginSettings.sql';          T='SQL'}
+            [ordered]@{P='sql\security\Get-UserPermissionsAudit.sql';       T='SQL'}
+            [ordered]@{P='sql\security\Get-OrphanedUsers.sql';              T='SQL'}
+            [ordered]@{P='sql\security\Get-CertificateExpiryWarnings.sql';  T='SQL'}
         )}
-        [ordered]@{ Title='Instance Configuration'; When='New server review, performance baseline, best practice settings check, integrity'; Scripts=@(
+        [ordered]@{ Title='Instance Configuration'; When='New server review, performance baseline, best practice settings check, integrity, TempDB configuration, linked servers'; Scripts=@(
             [ordered]@{P='sql\monitoring\Get-Databases.sql';                   T='SQL'}
             [ordered]@{P='sql\monitoring\Get-InstanceConfigurationScore.sql';  T='SQL'}
+            [ordered]@{P='sql\monitoring\Get-TempDbFileBalance.sql';           T='SQL'}
+            [ordered]@{P='sql\monitoring\Get-CollationConflicts.sql';          T='SQL'}
+            [ordered]@{P='sql\monitoring\Get-LinkedServerConnectivity.sql';    T='SQL'}
             [ordered]@{P='sql\monitoring\Get-MaxdopConfiguration.sql';         T='SQL'}
             [ordered]@{P='sql\monitoring\Get-MemoryConfigurationAndUsage.sql'; T='SQL'}
             [ordered]@{P='sql\monitoring\Get-LastDbccCheckdb.sql';             T='SQL'}
             [ordered]@{P='sql\monitoring\Get-SuspectPages.sql';                T='SQL'}
             [ordered]@{P='sql\monitoring\Get-DatabaseHealth.sql';              T='SQL'}
+        )}
+        [ordered]@{ Title='Decommission & Traces'; When='Retiring a server or database, profiling what stored procedures are being called, auditing who connects and from where — run Get-ActiveConnectionsByDatabase first'; Scripts=@(
+            [ordered]@{P='sql\monitoring\Get-ActiveConnectionsByDatabase.sql'; T='SQL'}
+            [ordered]@{P='sql\traces\Get-ActiveXeSessions.sql';              T='SQL'}
+            [ordered]@{P='sql\traces\Create-DecommissionAuditSession.sql';   T='SQL'}
+            [ordered]@{P='sql\traces\Create-LoginActivitySession.sql';       T='SQL'}
+            [ordered]@{P='sql\traces\Create-SpExecutionSession.sql';         T='SQL'}
+            [ordered]@{P='sql\traces\Get-XeSessionActivity.sql';             T='SQL'}
+            [ordered]@{P='sql\traces\Remove-XeSession.sql';                  T='SQL'}
         )}
     )
 
@@ -924,6 +944,7 @@ const CHART_HINTS={
   'Get-LongRunningQueries':          {type:'bar',h:true,  prefer:['elapsed_sec','cpu_time','logical_reads']},
   // Vertical bar — per-database comparisons
   'Get-DatabaseSizesAndFreeSpace':   {type:'bar',h:false, prefer:['data_size_mb','log_size_mb','free_space_mb']},
+  'Get-DatabaseFreeSpaceSummary':    {type:'bar',h:true,  prefer:['TotalAllocMB','TotalUsedMB','TotalFreeMB']},
   'Get-DatabaseIoUsage':             {type:'bar',h:false, prefer:['reads_mb','writes_mb','read_latency_ms','write_latency_ms']},
   'Get-TransactionLogSizeAndUsage':  {type:'bar',h:false, prefer:['log_size_mb','log_used_mb']},
   'Get-BackupCoverage':              {type:'bar',h:false, prefer:['full_backup_age_hours','diff_backup_age_hours']},
@@ -932,6 +953,23 @@ const CHART_HINTS={
   'Get-DiskSpace':                   {type:'doughnut',    prefer:['used_gb','free_gb']},
   'Get-TempdbUsage':                 {type:'doughnut',    prefer:['used_mb','free_mb']},
   'Get-MemoryConfigurationAndUsage': {type:'doughnut',    prefer:['sql_memory_mb','available_mb']},
+  // Monitoring additions
+  'Get-JobDurationTrends':           {type:'bar',h:true,  prefer:['last_run_sec','avg_sec_30d','max_sec_30d']},
+  'Get-TempDbFileBalance':           {type:'bar',h:false, prefer:['size_mb']},
+  'Get-FilegroupSpace':              {type:'bar',h:true,  prefer:['used_mb','free_mb']},
+  'Get-CertificateExpiryWarnings':   {type:'bar',h:true,  prefer:['days_until_expiry']},
+  'Get-CollationConflicts':          {type:'bar',h:false, prefer:['database_id']},
+  'Get-DatabaseSnapshotInventory':   {type:'bar',h:true,  prefer:['allocated_mb','age_days']},
+  'Get-LinkedServerConnectivity':    {type:'bar',h:true,  prefer:[]},
+  'Get-CompressionCandidates':       {type:'bar',h:true,  prefer:['reserved_mb','row_count']},
+  // Traces
+  'Get-XeSessionActivity':           {type:'bar',h:true,  prefer:['occurrences']},
+  'Get-ActiveXeSessions':            {type:'bar',h:false, prefer:['running_hours','buffer_size_mb']},
+  // Batch 3
+  'Get-LastRestoreHistory':          {type:'bar',h:true,  prefer:['days_since_restore','backup_age_at_restore_days']},
+  'Get-ActiveConnectionsByDatabase': {type:'bar',h:true,  prefer:['total_sessions','active_requests','open_transactions']},
+  'Get-QueryVariance':               {type:'bar',h:true,  prefer:['max_to_min_ratio','variance_ms','max_ms']},
+  'Get-BackupSizeTrend':             {type:'bar',h:false, prefer:['avg_size_gb','avg_compressed_gb']},
 };
 
 const COLORS=['#58a6ff','#3fb950','#f78166','#d2a8ff','#ffa657','#79c0ff','#56d364','#ff7b72',
@@ -948,7 +986,17 @@ const SV={
   restoring:'orange',warning:'orange',warn:'orange',medium:'orange',pending:'orange',recovering:'orange',
   low:'blue',info:'blue',
   disabled:'gray','n/a':'gray',none:'gray',
-  'read-only':'blue',writes:'blue'
+  'read-only':'blue',writes:'blue',
+  // certificate expiry status (Get-CertificateExpiryWarnings)
+  expired:'red',
+  // job trend status (Get-JobDurationTrends)
+  spike:'red',growing:'orange',
+  // collation & TempDB balance flags
+  mismatch:'red',imbalanced:'red','too_few':'orange',excess:'orange','pct_growth':'orange',
+  // linked server connectivity
+  reachable:'green',unreachable:'red',untested:'gray',
+  // XE session status
+  running:'green',dropped:'gray',
 };
 
 let chart=null,data=null,type='bar',pieCol='',horizontal=false;
@@ -1212,7 +1260,7 @@ function fmtCell(val,col){
       const cl=n>=LOG_USED_CRIT?'red':n>=LOG_USED_WARN?'orange':'';
       return cl?'<span class="sv sv-'+cl+'">'+n.toFixed(1)+'%</span>':esc(n.toFixed(1)+'%');
     }
-    if(/free_pct|data_free_pct|log_free_pct/.test(c)){
+    if(/free_pct|data_free_pct|log_free_pct|^free %$/.test(c)){
       const cl=n<FREE_SPACE_CRIT?'red':n<FREE_SPACE_WARN?'orange':'';
       return cl?'<span class="sv sv-'+cl+'">'+n.toFixed(1)+'%</span>':esc(n.toFixed(1)+'%');
     }
@@ -1230,6 +1278,14 @@ function fmtCell(val,col){
     }
     if(/modification_pct/.test(c)){
       const cl=n>=MOD_PCT_CRIT?'red':n>=MOD_PCT_WARN?'orange':'';
+      return cl?'<span class="sv sv-'+cl+'">'+n.toFixed(1)+'%</span>':esc(n.toFixed(1)+'%');
+    }
+    if(/days_until_expiry/.test(c)){
+      const cl=n<0?'red':n<=30?'red':n<=90?'orange':'';
+      return cl?'<span class="sv sv-'+cl+'">'+n+'d</span>':esc(n+'d');
+    }
+    if(/pct_vs_avg/.test(c)){
+      const cl=n>=100?'red':n>=25?'orange':'';
       return cl?'<span class="sv sv-'+cl+'">'+n.toFixed(1)+'%</span>':esc(n.toFixed(1)+'%');
     }
     // Generic formatting (no threshold)
