@@ -47,10 +47,10 @@ SA account password as a SecureString. Prompted interactively if not supplied.
 Windows accounts to add as sysadmin (space-separated string). Defaults to current user.
 
 .PARAMETER ServiceAccount
-Service account for SQL Server engine. Default: NT Service\MSSQLSERVER (virtual account).
+Windows service account for the SQL Server engine. Default: NT Service\MSSQLSERVER (virtual account).
 
 .PARAMETER AgtServiceAccount
-Service account for SQL Agent. Default: NT Service\SQLSERVERAGENT.
+Windows service account for SQL Agent. Default: NT Service\SQLSERVERAGENT.
 
 .PARAMETER Collation
 Server collation. Default: SQL_Latin1_General_CP1_CI_AS
@@ -82,14 +82,14 @@ Preview the setup.exe command without executing it.
 # Unattended
 .\admin\installation\Install-SqlServer.ps1 `
     -SetupPath D:\SQL2022\setup.exe `
-    -SAPassword (ConvertTo-SecureString '<sa-password>' -AsPlainText -Force)
+    -SAPassword (Read-Host 'SA password' -AsSecureString)
 
 .EXAMPLE
 # Answer-file mode
 .\admin\installation\Install-SqlServer.ps1 `
     -SetupPath D:\SQL2022\setup.exe `
     -AnswerFile .\admin\installation\templates\sql-server-install-default.ini `
-    -SAPassword (ConvertTo-SecureString '<sa-password>' -AsPlainText -Force)
+    -SAPassword (Read-Host 'SA password' -AsSecureString)
 #>
 param(
     [string]$SetupPath,

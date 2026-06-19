@@ -153,15 +153,14 @@ function Invoke-SqlDataTable([string]$instance, [string]$query, [int]$timeout = 
 function Test-RemotePort([string]$fromHost, [int]$port, [string]$toHost, [int]$timeout = 3000) {
     try {
         $result = Invoke-Command -ComputerName $fromHost -ScriptBlock {
-            param($h, $p, $t)
             try {
                 $tcp = [System.Net.Sockets.TcpClient]::new()
-                $ar  = $tcp.BeginConnect($h, $p, $null, $null)
-                $ok  = $ar.AsyncWaitHandle.WaitOne($t)
+                $ar  = $tcp.BeginConnect($Using:toHost, $Using:port, $null, $null)
+                $ok  = $ar.AsyncWaitHandle.WaitOne($Using:timeout)
                 if ($ok -and $tcp.Connected) { $tcp.Close(); return $true }
                 $tcp.Close(); return $false
             } catch { return $false }
-        } -ArgumentList $toHost, $port, $timeout -ErrorAction Stop
+        } -ErrorAction Stop
         return [PSCustomObject]@{ Success = $result; Skipped = $false; Error = '' }
     }
     catch {

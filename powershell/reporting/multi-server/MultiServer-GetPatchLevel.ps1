@@ -14,7 +14,7 @@ Params      : -Servers "SVR01,SVR02"   Required. Comma-separated SQL Server inst
               -OutCsv path.csv         Save full results to CSV.
 Output      : server_name, version_friendly, product_update_level, product_version,
               edition, resource_db_updated, patch_summary
-              Compare product_version against https://sqlserverupdates.com for latest CU.
+              Check product_version against https://sqlserverupdates.com for latest CU.
 Example     : .\MultiServer-GetPatchLevel.ps1 -Servers "SVR01,SVR02,SVR03" -Parallel
 #>
 

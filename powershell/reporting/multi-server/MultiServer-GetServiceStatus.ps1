@@ -5,7 +5,7 @@ Purpose     : Check Windows service status across multiple remote hosts using Ge
 Author      : Peter Whyte (https://sqldba.blog)
 Safe        : Read-only
 Impact      : Low
-Requires    : RPC access to target hosts (port 135). Get-Service -ComputerName uses RPC, not WinRM.
+Requires    : RPC access to target hosts (port 135). The -ComputerName path on Get-Service uses RPC, not WinRM.
 Params      : -Servers "SVR01,SVR02"   Required. Comma-separated hostnames or IPs.
               -ServiceName "SQL*"      Service name filter; wildcard supported. Default: SQL*.
               -Parallel                Run all servers simultaneously (PS7+).

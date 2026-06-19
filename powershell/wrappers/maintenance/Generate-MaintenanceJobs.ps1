@@ -91,9 +91,9 @@ if ($invokeSqlcmd) {
 } else {
     $sqlcmdExe = Get-Command sqlcmd.exe -ErrorAction SilentlyContinue
     if (-not $sqlcmdExe) { throw 'Neither Invoke-Sqlcmd nor sqlcmd.exe is available on PATH.' }
-    $args = @('-S', $ServerInstance, '-d', $Database, '-i', $sqlScript, '-y', '0', '-b', '-C')
-    if ($Username -and $Password) { $args += @('-U', $Username, '-P', $Password) }
-    else                          { $args += '-E' }
+    $sqlcmdArgs = @('-S', $ServerInstance, '-d', $Database, '-i', $sqlScript, '-y', '0', '-b', '-C')
+    if ($Username -and $Password) { $sqlcmdArgs += @('-U', $Username, '-P', $Password) }
+    else                          { $sqlcmdArgs += '-E' }
     $lines = & $sqlcmdExe.Source @args
     if ($LASTEXITCODE -ne 0) { throw "sqlcmd.exe failed with exit code $LASTEXITCODE" }
     $ddlText = (($lines | Select-Object -Skip 2) -join "`r`n").TrimEnd()

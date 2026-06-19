@@ -241,8 +241,8 @@ function Invoke-RemotePatch {
     try {
         # Ensure the remote folder exists
         Invoke-Command -Session $session -ScriptBlock {
-            param($d) New-Item -ItemType Directory -Path $d -Force | Out-Null
-        } -ArgumentList $remDir
+            New-Item -ItemType Directory -Path $Using:remDir -Force | Out-Null
+        }
 
         # Copy installer via admin share (handles large files; admin share must be accessible)
         $uncFile = ConvertTo-Unc -LocalPath $remFile -ComputerName $ComputerName
@@ -258,12 +258,11 @@ function Invoke-RemotePatch {
         # Run installer silently on the remote server
         Write-PatchLog "    Running installer on $ComputerName..." 'Cyan'
         $exitCode = Invoke-Command -Session $session -ScriptBlock {
-            param($installer)
-            $proc = Start-Process -FilePath $installer `
+            $proc = Start-Process -FilePath $Using:remFile `
                 -ArgumentList '/quiet', '/IAcceptSQLServerLicenseTerms', '/allinstances' `
                 -Wait -PassThru
             $proc.ExitCode
-        } -ArgumentList $remFile
+        }
 
         return $exitCode
     }
