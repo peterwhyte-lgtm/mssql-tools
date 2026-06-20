@@ -58,6 +58,7 @@ The repo's internal documentation layer is the script header only (Purpose, Requ
 
 | Date | Item |
 |------|------|
+| 2026-06-21 | Security page — Build-SecurityPage + Build-SecurityScripts added to web UI; /security route wired; nav link added; Get-DatabaseMailAndXpCmdShell.sql updated with force encryption (sys.dm_server_registry) and NTLM connection count (sys.dm_exec_connections); Surface Area vitals (xp_cmdshell CRITICAL, CLR WARN, Force Encryption WARN, NTLM WARN) + Access Risk vitals (SA, weak logins, locked accounts, brute-force); findings panel with filter JS; security scripts grid |
 | 2026-06-20 | CONTRIBUTING.md rewrite — Peter Whyte as lead and author established; mission statement; SQL header Author field fixed to Peter Whyte (https://sqldba.blog); Pester test instructions added |
 | 2026-06-20 | README.md — author identity added to What This Is; health check count corrected 27→32; AssessedBy placeholder fixed; Contributing blurb updated |
 | 2026-06-20 | docs/standards.md — wrapper depth updated to cover both 3-level and 4-level cases with subfoldered path example |

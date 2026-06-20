@@ -416,11 +416,12 @@ details.cat-group[open]>summary::before{transform:rotate(90deg)}
 
 function Wrap-Page([string]$title, [string]$body, [string]$q='', [string]$active='scripts') {
     $qEsc = Html-Escape $q
-    $navTriage  = if ($active -eq 'triage')  { "class='active'" } else { '' }
-    $navScripts = if ($active -eq 'scripts') { "class='active'" } else { '' }
-    $navReview  = if ($active -eq 'review')  { "class='active'" } else { '' }
-    $navDisk    = if ($active -eq 'disk')    { "class='active'" } else { '' }
-    $navCsvs    = if ($active -eq 'csvs')    { "class='active'" } else { '' }
+    $navTriage   = if ($active -eq 'triage')   { "class='active'" } else { '' }
+    $navScripts  = if ($active -eq 'scripts')  { "class='active'" } else { '' }
+    $navReview   = if ($active -eq 'review')   { "class='active'" } else { '' }
+    $navSecurity = if ($active -eq 'security') { "class='active'" } else { '' }
+    $navDisk     = if ($active -eq 'disk')     { "class='active'" } else { '' }
+    $navCsvs     = if ($active -eq 'csvs')     { "class='active'" } else { '' }
     @"
 <!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -432,6 +433,7 @@ function Wrap-Page([string]$title, [string]$body, [string]$q='', [string]$active
     <a href="/triage" $navTriage>Triage</a>
     <a href="/" $navScripts>Scripts</a>
     <a href="/review" $navReview>Health Check</a>
+    <a href="/security" $navSecurity>Security</a>
     <a href="/disk" $navDisk>Disk Space</a>
     <a href="/csvs" $navCsvs>Output CSVs</a>
   </nav>
@@ -2042,6 +2044,250 @@ function filterFindings(btn){
     Wrap-Page 'Health Check' $html '' 'review'
 }
 
+# ── security review page ────────────────────────────────────────────────────────
+
+function Build-SecurityScripts([object[]]$scripts) {
+    if (-not $scripts -or $scripts.Count -eq 0) { return '' }
+    $out  = "<hr class='section-sep'><details class='rv-section' open><summary>Security Scripts ($($scripts.Count))</summary>"
+    $out += "<div class='run-bar' style='margin-bottom:12px'>"
+    $out += "<label>Server:</label>"
+    $defaultSrv2 = if ($env:DBASCRIPTS_SERVER) { Html-Escape $env:DBASCRIPTS_SERVER } else { '' }
+    $srvHint2    = if ($env:DBASCRIPTS_SERVER) { $env:DBASCRIPTS_SERVER } else { 'local ( . )' }
+    $out += "<input id='sec-srv' class='server-input' placeholder='$srvHint2' value='$defaultSrv2' autocomplete='off'>"
+    $out += "</div>"
+    $out += "<div id='sec-run-err' class='run-error' style='display:none;margin-bottom:8px'></div>"
+    $out += "<div class='grid'>"
+    foreach ($s in $scripts) {
+        $relEnc = [Uri]::EscapeDataString($s.RelPath)
+        $purpose = Html-Escape ($s.Purpose ?? '')
+        $safeTag = if ($s.Safety) { " <span class='sv sv-green'>$(Html-Escape $s.Safety)</span>" } else { '' }
+        $out += "<div class='card'>"
+        $out += "<div style='display:flex;justify-content:space-between;align-items:flex-start;gap:6px'>"
+        $out += "<a href='/view?p=$relEnc' style='flex:1'>$(Html-Escape $s.Name)</a>$safeTag"
+        $out += "</div>"
+        $out += "<div class='purpose'>$purpose</div>"
+        $out += "<div style='margin-top:8px;display:flex;gap:6px'>"
+        $out += "<button class='run-btn' style='font-size:.75rem;padding:3px 10px' onclick='runSecScript(`"$relEnc`",false)'>Run &#9654;</button>"
+        $out += "</div></div>"
+    }
+    $out += "</div></details>"
+    $out += "<script>
+async function runSecScript(path,dryrun){
+  const srv=document.getElementById('sec-srv').value.trim()||'.';
+  const err=document.getElementById('sec-run-err');
+  err.style.display='none';
+  try{
+    const r=await fetch('/api/run?p='+path+'&server='+encodeURIComponent(srv)+'&dryrun='+(dryrun?'1':'0'));
+    const d=await r.json();
+    if(d.ok){window.location.href=d.url;return;}
+    err.textContent=d.error||'Unknown error';err.style.display='';
+  }catch(e){err.textContent='Request failed: '+e.message;err.style.display='';}
+}
+</script>"
+    return $out
+}
+
+function Build-SecurityPage([string]$folder) {
+    $hcRoot = Join-Path $repoRoot 'output-files\healthcheck'
+    if ($folder -and -not [System.IO.Path]::IsPathRooted($folder)) { $folder = Join-Path $hcRoot $folder }
+    if (-not $folder) {
+        if (Test-Path $hcRoot) {
+            $latest = Get-ChildItem -LiteralPath $hcRoot -Directory |
+                      Sort-Object LastWriteTime -Descending | Select-Object -First 1
+            if ($latest) { $folder = $latest.FullName }
+        }
+    }
+
+    $folderEnc  = Html-Escape ($folder ?? '')
+    $defaultSrv = if ($env:DBASCRIPTS_SERVER) { Html-Escape $env:DBASCRIPTS_SERVER } else { '' }
+    $srvHint    = if ($env:DBASCRIPTS_SERVER) { $env:DBASCRIPTS_SERVER } else { 'local ( . )' }
+
+    $html = @"
+<div style='display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px'>
+  <form class='folder-row' style='margin:0;flex:1;min-width:0' method='get' action='/security'>
+    <label>Folder:</label>
+    <input class='folder-input' name='folder' value='$folderEnc' placeholder='Leave blank for most recent…'>
+    <button type='submit' class='folder-btn'>Load</button>
+  </form>
+  <div class='run-bar' style='flex-shrink:0'>
+    <label>Server:</label>
+    <input id='hc-srv' class='server-input' placeholder='$srvHint' value='$defaultSrv' autocomplete='off'>
+    <button id='hc-run-btn' class='run-btn' onclick='runHealthcheck("security")'>Run Security Check &#9654;</button>
+  </div>
+</div>
+<div id='hc-run-err' class='run-error' style='display:none;margin-bottom:10px'></div>
+<div id='hc-overlay' class='run-overlay'>
+  <div class='run-spinner'></div>
+  <div class='run-spinner-label'>Running security check — collecting data, please wait…</div>
+</div>
+<script>
+async function runHealthcheck(page){
+  const srv=document.getElementById('hc-srv').value.trim()||'.';
+  const btn=document.getElementById('hc-run-btn');
+  const err=document.getElementById('hc-run-err');
+  document.getElementById('hc-overlay').style.display='flex';
+  btn.disabled=true;err.style.display='none';
+  try{
+    const r=await fetch('/api/run-healthcheck?server='+encodeURIComponent(srv)+'&page='+page);
+    const d=await r.json();
+    if(d.ok){window.location.href=d.url;return;}
+    err.textContent=d.error||'Unknown error';err.style.display='';
+  }catch(e){err.textContent='Request failed: '+e.message;err.style.display='';}
+  document.getElementById('hc-overlay').style.display='none';
+  btn.disabled=false;
+}
+</script>
+"@
+
+    $secScripts = @(Get-AllScriptsCached | Where-Object { $_.Type -eq 'SQL' -and $_.Category -eq 'security' } | Sort-Object Name)
+
+    if (-not $folder -or -not (Test-Path -LiteralPath $folder)) {
+        $html += "<p class='no-data'>No healthcheck folder found. Run the health check first to see security findings.</p>"
+        $html += Build-SecurityScripts $secScripts
+        return Wrap-Page 'Security' $html '' 'security'
+    }
+
+    function Read-SecCsv([string]$name) {
+        $p = Join-Path $folder "$name.csv"
+        if (Test-Path -LiteralPath $p) { @(Import-Csv -LiteralPath $p -EA SilentlyContinue) } else { @() }
+    }
+
+    $logins       = Read-SecCsv 'weak-logins'
+    $failedLogins = Read-SecCsv 'failed-logins'
+    $surfaceArea  = Read-SecCsv 'security-surface-area'
+    $svrInfo      = Read-SecCsv 'server-info'
+
+    # ── meta bar ────────────────────────────────────────────────────────────────
+    $folderLeaf  = Split-Path -Leaf $folder
+    $collectedAt = ''
+    if ($folderLeaf -match '(\d{8}-\d{6})$') {
+        try { $collectedAt = ([DateTime]::ParseExact($Matches[1],'yyyyMMdd-HHmmss',$null)).ToString('yyyy-MM-dd HH:mm') } catch {}
+    }
+    $svrName = if ($svrInfo -and $svrInfo[0].PSObject.Properties['server_name']) { $svrInfo[0].server_name } `
+               else { $folderLeaf -replace '-\d{8}-\d{6}$','' }
+    $html += "<div class='hc-meta'>"
+    $html += "<span><strong>Server</strong> $(Html-Escape $svrName)</span>"
+    if ($collectedAt) { $html += "<span><strong>Collected</strong> $collectedAt</span>" }
+    $html += "<span><strong>Reviewed</strong> $(Get-Date -Format 'yyyy-MM-dd HH:mm')</span>"
+    $html += "</div>"
+
+    # ── surface area vitals ──────────────────────────────────────────────────────
+    $xpRow      = $surfaceArea | Where-Object { $_.name -eq 'xp_cmdshell' }         | Select-Object -First 1
+    $clrRow     = $surfaceArea | Where-Object { $_.name -eq 'clr enabled' }          | Select-Object -First 1
+    $clrStrRow  = $surfaceArea | Where-Object { $_.name -eq 'clr strict security' }  | Select-Object -First 1
+    $encRow     = $surfaceArea | Where-Object { $_.name -eq 'force encryption' }      | Select-Object -First 1
+    $ntlmRow    = $surfaceArea | Where-Object { $_.name -eq 'ntlm connections' }      | Select-Object -First 1
+
+    $xpEnabled  = $xpRow     -and $xpRow.running_value     -in @('1','True','true')
+    $clrEnabled = $clrRow    -and $clrRow.running_value    -in @('1','True','true')
+    $clrStrict  = $clrStrRow -and $clrStrRow.running_value -in @('1','True','true')
+    $forceEnc   = $encRow    -and $encRow.running_value    -in @('1','True','true')
+    $ntlmCount  = [int]($ntlmRow.running_value -as [int])
+
+    $saLoginRow = $logins | Where-Object { $_.risk_flag -eq 'SA_ENABLED' } | Select-Object -First 1
+    $saEnabled  = $null -ne $saLoginRow
+    $weakCount  = @($logins | Where-Object { $_.risk_flag -ne 'OK' }).Count
+    $lockedCount = @($failedLogins | Where-Object { $_.is_currently_locked -in @('1','True','true') }).Count
+    $bruteCount  = @($failedLogins | Where-Object { $_.status -like 'CRITICAL*' }).Count
+
+    if ($surfaceArea.Count -gt 0) {
+        $html += "<details class='rv-section' open><summary>Surface Area</summary><div class='vital-grid'>"
+        $xpCls  = if ($xpEnabled)                          { 'v-crit' } else { 'v-ok' }
+        $html  += "<div class='vital-card $xpCls'><div class='vital-label'>xp_cmdshell</div><div class='vital-val'>$(if ($xpEnabled) {'ENABLED'} else {'Off'})</div><div class='vital-sub'>OS command execution</div></div>"
+        $clrCls = if ($clrEnabled -and -not $clrStrict)   { 'v-warn' } elseif ($clrEnabled) { 'v-blue' } else { 'v-ok' }
+        $clrSub = if ($clrEnabled -and -not $clrStrict)   { 'strict security OFF' } elseif ($clrEnabled) { 'strict security on' } else { 'not enabled' }
+        $html  += "<div class='vital-card $clrCls'><div class='vital-label'>CLR</div><div class='vital-val'>$(if ($clrEnabled) {'Enabled'} else {'Off'})</div><div class='vital-sub'>$clrSub</div></div>"
+        $encCls = if ($encRow -and -not $forceEnc)        { 'v-warn' } elseif ($forceEnc) { 'v-ok' } else { 'v-blue' }
+        $encSub = if ($forceEnc)                           { 'all connections encrypted' } elseif ($encRow) { 'unencrypted allowed' } else { 'data not collected' }
+        $html  += "<div class='vital-card $encCls'><div class='vital-label'>Force Encryption</div><div class='vital-val'>$(if ($forceEnc) {'Enforced'} elseif ($encRow) {'Optional'} else {'—'})</div><div class='vital-sub'>$encSub</div></div>"
+        $ntlmCls = if ($ntlmCount -gt 0)                  { 'v-warn' } else { 'v-ok' }
+        $html   += "<div class='vital-card $ntlmCls'><div class='vital-label'>NTLM Connections</div><div class='vital-val'>$(if ($ntlmCount -gt 0) {$ntlmCount} else {'None'})</div><div class='vital-sub'>$(if ($ntlmCount -gt 0) {'NTLM sessions (prefer Kerberos)'} else {'no NTLM sessions'})</div></div>"
+        $html  += "</div></details>"
+    }
+
+    $html += "<details class='rv-section' open><summary>Access Risk</summary><div class='vital-grid'>"
+    $saCls = if ($saEnabled) { 'v-crit' } else { 'v-ok' }
+    $html += "<div class='vital-card $saCls'><div class='vital-label'>SA Login</div><div class='vital-val'>$(if ($saEnabled) {'ENABLED'} else {'Disabled'})</div><div class='vital-sub'>built-in sysadmin</div></div>"
+    $wkCls = if ($weakCount -gt 5) { 'v-crit' } elseif ($weakCount -gt 0) { 'v-warn' } else { 'v-ok' }
+    $html += "<div class='vital-card $wkCls'><div class='vital-label'>Weak Logins</div><div class='vital-val'>$(if ($weakCount -gt 0) {$weakCount} else {'Clean'})</div><div class='vital-sub'>$(if ($weakCount -gt 0) {'weak SQL logins'} else {'no weak logins'})</div></div>"
+    $lkCls = if ($lockedCount -gt 0) { 'v-crit' } else { 'v-ok' }
+    $html += "<div class='vital-card $lkCls'><div class='vital-label'>Locked Accounts</div><div class='vital-val'>$(if ($lockedCount -gt 0) {$lockedCount} else {'None'})</div><div class='vital-sub'>$(if ($lockedCount -gt 0) {'currently locked out'} else {'none locked'})</div></div>"
+    $brCls = if ($bruteCount -gt 0) { 'v-crit' } else { 'v-ok' }
+    $html += "<div class='vital-card $brCls'><div class='vital-label'>Brute-Force</div><div class='vital-val'>$(if ($bruteCount -gt 0) {$bruteCount} else {'None'})</div><div class='vital-sub'>$(if ($bruteCount -gt 0) {'likely brute-force patterns'} else {'no patterns detected'})</div></div>"
+    $html += "</div></details>"
+
+    # ── findings ────────────────────────────────────────────────────────────────
+    $findings = [System.Collections.Generic.List[PSObject]]::new()
+    function Add-F([string]$Sev,[string]$Cat,[string]$Subj,[string]$Detail) {
+        $findings.Add([PSCustomObject]@{ Severity=$Sev; Category=$Cat; Subject=$Subj; Detail=$Detail })
+    }
+
+    if ($saEnabled)  { Add-F 'CRITICAL' 'SA Login'     'sa'               'SA login is enabled — rename or disable to reduce attack surface' }
+    if ($xpEnabled)  { Add-F 'CRITICAL' 'Surface Area' 'xp_cmdshell'      'xp_cmdshell enabled — allows arbitrary OS command execution from SQL' }
+    if ($encRow -and -not $forceEnc) {
+        Add-F 'WARNING' 'Encryption' 'force encryption' 'Force encryption disabled — connections may transmit data in plaintext'
+    }
+    if ($ntlmCount -gt 0) {
+        Add-F 'WARNING' 'Authentication' 'NTLM connections' "$ntlmCount active session(s) using NTLM — configure Kerberos (SPN) for stronger auth"
+    }
+    if ($clrEnabled -and -not $clrStrict) {
+        Add-F 'WARNING' 'Surface Area' 'CLR' 'CLR enabled without strict security — allows unsigned assemblies'
+    }
+    foreach ($login in $logins) {
+        if (-not $login.risk_flag -or $login.risk_flag -eq 'OK') { continue }
+        $sev    = if ($login.risk_flag -eq 'SA_ENABLED') { 'CRITICAL' } else { 'WARNING' }
+        $detail = switch ($login.risk_flag) {
+            'PASSWORD_POLICY_OFF' { 'Password policy not enforced' }
+            'EXPIRATION_OFF'      { 'Password expiration disabled' }
+            default               { "Risk flag: $($login.risk_flag)" }
+        }
+        Add-F $sev 'Login Settings' $login.login_name $detail
+    }
+    foreach ($row in $failedLogins) {
+        if ($row.is_currently_locked -in @('1','True','true')) {
+            Add-F 'CRITICAL' 'Failed Logins' ($row.login_name ?? '(unknown)') 'Login is currently locked out'
+        }
+        if ($row.status -like 'CRITICAL*') {
+            Add-F 'CRITICAL' 'Failed Logins' ($row.login_name ?? '(unknown)') "$($row.failure_count) failures — likely brute-force or app misconfiguration"
+        } elseif ($row.status -like 'WARN*') {
+            Add-F 'WARNING'  'Failed Logins' ($row.login_name ?? '(unknown)') "$($row.failure_count) repeated failures in error log"
+        }
+    }
+
+    $critN = @($findings | Where-Object Severity -eq 'CRITICAL').Count
+    $warnN = @($findings | Where-Object Severity -eq 'WARNING').Count
+    $sevPills = ''
+    if ($critN -gt 0) { $sevPills += "<button class='sev-filter-btn s-crit' data-sev='crit' onclick='filterFindings(this)'>$critN Critical</button>" }
+    if ($warnN -gt 0) { $sevPills += "<button class='sev-filter-btn s-warn' data-sev='warn' onclick='filterFindings(this)'>$warnN Warning</button>" }
+    if ($findings.Count -eq 0) { $sevPills = "<span class='sev-chip s-ok'>All clear</span>" }
+
+    $html += "<hr class='section-sep'><details class='rv-section' open><summary>Findings <span class='find-pills'>$sevPills</span></summary>"
+    if ($findings.Count -eq 0) {
+        $html += "<p class='no-data'>No security findings detected.</p>"
+    } else {
+        $ord = @{ CRITICAL=0; WARNING=1; INFO=2 }
+        $html += "<div class='findings-list'>"
+        foreach ($f in ($findings | Sort-Object { $ord[$_.Severity] }, Category, Subject)) {
+            $rowCls = switch ($f.Severity) { 'CRITICAL' {'f-crit'} 'WARNING' {'f-warn'} default {'f-info'} }
+            $tagCls = switch ($f.Severity) { 'CRITICAL' {'sv sv-red'} 'WARNING' {'sv sv-orange'} default {'sv sv-blue'} }
+            $html  += "<div class='finding-row $rowCls'><span class='$tagCls'>$($f.Severity)</span><span class='find-cat'>$(Html-Escape $f.Category)</span><span class='find-subj'>$(Html-Escape $f.Subject)</span><div class='find-detail'>$(Html-Escape $f.Detail)</div></div>"
+        }
+        $html += "</div>"
+    }
+    $html += "</details><script>
+function filterFindings(btn){
+  var sev=btn.getAttribute('data-sev');
+  var isActive=btn.classList.contains('active');
+  document.querySelectorAll('.sev-filter-btn').forEach(function(b){b.classList.remove('active')});
+  document.querySelectorAll('.finding-row').forEach(function(r){r.style.display=''});
+  if(!isActive){btn.classList.add('active');document.querySelectorAll('.finding-row').forEach(function(r){if(!r.classList.contains('f-'+sev))r.style.display='none';});}
+}
+</script>"
+
+    $html += Build-SecurityScripts $secScripts
+    Wrap-Page 'Security' $html '' 'security'
+}
+
 # ── disk dashboard ─────────────────────────────────────────────────────────────
 
 function Build-DiskPage([string]$folder) {
@@ -2355,8 +2601,9 @@ try {
             '/view'     { Build-ViewPage   ($qs['p'] ?? '') }
             '/csvs'     { Build-CsvListPage }
             '/csv'      { Build-CsvViewPage ($qs['p'] ?? '') }
-            '/review'   { Build-ReviewPage  ($qs['folder'] ?? '') }
-            '/disk'     { Build-DiskPage    ($qs['folder'] ?? '') }
+            '/review'    { Build-ReviewPage   ($qs['folder'] ?? '') }
+            '/security'  { Build-SecurityPage ($qs['folder'] ?? '') }
+            '/disk'      { Build-DiskPage     ($qs['folder'] ?? '') }
             '/api/csv'  {
                 $contentType = 'application/json; charset=utf-8'
                 $p = $qs['p'] ?? ''
