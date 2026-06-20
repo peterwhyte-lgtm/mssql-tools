@@ -80,16 +80,16 @@ $scripts = @(
     [PSCustomObject]@{ Label = 'deprecated-features'; Path = 'sql\migration\Get-DeprecatedFeaturesInUse.sql' }
     [PSCustomObject]@{ Label = 'compat-level-audit';  Path = 'sql\migration\Get-CompatibilityLevelAudit.sql' }
     [PSCustomObject]@{ Label = 'login-audit';         Path = 'sql\migration\Get-MigrationLoginAudit.sql' }
-    [PSCustomObject]@{ Label = 'database-health';     Path = 'sql\monitoring\Get-DatabaseHealth.sql' }
-    [PSCustomObject]@{ Label = 'database-sizes';      Path = 'sql\monitoring\Get-DatabaseSizesAndFreeSpace.sql' }
-    [PSCustomObject]@{ Label = 'database-files';      Path = 'sql\monitoring\Get-DatabaseFilesDetail.sql' }
+    [PSCustomObject]@{ Label = 'database-health';     Path = 'sql\monitoring\databases\Get-DatabaseHealth.sql' }
+    [PSCustomObject]@{ Label = 'database-sizes';      Path = 'sql\monitoring\disk-space\Get-DatabaseSizesAndFreeSpace.sql' }
+    [PSCustomObject]@{ Label = 'database-files';      Path = 'sql\monitoring\disk-space\Get-DatabaseFilesDetail.sql' }
     [PSCustomObject]@{ Label = 'backup-coverage';     Path = 'sql\backups\Get-BackupCoverage.sql' }
-    [PSCustomObject]@{ Label = 'agent-jobs';          Path = 'sql\monitoring\Get-SqlAgentJobOverview.sql' }
-    [PSCustomObject]@{ Label = 'linked-servers';      Path = 'sql\monitoring\Get-LinkedServerAndJobInventory.sql' }
+    [PSCustomObject]@{ Label = 'agent-jobs';          Path = 'sql\monitoring\jobs\Get-SqlAgentJobOverview.sql' }
+    [PSCustomObject]@{ Label = 'linked-servers';      Path = 'sql\inventory\Get-LinkedServerAndJobInventory.sql' }
     [PSCustomObject]@{ Label = 'ag-state';            Path = 'sql\high-availability\always-on\Get-AvailabilityGroupReplicaState.sql' }
-    [PSCustomObject]@{ Label = 'sysadmin-members';    Path = 'sql\security\Get-SysadminMembers.sql' }
+    [PSCustomObject]@{ Label = 'sysadmin-members';    Path = 'sql\security\access\Get-SysadminMembers.sql' }
     [PSCustomObject]@{ Label = 'security-surface';    Path = 'sql\security\Get-DatabaseMailAndXpCmdShell.sql' }
-    [PSCustomObject]@{ Label = 'disk-space';          Path = 'sql\monitoring\Get-DiskSpace.sql' }
+    [PSCustomObject]@{ Label = 'disk-space';          Path = 'sql\monitoring\disk-space\Get-DiskSpace.sql' }
 )
 
 $summary = [System.Collections.Generic.List[PSObject]]::new()

@@ -74,19 +74,19 @@ Write-Host '--------------------------------------------'
 Write-Host ''
 
 $scripts = @(
-    [PSCustomObject]@{ Label = 'server-info';      Path = 'sql\monitoring\Get-VersionAndEdition.sql' }
-    [PSCustomObject]@{ Label = 'os-hardware';      Path = 'sql\monitoring\Get-OsAndHardwareInfo.sql' }
-    [PSCustomObject]@{ Label = 'instance-config';  Path = 'sql\monitoring\Get-InstanceConfigurationSnapshot.sql' }
-    [PSCustomObject]@{ Label = 'memory-config';    Path = 'sql\monitoring\Get-MemoryConfigurationAndUsage.sql' }
-    [PSCustomObject]@{ Label = 'maxdop-config';    Path = 'sql\monitoring\Get-MaxdopConfiguration.sql' }
-    [PSCustomObject]@{ Label = 'database-health';  Path = 'sql\monitoring\Get-DatabaseHealth.sql' }
-    [PSCustomObject]@{ Label = 'database-sizes';   Path = 'sql\monitoring\Get-DatabaseSizesAndFreeSpace.sql' }
-    [PSCustomObject]@{ Label = 'database-files';   Path = 'sql\monitoring\Get-DatabaseFilesDetail.sql' }
+    [PSCustomObject]@{ Label = 'server-info';      Path = 'sql\inventory\Get-VersionAndEdition.sql' }
+    [PSCustomObject]@{ Label = 'os-hardware';      Path = 'sql\inventory\Get-OsAndHardwareInfo.sql' }
+    [PSCustomObject]@{ Label = 'instance-config';  Path = 'sql\monitoring\instance\Get-InstanceConfigurationSnapshot.sql' }
+    [PSCustomObject]@{ Label = 'memory-config';    Path = 'sql\monitoring\instance\Get-MemoryConfigurationAndUsage.sql' }
+    [PSCustomObject]@{ Label = 'maxdop-config';    Path = 'sql\monitoring\instance\Get-MaxdopConfiguration.sql' }
+    [PSCustomObject]@{ Label = 'database-health';  Path = 'sql\monitoring\databases\Get-DatabaseHealth.sql' }
+    [PSCustomObject]@{ Label = 'database-sizes';   Path = 'sql\monitoring\disk-space\Get-DatabaseSizesAndFreeSpace.sql' }
+    [PSCustomObject]@{ Label = 'database-files';   Path = 'sql\monitoring\disk-space\Get-DatabaseFilesDetail.sql' }
     [PSCustomObject]@{ Label = 'backup-coverage';  Path = 'sql\backups\Get-BackupCoverage.sql' }
     [PSCustomObject]@{ Label = 'wait-stats';       Path = 'sql\performance\Get-WaitStatistics.sql' }
     [PSCustomObject]@{ Label = 'io-usage';         Path = 'sql\performance\Get-DatabaseIoUsage.sql' }
     [PSCustomObject]@{ Label = 'ag-state';         Path = 'sql\high-availability\always-on\Get-AvailabilityGroupReplicaState.sql' }
-    [PSCustomObject]@{ Label = 'disk-space';       Path = 'sql\monitoring\Get-DiskSpace.sql' }
+    [PSCustomObject]@{ Label = 'disk-space';       Path = 'sql\monitoring\disk-space\Get-DiskSpace.sql' }
 )
 
 $summary = [System.Collections.Generic.List[PSObject]]::new()

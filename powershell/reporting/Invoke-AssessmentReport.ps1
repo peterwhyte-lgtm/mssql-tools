@@ -80,7 +80,7 @@ else {
 
 # ── Step 2: Configuration score ─────────────────────────────────────────────
 Write-Host "  Step 2/3   : Running configuration score..." -ForegroundColor DarkGray
-$scoreSql = Join-Path $repoRoot 'sql\monitoring\Get-InstanceConfigurationScore.sql'
+$scoreSql = Join-Path $repoRoot 'sql\monitoring\instance\Get-InstanceConfigurationScore.sql'
 $scoreCsv = Join-Path $FolderPath 'score.csv'
 if (Test-Path -LiteralPath $scoreSql) {
     try {
