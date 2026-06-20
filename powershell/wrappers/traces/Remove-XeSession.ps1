@@ -1,11 +1,11 @@
 <#
 .SYNOPSIS
-Stops and drops a named Extended Events session.
+Lists all DBA-created Extended Events sessions and generates the DDL to stop and drop each one.
 
 .NOTES
 ScriptType   : runner
 TargetScope  : single server
-RiskLevel    : MEDIUM
+RiskLevel    : SAFE
 #>
 
 param(
@@ -24,5 +24,5 @@ $runner    = Join-Path $repoRoot 'tools\local-sql\Invoke-RepoSql.ps1'
 if (-not (Test-Path -LiteralPath $sqlScript)) { throw "Script not found: $sqlScript" }
 if (-not (Test-Path -LiteralPath $runner))    { throw "Runner not found: $runner" }
 
-Write-Host 'Removing XE session...' -ForegroundColor Cyan
+Write-Host 'Listing XE sessions and generating cleanup commands...' -ForegroundColor Cyan
 & $runner -ScriptPath $sqlScript -ServerInstance $ServerInstance -Database $Database -OutputFormat $OutputFormat -OutputPath $OutputPath

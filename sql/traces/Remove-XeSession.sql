@@ -1,40 +1,40 @@
 /*
 Script Name : Remove-XeSession
 Category    : traces
-Purpose     : Stops and drops a named Extended Events session. Run this when collection is complete.
-              The .xel files on disk are NOT deleted — review them first with Get-XeSessionActivity.sql, then delete manually.
+Purpose     : Lists all DBA-created Extended Events sessions (running and stopped) and generates the DDL to stop and drop each one.
+              Copy the remove_cmd value for any session you want to clean up and run it.
+              .xel files on disk are NOT deleted — review them first with Get-XeSessionActivity.sql, then delete manually.
 Author      : Peter Whyte (https://sqldba.blog)
-Requires    : ALTER ANY EVENT SESSION
+Requires    : VIEW SERVER STATE
 */
--- SAFE:WritesData
+-- SAFE:ReadOnly
 -- IMPACT:Low
 SET NOCOUNT ON;
 
-/* ── Configuration — edit before running ────────────────────────────────── */
-DECLARE @SessionName NVARCHAR(128) = N'DecommissionAudit';
-/* ─────────────────────────────────────────────────────────────────────────── */
-
-IF NOT EXISTS (SELECT 1 FROM sys.server_event_sessions WHERE name = @SessionName)
-BEGIN
-    PRINT 'Session ' + @SessionName + ' does not exist — nothing to remove.';
-    RETURN;
-END;
-
-DECLARE @sql NVARCHAR(MAX);
-
-/* Stop first (ignore error if already stopped) */
-BEGIN TRY
-    SET @sql = N'ALTER EVENT SESSION ' + QUOTENAME(@SessionName) + N' ON SERVER STATE = STOP;';
-    EXEC sp_executesql @sql;
-END TRY
-BEGIN CATCH
-    /* Session was already stopped — that is fine */
-END CATCH;
-
-SET @sql = N'DROP EVENT SESSION ' + QUOTENAME(@SessionName) + N' ON SERVER;';
-EXEC sp_executesql @sql;
-
-SELECT @SessionName AS session_removed, 'DROPPED' AS status;
-
-PRINT 'Session ' + @SessionName + ' stopped and dropped.';
-PRINT 'Note: .xel files on disk have NOT been deleted. Remove them manually when no longer needed.';
+SELECT
+    ses.name                                                         AS session_name,
+    CASE WHEN dm.name IS NOT NULL THEN 'RUNNING' ELSE 'STOPPED' END  AS session_status,
+    dm.create_time                                                    AS started_at,
+    DATEDIFF(HOUR, dm.create_time, GETDATE())                        AS running_hours,
+    ses.startup_state                                                 AS auto_start_on_restart,
+    COALESCE(
+        CAST(CAST(tgt.target_data AS XML).value(
+            '(EventFileTarget/File/@name)[1]', 'nvarchar(500)') AS NVARCHAR(500)),
+        CONVERT(NVARCHAR(500), f.value)
+    )                                                                 AS output_file,
+    'ALTER EVENT SESSION ' + QUOTENAME(ses.name) + ' ON SERVER STATE = STOP; DROP EVENT SESSION ' + QUOTENAME(ses.name) + ' ON SERVER;'
+                                                                      AS remove_cmd
+FROM sys.server_event_sessions                       ses
+LEFT JOIN sys.dm_xe_sessions                         dm  ON dm.name  = ses.name
+LEFT JOIN sys.dm_xe_session_targets                  tgt ON tgt.event_session_address = dm.address
+                                                        AND tgt.target_name = 'event_file'
+LEFT JOIN sys.server_event_session_targets           st  ON st.event_session_id = ses.event_session_id
+                                                        AND st.name = 'event_file'
+LEFT JOIN sys.server_event_session_fields            f   ON f.event_session_id  = ses.event_session_id
+                                                        AND f.object_id         = st.target_id
+                                                        AND f.name              = 'filename'
+WHERE ses.name NOT IN (
+    'system_health', 'telemetry_xevents', 'hkenginexesession',
+    'AlwaysOn_health', 'sp_server_diagnostics session'
+)
+ORDER BY CASE WHEN dm.name IS NOT NULL THEN 0 ELSE 1 END, ses.name;

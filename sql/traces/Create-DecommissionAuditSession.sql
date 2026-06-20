@@ -1,10 +1,9 @@
 /*
 Script Name : Create-DecommissionAuditSession
 Category    : traces
-Purpose     : Creates an Extended Events session to capture all activity against a specific database — use before decommissioning or retiring a database to prove zero usage.
-              Run for a minimum of 5-7 business days to catch batch jobs and end-of-period activity.
-              Set STARTUP_STATE = ON so the session survives server restarts during collection.
-              When done, run Remove-XeSession.sql to stop and clean up.
+Purpose     : Creates an Extended Events session that captures all T-SQL batch, RPC, successful login, and failed login activity
+              against a specific database (or all databases). Use before decommissioning or retiring a database to prove zero usage.
+              Run for at least 5–7 business days to catch batch jobs and end-of-period activity.
 Author      : Peter Whyte (https://sqldba.blog)
 Requires    : ALTER ANY EVENT SESSION, VIEW SERVER STATE
 */
@@ -13,30 +12,32 @@ Requires    : ALTER ANY EVENT SESSION, VIEW SERVER STATE
 SET NOCOUNT ON;
 
 /* ── Configuration — edit these before running ───────────────────────────── */
-DECLARE @SessionName  NVARCHAR(128) = N'DecommissionAudit';
-DECLARE @DatabaseName NVARCHAR(128) = N'';   /* set to the database you are retiring; blank = all databases */
-DECLARE @TraceFolder  NVARCHAR(260) = N'';   /* blank = auto-detect SQL Server log folder */
-DECLARE @MaxFileMB    INT           = 100;
-DECLARE @MaxFiles     INT           = 10;    /* 10 x 100 MB = up to 1 GB rolling */
+DECLARE @SessionName   NVARCHAR(128) = N'DecommissionAudit';
+DECLARE @DatabaseName  NVARCHAR(128) = N'';   /* target database; blank = all databases (high volume on busy servers) */
+DECLARE @TraceFolder   NVARCHAR(260) = N'D:\SQLTrace';
+    /* Folder must exist; SQL Server service account needs write access.      */
+DECLARE @MaxFileMB     INT           = 100;   /* max size per .xel file in MB                         */
+DECLARE @MaxFiles      INT           = 14;    /* number of rollover files; oldest is overwritten first */
+DECLARE @RetentionDays INT           = 7;
+    /* SQL Server 2025+ (v17+) only: session auto-stops after this many days.
+       On older versions this has no effect — the session runs until you stop
+       it manually. Run for at least 5–7 business days to catch batch jobs
+       and end-of-period processing.                                          */
 /* ─────────────────────────────────────────────────────────────────────────── */
 
-/* Auto-detect trace folder from SQL Server error log path if not supplied */
-IF @TraceFolder = N''
-BEGIN
-    DECLARE @errlog NVARCHAR(260) = CAST(SERVERPROPERTY('ErrorLogFileName') AS NVARCHAR(260));
-    SET @TraceFolder = LEFT(@errlog, LEN(@errlog) - CHARINDEX(N'\', REVERSE(@errlog)));
-END;
+DECLARE @ProductMajorVersion INT = CAST(SERVERPROPERTY('ProductMajorVersion') AS INT);
 
-DECLARE @FilePath NVARCHAR(260) = @TraceFolder + N'\' + @SessionName + N'.xel';
+/* Escape any single-quotes in the path so the dynamic SQL string stays valid */
+DECLARE @FilePathRaw NVARCHAR(260) = @TraceFolder + N'\' + @SessionName + N'.xel';
+DECLARE @FilePathEsc NVARCHAR(522) = REPLACE(@FilePathRaw, N'''', N'''''');
 
-/* Build the WHERE predicate — filter by database name if one was supplied */
+/* Database filter — applied to batch and RPC events; login events are server-level */
 DECLARE @dbFilter NVARCHAR(500) = N'';
 IF @DatabaseName <> N''
     SET @dbFilter = N'WHERE sqlserver.database_name = N''' + REPLACE(@DatabaseName, N'''', N'''''') + N'''';
 
 DECLARE @sql NVARCHAR(MAX);
 
-/* Drop if already exists so the script is safe to re-run */
 IF EXISTS (SELECT 1 FROM sys.server_event_sessions WHERE name = @SessionName)
 BEGIN
     SET @sql = N'ALTER EVENT SESSION ' + QUOTENAME(@SessionName) + N' ON SERVER STATE = STOP;
@@ -45,64 +46,96 @@ BEGIN
     PRINT 'Existing session ' + @SessionName + ' stopped and dropped.';
 END;
 
+/* Build WITH clause — MAX_DURATION is SQL Server 2025+ (v17+) only */
+DECLARE @WithClause NVARCHAR(500) =
+    N'WITH (
+    MAX_DISPATCH_LATENCY = 15 SECONDS,
+    STARTUP_STATE        = ON';
+IF @ProductMajorVersion >= 17
+    SET @WithClause = @WithClause
+        + N',
+    MAX_DURATION         = ' + CAST(@RetentionDays AS NVARCHAR(5)) + N' DAYS';
+SET @WithClause = @WithClause + N'
+)';
+
 SET @sql = N'
 CREATE EVENT SESSION ' + QUOTENAME(@SessionName) + N' ON SERVER
-
-/* Capture T-SQL batch completions ----------------------------------------- */
 ADD EVENT sqlserver.sql_batch_completed (
     ACTION (
         sqlserver.client_hostname,
         sqlserver.client_app_name,
         sqlserver.username,
         sqlserver.nt_username,
+        sqlserver.server_principal_name,
         sqlserver.database_name
     )
     ' + @dbFilter + N'
 ),
-
-/* Capture stored procedure / RPC calls ------------------------------------ */
 ADD EVENT sqlserver.rpc_completed (
     ACTION (
         sqlserver.client_hostname,
         sqlserver.client_app_name,
         sqlserver.username,
         sqlserver.nt_username,
+        sqlserver.server_principal_name,
         sqlserver.database_name
     )
     ' + @dbFilter + N'
 ),
-
-/* Capture new logins ------------------------------------------------------- */
 ADD EVENT sqlserver.login (
     ACTION (
         sqlserver.client_hostname,
         sqlserver.client_app_name,
         sqlserver.username,
-        sqlserver.nt_username
+        sqlserver.nt_username,
+        sqlserver.server_principal_name,
+        sqlserver.database_name
     )
+    WHERE sqlserver.is_system = 0
+),
+ADD EVENT sqlserver.error_reported (
+    /* error 18456 = Login failed; state field indicates the specific reason */
+    ACTION (
+        sqlserver.client_hostname,
+        sqlserver.client_app_name,
+        sqlserver.username,
+        sqlserver.nt_username,
+        sqlserver.server_principal_name,
+        sqlserver.database_name
+    )
+    WHERE error_number = 18456
 )
-
 ADD TARGET package0.event_file (
-    SET filename         = N''' + @FilePath + N''',
-        max_file_size    = ' + CAST(@MaxFileMB AS NVARCHAR(10)) + N',
-        max_rollover_files = ' + CAST(@MaxFiles AS NVARCHAR(10)) + N'
+    SET filename           = N''' + @FilePathEsc + N''',
+        max_file_size      = ' + CAST(@MaxFileMB AS NVARCHAR(10)) + N',
+        max_rollover_files = ' + CAST(@MaxFiles  AS NVARCHAR(10)) + N'
 )
-WITH (
-    MAX_DISPATCH_LATENCY = 15 SECONDS,
-    STARTUP_STATE        = ON    /* survives restarts — important for multi-day collection */
-);
-
+' + @WithClause + N';
 ALTER EVENT SESSION ' + QUOTENAME(@SessionName) + N' ON SERVER STATE = START;';
 
-EXEC sp_executesql @sql;
+BEGIN TRY
+    EXEC sp_executesql @sql;
 
-SELECT
-    @SessionName  AS session_name,
-    @FilePath     AS output_file,
-    @DatabaseName AS database_filter,
-    'RUNNING'     AS status;
+    SELECT
+        @SessionName                                               AS session_name,
+        @FilePathRaw                                               AS output_file,
+        NULLIF(@DatabaseName, N'')                                 AS database_filter,
+        @MaxFileMB                                                 AS max_file_mb,
+        @MaxFiles                                                  AS max_files,
+        @MaxFileMB * @MaxFiles                                     AS total_capacity_mb,
+        CASE WHEN @ProductMajorVersion >= 17
+             THEN CAST(@RetentionDays AS VARCHAR(5)) + ' days (MAX_DURATION)'
+             ELSE 'manual stop (pre-2025)'
+        END                                                        AS session_lifetime,
+        'RUNNING'                                                  AS status,
+        'ALTER EVENT SESSION ' + QUOTENAME(@SessionName) + ' ON SERVER STATE = STOP; DROP EVENT SESSION ' + QUOTENAME(@SessionName) + ' ON SERVER;'
+                                                                   AS remove_cmd;
 
-PRINT 'Session ' + @SessionName + ' created and started.';
-PRINT 'Output file: ' + @FilePath;
-PRINT 'Run Get-XeSessionActivity.sql to review collected data.';
-PRINT 'Run Remove-XeSession.sql when collection is complete.';
+    PRINT 'Session ' + @SessionName + ' created and started.';
+    PRINT 'Output file : ' + @FilePathRaw;
+    PRINT 'View data   : SSMS > Management > Extended Events > Sessions > ' + @SessionName + ' > right-click target > View Target Data';
+END TRY
+BEGIN CATCH
+    PRINT 'ERROR creating session: ' + ERROR_MESSAGE();
+    THROW;
+END CATCH;
