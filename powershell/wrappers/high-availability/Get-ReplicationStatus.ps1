@@ -1,17 +1,16 @@
 <#
 .SYNOPSIS
-Shows transactional replication status for the local publisher and distributor.
+Lists all publications and subscriptions from the distribution database.
 
 .NOTES
 ScriptType   : runner
 TargetScope  : single server
 RiskLevel    : SAFE
-Purpose      : Run the replication status SQL query from the repo and export results.
 #>
 
 param(
     [string]$ServerInstance = '.',
-    [string]$Database = 'master',
+    [string]$Database = 'distribution',
     [ValidateSet('Table', 'Csv')]
     [string]$OutputFormat = 'Table',
     [string]$OutputPath
@@ -26,5 +25,5 @@ $runner = Join-Path $repoRoot 'tools\local-sql\Invoke-RepoSql.ps1'
 if (-not (Test-Path -LiteralPath $sqlScript)) { throw "SQL script not found: $sqlScript" }
 if (-not (Test-Path -LiteralPath $runner)) { throw "Runner not found: $runner" }
 
-Write-Host 'Running replication status review...' -ForegroundColor Cyan
+Write-Host 'Listing replication publications and subscriptions...' -ForegroundColor Cyan
 & $runner -ScriptPath $sqlScript -ServerInstance $ServerInstance -Database $Database -OutputFormat $OutputFormat -OutputPath $OutputPath

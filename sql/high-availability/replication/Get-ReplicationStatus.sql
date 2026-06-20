@@ -1,37 +1,41 @@
 /*
 Script Name : Get-ReplicationStatus
 Category    : high-availability
-Purpose     : Show transactional replication status for local publisher and distributor.
+Purpose     : Lists all publications and subscriptions from the distribution database, including
+              publication type, subscriber server and database, subscription type, and status.
+              Run against the distribution database (-Database distribution).
 Author      : Peter Whyte (https://sqldba.blog)
-Requires    : VIEW SERVER STATE
+Requires    : db_owner or replmonitor role on the distribution database
 */
 -- SAFE:ReadOnly
 -- IMPACT:Low
 SET NOCOUNT ON;
 
 SELECT
-    s.name AS publication_db,
-    p.name AS publication_name,
-    a.agent_name,
-    r.subscriber_db,
-    r.subscriber_server,
-    r.status,
-    CASE r.status
-        WHEN 1 THEN 'Started'
-        WHEN 2 THEN 'Starting'
-        WHEN 3 THEN 'Stopping'
-        WHEN 4 THEN 'Stopped'
-        WHEN 5 THEN 'Retrying'
-        WHEN 6 THEN 'Failed'
-        WHEN 7 THEN 'Succeeded'
+    pub.publisher_db                                    AS publication_database,
+    pub.publication                                     AS publication_name,
+    CASE pub.publication_type
+        WHEN 0 THEN 'Transactional'
+        WHEN 1 THEN 'Snapshot'
+        WHEN 2 THEN 'Merge'
         ELSE 'Unknown'
-    END AS status_desc,
-    r.last_distsync_status,
-    r.last_distsync_time,
-    r.last_distsync_duration,
-    r.last_distsync_history
-FROM syspublications p
-JOIN syspublication_agents a ON p.publication_id = a.publication_id
-JOIN syspublication_subscriptions s ON p.publication_id = s.publication_id
-JOIN syspublication_subscriptions_history r ON s.subscription_id = r.subscription_id
-ORDER BY s.name, p.name, a.agent_name;
+    END                                                 AS publication_type,
+    si.name                                             AS subscriber_server,
+    sub.subscriber_db                                   AS subscriber_database,
+    CASE sub.subscription_type
+        WHEN 0 THEN 'Push'
+        WHEN 1 THEN 'Pull'
+        WHEN 2 THEN 'Anonymous'
+        ELSE 'Unknown'
+    END                                                 AS subscription_type,
+    CASE sub.status
+        WHEN 0 THEN 'Inactive'
+        WHEN 1 THEN 'Subscribed'
+        WHEN 2 THEN 'Active'
+        ELSE 'Unknown'
+    END                                                 AS subscription_status
+FROM dbo.MSpublications          pub
+JOIN dbo.MSsubscriptions         sub ON sub.publication_id = pub.publication_id
+JOIN dbo.MSsubscriber_info       si  ON si.id              = sub.subscriber_id
+WHERE sub.subscriber_id > 0
+ORDER BY pub.publisher_db, pub.publication, si.name;

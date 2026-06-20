@@ -1,6 +1,6 @@
 /*
 Script Name : Get-AgFailoverReadiness
-Category    : ha-dr
+Category    : high-availability
 Purpose     : Per-AG, per-database failover readiness with quantified RPO and RTO estimates.
               Answers "would a failover succeed RIGHT NOW and what would it cost?"
               RTO = estimated seconds to drain redo queue at current redo rate.
