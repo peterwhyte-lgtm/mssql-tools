@@ -99,7 +99,7 @@ Latency thresholds: >20ms read or >10ms write on data files is concerning.
 ## Daily health check workflow
 
 ```powershell
-# Collect all 27 healthcheck scripts → named CSVs in output-files\healthcheck\
+# Collect all 32 healthcheck scripts → named CSVs in output-files\healthcheck\
 .\powershell\reporting\Invoke-HealthCheckCollection.ps1 -ServerInstance PROD01
 
 # Review findings — surfaces CRITICAL / WARNING / INFO
