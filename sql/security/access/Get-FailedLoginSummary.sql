@@ -9,6 +9,7 @@ Purpose     : Aggregated failed login analysis from the SQL Server error log and
               xp_readerrorlog is the reliable cross-version source for login failures.
 Author      : Peter Whyte (https://sqldba.blog)
 Requires    : VIEW SERVER STATE, sysadmin (for LOGINPROPERTY on other logins), EXECUTE on xp_readerrorlog
+HealthCheck : Yes
 */
 -- SAFE:ReadOnly
 -- IMPACT:Low

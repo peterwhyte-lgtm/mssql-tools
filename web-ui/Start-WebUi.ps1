@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Local web UI for browsing scripts and visualising output CSVs.
 .DESCRIPTION
@@ -29,7 +29,11 @@ function Get-AllScripts {
     $sql = Get-ChildItem "$repoRoot\sql" -Recurse -Filter '*.sql' -File |
         Select-Object FullName,
             @{n='Name';    e={ $_.BaseName }},
-            @{n='Category';e={ $_.Directory.Name }},
+            @{n='Category';e={
+                $rel = $_.FullName.Replace($repoRoot.ToString(),'').TrimStart('\').Replace('\','/')
+                if ($rel -match '^sql/([^/]+)/([^/]+)/') { $Matches[1] }
+                else { $_.Directory.Name }
+            }},
             @{n='Type';    e={ 'SQL' }},
             @{n='RelPath'; e={ $_.FullName.Replace($repoRoot,'').TrimStart('\') }}
 
@@ -341,6 +345,17 @@ tr:hover td{background:#161b22}
 .sev-chip.s-warn{background:#3a2a1a;color:#ffa657;border-color:#ffa657}
 .sev-chip.s-info{background:#1a2a3a;color:#58a6ff;border-color:#58a6ff}
 .sev-chip.s-ok{background:#1a3a2a;color:#3fb950;border-color:#3fb950}
+details.rv-section{margin:0}
+details.rv-section>summary{font-size:1rem;font-weight:600;color:#e6edf3;margin:10px 0 14px;padding-bottom:6px;border-bottom:1px solid #21262d;cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px}
+details.rv-section>summary::-webkit-details-marker{display:none}
+details.rv-section>summary::before{content:'\25be';font-size:.75rem;color:#8b949e;flex-shrink:0;font-family:monospace}
+details.rv-section:not([open])>summary::before{content:'\25b8'}
+.find-pills{margin-left:auto;display:flex;gap:6px;align-items:center;flex-shrink:0}
+.sev-filter-btn{padding:3px 12px;border-radius:20px;font-size:.8rem;font-weight:600;border:1px solid;cursor:pointer;background:transparent;transition:opacity .15s}
+.sev-filter-btn.s-crit{color:#f78166;border-color:#f78166}.sev-filter-btn.s-crit.active{background:#3a1a1a}
+.sev-filter-btn.s-warn{color:#ffa657;border-color:#ffa657}.sev-filter-btn.s-warn.active{background:#3a2a1a}
+.sev-filter-btn.s-info{color:#58a6ff;border-color:#58a6ff}.sev-filter-btn.s-info.active{background:#1a2a3a}
+.sev-filter-btn:hover{opacity:.8}
 .findings-list{display:flex;flex-direction:column;gap:5px;margin-bottom:28px}
 .finding-row{padding:9px 14px;border-radius:6px;border-left:3px solid;display:grid;grid-template-columns:90px 170px 1fr;align-items:start;gap:4px 12px}
 .finding-row .find-detail{grid-column:2/4;font-size:.78rem;color:#8b949e;margin-top:2px}
@@ -528,7 +543,9 @@ function Build-ViewPage([string]$relPath) {
     }
     $content   = Get-Content $fullPath -Raw -Encoding UTF8
     $name      = [IO.Path]::GetFileNameWithoutExtension($relPath)
-    $category  = Split-Path (Split-Path $relPath -Parent) -Leaf
+    $category  = if ($relPath -match '^sql[\\/]([^\\/]+)[\\/]([^\\/]+)[\\/]') { "$($Matches[1])/$($Matches[2])" }
+               elseif ($relPath -match '^sql[\\/]([^\\/]+)[\\/]') { $Matches[1] }
+               else { Split-Path (Split-Path $relPath -Parent) -Leaf }
     $purpose   = Get-ScriptPurpose $fullPath
     $ext       = [IO.Path]::GetExtension($relPath).ToLower()
     $metaParts = @($category, $ext.TrimStart('.').ToUpper())
@@ -1390,7 +1407,7 @@ function Build-ReviewPage([string]$folder) {
 <div id='hc-run-err' class='run-error' style='display:none;margin-bottom:10px'></div>
 <div id='hc-overlay' class='run-overlay'>
   <div class='run-spinner'></div>
-  <div class='run-spinner-label'>Running health check — collecting 19 scripts, please wait…</div>
+  <div class='run-spinner-label'>Running health check — collecting 32 scripts, please wait…</div>
 </div>
 <script>
 async function runHealthcheck(page){
@@ -1439,7 +1456,12 @@ async function runHealthcheck(page){
     $dbSizes   = Read-RvwCsv 'database-sizes'
     $tempdb      = Read-RvwCsv 'tempdb-usage'
     $diskSpc     = Read-RvwCsv 'disk-space'
-    $missingIdx  = Read-RvwCsv 'missing-indexes'
+    $missingIdx   = Read-RvwCsv 'missing-indexes'
+    $failedLogins = Read-RvwCsv 'failed-logins'
+    $qsStatus     = Read-RvwCsv 'query-store-status'
+    $xeSessions   = Read-RvwCsv 'extended-events'
+    $cdcCt        = Read-RvwCsv 'cdc-and-ct'
+    $svcBroker    = Read-RvwCsv 'service-broker'
 
     # ── findings rules (mirrors Review-HealthCheckOutput.ps1) ──────────────────
     $findings = [System.Collections.Generic.List[PSObject]]::new()
@@ -1458,8 +1480,8 @@ async function runHealthcheck(page){
         if (-not $row.last_full_backup -or $row.last_full_backup -eq '') { Add-F 'CRITICAL' 'Backup' $db 'No full backup on record' }
         else {
             $h = 0.0
-            if ([double]::TryParse($row.full_backup_age_hours,[ref]$h) -and $h -gt 25) {
-                Add-F 'WARNING' 'Backup' $db "Full backup $([Math]::Round($h,1))h old (threshold 25h)"
+            if ([double]::TryParse($row.full_backup_age_hours,[ref]$h) -and $h -gt 24) {
+                Add-F 'CRITICAL' 'Backup' $db "Full backup $([Math]::Round($h,1))h old (threshold 24h)"
             }
         }
         if ($row.recovery_model_desc -in @('FULL','BULK_LOGGED')) {
@@ -1497,11 +1519,12 @@ async function runHealthcheck(page){
     if ($errors.Count -gt 0)     { Add-F 'INFO' 'Error Log' 'SQL Server error log' "$($errors.Count) non-routine entries in last 24h" }
     $d = 0
     foreach ($row in $checkdb) {
-        if (-not $row.last_good_checkdb -or $row.last_good_checkdb -eq '') { Add-F 'WARNING' 'DBCC CHECKDB' $row.database_name 'No CHECKDB on record' }
+        if (-not $row.last_good_checkdb -or $row.last_good_checkdb -eq '') { Add-F 'CRITICAL' 'DBCC CHECKDB' $row.database_name 'No CHECKDB ever recorded — integrity unknown' }
         else {
             $d = 0
-            if ([int]::TryParse($row.days_since_checkdb,[ref]$d) -and $d -gt 7) {
-                Add-F 'WARNING' 'DBCC CHECKDB' $row.database_name "Last good CHECKDB $d days ago (threshold 7)"
+            if ([int]::TryParse($row.days_since_checkdb,[ref]$d)) {
+                if ($d -gt 14)     { Add-F 'CRITICAL' 'DBCC CHECKDB' $row.database_name "CHECKDB overdue — $d days since last integrity check (run immediately)" }
+                elseif ($d -gt 7)  { Add-F 'WARNING'  'DBCC CHECKDB' $row.database_name "CHECKDB stale — $d days since last integrity check (run soon)" }
             }
         }
     }
@@ -1549,6 +1572,22 @@ async function runHealthcheck(page){
     } elseif ($missingIdx.Count -gt 0) {
         Add-F 'INFO' 'Missing Indexes' "$($missingIdx.Count) candidate(s) identified" "Top impact score: $([Math]::Round(($missingIdx[0].impact_score -as [double]),0).ToString('N0'))"
     }
+    foreach ($row in $failedLogins) {
+        if ($row.is_currently_locked -in @('1','True','true')) {
+            Add-F 'CRITICAL' 'Failed Logins' ($row.login_name ?? '(unknown)') 'Login is currently locked out'
+        }
+        if ($row.status -like 'CRITICAL*') {
+            Add-F 'CRITICAL' 'Failed Logins' ($row.login_name ?? '(unknown)') "$($row.failure_count) failures in error log — likely brute-force or app misconfiguration"
+        } elseif ($row.status -like 'WARN*') {
+            Add-F 'WARNING' 'Failed Logins' ($row.login_name ?? '(unknown)') "$($row.failure_count) repeated failures in error log"
+        }
+    }
+    foreach ($row in $qsStatus) {
+        if ($row.qs_state -eq 'READ_ONLY' -and $row.qs_desired_state -in @('READ_WRITE','AUTO')) {
+            $fp = if ($row.fill_pct -and $row.fill_pct -ne '') { " ($(Fmt-Pct ([double]$row.fill_pct))% full)" } else { '' }
+            Add-F 'WARNING' 'Query Store' $row.database_name "QS switched to READ_ONLY$fp — storage full or error; plan history is paused"
+        }
+    }
 
     # ── header bar ─────────────────────────────────────────────────────────────
     $folderLeaf = Split-Path -Leaf $folder
@@ -1567,7 +1606,7 @@ async function runHealthcheck(page){
 
     # ── instance & OS ───────────────────────────────────────────────────────────
     if ($svrInfo.Count -gt 0 -or $osHw.Count -gt 0) {
-        $html += "<h2>Instance</h2><div class='info-card-grid'>"
+        $html += "<details class='rv-section' open><summary>Instance</summary><div class='info-card-grid'>"
         if ($svrInfo.Count -gt 0) {
             $sqlNames = @{ '8'='SQL Server 2000';'9'='SQL Server 2005';'10'='SQL Server 2008';
                            '11'='SQL Server 2012';'12'='SQL Server 2014';'13'='SQL Server 2016';
@@ -1593,7 +1632,74 @@ async function runHealthcheck(page){
             $disp = if ($fld -like '*_mb') { Fmt-Mb $raw } else { $raw -replace '\.\d{3,}$','' }
             $html += "<div class='info-card'><div class='info-label'>$($fld -replace '_',' ')</div><div class='info-val'>$(Html-Escape $disp)</div></div>"
         }
-        $html += "</div>"
+        $html += "</div></details>"
+    }
+
+    if ($memConfig.Count -gt 0) {
+        $mc = $memConfig[0]
+        $html += "<details class='rv-section' open><summary>Memory Configuration</summary><div class='info-card-grid'>"
+        $mcFields = @(
+            @{ f='min_server_memory_mb';   l='Min Server Memory (MB)' }
+            @{ f='max_server_memory_mb';   l='Max Server Memory (MB)' }
+            @{ f='server_physical_memory_gb'; l='Physical RAM (GB)' }
+            @{ f='sql_memory_in_use_mb';   l='SQL Memory In Use (MB)' }
+            @{ f='sql_committed_mb';       l='SQL Committed (MB)' }
+        )
+        foreach ($mf in $mcFields) {
+            if ($mc.PSObject.Properties[$mf.f]) {
+                $v = $mc.($mf.f)
+                $disp = if ($mf.f -like '*_mb') { Fmt-Mb $v } else { [Math]::Round(($v -as [double]),2) }
+                $html += "<div class='info-card'><div class='info-label'>$($mf.l)</div><div class='info-val'>$(Html-Escape $disp)</div></div>"
+            }
+        }
+        $maxMb = 0L; [long]::TryParse($mc.max_server_memory_mb,[ref]$maxMb) | Out-Null
+        if ($maxMb -ge 2147483647) {
+            $html += "<div class='info-card' style='border-color:#ffa657'><div class='info-label'>Warning</div><div class='info-val' style='color:#ffa657'>Max memory unconfigured</div></div>"
+        }
+        $html += "</div></details>"
+    }
+    # ── features (compact cards, shown when HC has feature data) ───────────────
+    if (($qsStatus.Count + $xeSessions.Count + $cdcCt.Count + $svcBroker.Count) -gt 0) {
+        $html += "<details class='rv-section' open><summary>Features</summary><div class='vital-grid'>"
+
+        if ($qsStatus.Count -gt 0) {
+            $qsOn  = @($qsStatus | Where-Object { $_.qs_desired_state -notin @('OFF','') }).Count
+            $qsROW = @($qsStatus | Where-Object { $_.qs_state -eq 'READ_ONLY' -and $_.qs_desired_state -in @('READ_WRITE','AUTO') }).Count
+            $qsCls = if ($qsROW -gt 0) { 'v-warn' } elseif ($qsOn -gt 0) { 'v-ok' } else { 'v-blue' }
+            $qsVal = if ($qsOn -gt 0) { "$qsOn of $($qsStatus.Count)" } else { 'Off' }
+            $qsSub = if ($qsROW -gt 0) { "$qsROW DB(s) READ_ONLY" } elseif ($qsOn -gt 0) { 'databases enabled' } else { 'not enabled' }
+            $html += "<div class='vital-card $qsCls'><div class='vital-label'>Query Store</div><div class='vital-val'>$qsVal</div><div class='vital-sub'>$qsSub</div></div>"
+        }
+
+        if ($xeSessions.Count -gt 0) {
+            $sysXE  = @('system_health','telemetry_xevents','AlwaysOn_health','hkenginexesession','FaultReporting')
+            $userXE = @($xeSessions | Where-Object { $_.session_name -notin $sysXE })
+            $xeCls  = if ($userXE.Count -gt 0) { 'v-blue' } else { 'v-ok' }
+            $xeSub  = if ($userXE.Count -gt 0) { "$($userXE.Count) user session(s)" } else { 'system only' }
+            $html += "<div class='vital-card $xeCls'><div class='vital-label'>Extended Events</div><div class='vital-val'>$($xeSessions.Count)</div><div class='vital-sub'>$xeSub</div></div>"
+        }
+
+        if ($cdcCt.Count -gt 0) {
+            $cdcDBs = @($cdcCt | Where-Object { $_.feature -eq 'CDC'             -and $_.feature_enabled -in @('1','True','true') }).Count
+            $ctDBs  = @($cdcCt | Where-Object { $_.feature -eq 'CHANGE_TRACKING' }).Count
+            $cdcWrn = @($cdcCt | Where-Object { $_.status -like 'WARN*' }).Count
+            $cdcAny = $cdcDBs + $ctDBs
+            $cdcCls = if ($cdcWrn -gt 0) { 'v-warn' } elseif ($cdcAny -gt 0) { 'v-blue' } else { 'v-ok' }
+            $cdcVal = if ($cdcAny -gt 0) { $cdcAny } else { 'None' }
+            $cdcSub = if ($cdcAny -gt 0) { "CDC: $cdcDBs  CT: $ctDBs" } else { 'not in use' }
+            $html += "<div class='vital-card $cdcCls'><div class='vital-label'>CDC / Change Tracking</div><div class='vital-val'>$cdcVal</div><div class='vital-sub'>$cdcSub</div></div>"
+        }
+
+        if ($svcBroker.Count -gt 0) {
+            $sbOn  = @($svcBroker | Where-Object { $_.sb_enabled -in @('1','True','true') }).Count
+            $sbWrn = @($svcBroker | Where-Object { $_.status -like 'CRITICAL*' -or $_.status -like 'WARN*' }).Count
+            $sbCls = if ($sbWrn -gt 0) { 'v-warn' } elseif ($sbOn -gt 0) { 'v-blue' } else { 'v-ok' }
+            $sbVal = if ($sbOn -gt 0) { $sbOn } else { 'None' }
+            $sbSub = if ($sbOn -gt 0) { 'databases enabled' } else { 'not in use' }
+            $html += "<div class='vital-card $sbCls'><div class='vital-label'>Service Broker</div><div class='vital-val'>$sbVal</div><div class='vital-sub'>$sbSub</div></div>"
+        }
+
+        $html += "</div></details>"
     }
 
     # ── vital signs bar ────────────────────────────────────────────────────────
@@ -1609,12 +1715,12 @@ async function runHealthcheck(page){
     $waitCls   = if ($topWaitRow -and $cWaits.ContainsKey($vWaitName) -and $vWaitPct -gt 10) { 'v-warn' } else { 'v-ok' }
 
     $worstBkpHours = [double](($backups | Sort-Object { [double]($_.full_backup_age_hours -as [double]) } -Descending | Select-Object -First 1).full_backup_age_hours -as [double])
-    $bkpCls  = if ($worstBkpHours -gt 25) { 'v-crit' } elseif ($worstBkpHours -gt 12) { 'v-warn' } else { 'v-ok' }
+    $bkpCls  = if ($worstBkpHours -gt 24) { 'v-crit' } elseif ($worstBkpHours -gt 12) { 'v-warn' } else { 'v-ok' }
     $bkpDisp = if ($backups.Count -eq 0) { '—' } else { "$([Math]::Round($worstBkpHours,1))h" }
 
     $worstCheckRow = $checkdb | Sort-Object { [int]($_.days_since_checkdb -as [int]) } -Descending | Select-Object -First 1
     $worstCheckDays = $worstCheckRow.days_since_checkdb -as [int]
-    $chkCls  = if ($null -eq $worstCheckDays -or -not $worstCheckRow.last_good_checkdb) { 'v-crit' } elseif ($worstCheckDays -gt 7) { 'v-warn' } else { 'v-ok' }
+    $chkCls  = if ($null -eq $worstCheckDays -or -not $worstCheckRow.last_good_checkdb) { 'v-crit' } elseif ($worstCheckDays -gt 14) { 'v-crit' } elseif ($worstCheckDays -gt 7) { 'v-warn' } else { 'v-ok' }
     $chkDisp = if ($checkdb.Count -eq 0) { '—' } elseif ($null -eq $worstCheckDays) { 'NEVER' } else { "${worstCheckDays}d" }
 
     $worstTlogRow = $tlogs | Sort-Object { [double]($_.log_used_pct -as [double]) } -Descending | Select-Object -First 1
@@ -1634,38 +1740,35 @@ async function runHealthcheck(page){
     $tempCls  = if ($tempdb.Count -eq 0) { 'v-blue' } elseif ($worstTempPct -gt 80) { 'v-crit' } elseif ($worstTempPct -gt 60) { 'v-warn' } else { 'v-ok' }
     $tempDisp = if ($tempdb.Count -eq 0) { '—' } else { "$(Fmt-Pct $worstTempPct)% used" }
 
-    $html += "<p class='vital-row-label'>Right now</p><div class='vital-grid'>"
+    $html += "<details class='rv-section' open><summary>Right now</summary><div class='vital-grid'>"
     $html += "<div class='vital-card $sessCls'><div class='vital-label'>Sessions</div><div class='vital-val'>$vSessions</div><div class='vital-sub'>$sessSub</div></div>"
     $html += "<div class='vital-card $waitCls'><div class='vital-label'>Top Wait</div><div class='vital-val' style='font-size:.82rem'>$(Html-Escape $vWaitName)</div><div class='vital-sub'>$(Fmt-Pct $vWaitPct)% of waits</div></div>"
     $html += "<div class='vital-card $tlogCls'><div class='vital-label'>T-Log Pressure</div><div class='vital-val'>$tlogDisp</div><div class='vital-sub'>$tlogSub</div></div>"
     $html += "<div class='vital-card $tempCls'><div class='vital-label'>TempDB</div><div class='vital-val'>$tempDisp</div><div class='vital-sub'>worst file used %</div></div>"
-    $html += "</div>"
+    $html += "</div></details>"
     $vMissingHigh = @($missingIdx | Where-Object { ($_.impact_score -as [double]) -gt 100000 }).Count
     $vMissingAll  = $missingIdx.Count
     $missCls  = if ($vMissingHigh -gt 5) { 'v-crit' } elseif ($vMissingHigh -gt 0) { 'v-warn' } elseif ($vMissingAll -gt 0) { 'v-blue' } else { 'v-ok' }
     $missDisp = if ($vMissingAll -eq 0) { '—' } else { $vMissingAll }
     $missSub  = if ($vMissingHigh -gt 0) { "$vMissingHigh high-impact" } elseif ($vMissingAll -gt 0) { 'low impact only' } else { 'none detected' }
 
-    $html += "<p class='vital-row-label'>Keeping up</p><div class='vital-grid'>"
+    $html += "<details class='rv-section' open><summary>Keeping up</summary><div class='vital-grid'>"
     $html += "<div class='vital-card $bkpCls'><div class='vital-label'>Oldest Backup</div><div class='vital-val'>$bkpDisp</div><div class='vital-sub'>worst full backup age</div></div>"
     $html += "<div class='vital-card $chkCls'><div class='vital-label'>DBCC CHECKDB</div><div class='vital-val'>$chkDisp</div><div class='vital-sub'>worst days since check</div></div>"
     $html += "<div class='vital-card $diskCls'><div class='vital-label'>Disk (worst)</div><div class='vital-val'>$diskDisp</div><div class='vital-sub'>$diskSub</div></div>"
     $html += "<div class='vital-card $missCls'><div class='vital-label'>Missing Indexes</div><div class='vital-val'>$missDisp</div><div class='vital-sub'>$missSub</div></div>"
-    $html += "</div>"
+    $html += "</div></details>"
 
-    # severity summary chips
+    # ── findings ────────────────────────────────────────────────────────────────
     $critN = @($findings | Where-Object Severity -eq 'CRITICAL').Count
     $warnN = @($findings | Where-Object Severity -eq 'WARNING').Count
     $infoN = @($findings | Where-Object Severity -eq 'INFO').Count
-    $html += "<div class='sev-strip'>"
-    if ($critN -gt 0) { $html += "<span class='sev-chip s-crit'>$critN Critical</span>" }
-    if ($warnN -gt 0) { $html += "<span class='sev-chip s-warn'>$warnN Warning</span>" }
-    if ($infoN -gt 0) { $html += "<span class='sev-chip s-info'>$infoN Info</span>" }
-    if ($findings.Count -eq 0) { $html += "<span class='sev-chip s-ok'>All thresholds healthy</span>" }
-    $html += "</div>"
-
-    # ── findings list ───────────────────────────────────────────────────────────
-    $html += "<hr class='section-sep'><h2>Findings</h2>"
+    $sevPills = ''
+    if ($critN -gt 0) { $sevPills += "<button class='sev-filter-btn s-crit' data-sev='crit' onclick='filterFindings(this)'>$critN Critical</button>" }
+    if ($warnN -gt 0) { $sevPills += "<button class='sev-filter-btn s-warn' data-sev='warn' onclick='filterFindings(this)'>$warnN Warning</button>" }
+    if ($infoN -gt 0) { $sevPills += "<button class='sev-filter-btn s-info' data-sev='info' onclick='filterFindings(this)'>$infoN Info</button>" }
+    if ($findings.Count -eq 0) { $sevPills = "<span class='sev-chip s-ok'>All clear</span>" }
+    $html += "<hr class='section-sep'><details class='rv-section' open><summary>Findings <span class='find-pills'>$sevPills</span></summary>"
     if ($findings.Count -eq 0) {
         $html += "<p class='no-data'>No findings — all checked thresholds look healthy.</p>"
     } else {
@@ -1678,76 +1781,13 @@ async function runHealthcheck(page){
         }
         $html += "</div>"
     }
-
-    # ── databases ──────────────────────────────────────────────────────────────
-    if ($dbHealth.Count -gt 0) {
-        $html += "<hr class='section-sep'><h2>Databases ($($dbHealth.Count))</h2><div class='table-wrap'><table>"
-        $html += "<thead><tr><th>Database</th><th>State</th><th>Recovery</th><th>Auto-Shrink</th><th>Auto-Close</th></tr></thead><tbody>"
-        foreach ($db in ($dbHealth | Sort-Object database_name)) {
-            $stCls  = if ($db.state_desc -ne 'ONLINE') { 'sv sv-red' } else { 'sv sv-green' }
-            $shCls  = if ($db.is_auto_shrink_on -in @('True','1','YES')) { 'sv sv-orange' } else { 'sv sv-green' }
-            $clCls  = if ($db.is_auto_close_on  -in @('True','1','YES')) { 'sv sv-orange' } else { 'sv sv-green' }
-            $shTxt  = if ($db.is_auto_shrink_on -in @('True','1','YES')) { 'ON' } else { 'OFF' }
-            $clTxt  = if ($db.is_auto_close_on  -in @('True','1','YES')) { 'ON' } else { 'OFF' }
-            $html += "<tr><td>$(Html-Escape $db.database_name)</td><td><span class='$stCls'>$($db.state_desc)</span></td><td>$($db.recovery_model_desc)</td><td><span class='$shCls'>$shTxt</span></td><td><span class='$clCls'>$clTxt</span></td></tr>"
-        }
-        $html += "</tbody></table></div>"
-    }
-
-    # ── backup status ───────────────────────────────────────────────────────────
-    if ($backups.Count -gt 0) {
-        $html += "<hr class='mini-sep'><h2>Backup Status</h2><div class='table-wrap'><table>"
-        $html += "<thead><tr><th>Database</th><th>Recovery</th><th>Last Full</th><th>Full Age (h)</th><th>Last Log</th><th>Log Age (h)</th></tr></thead><tbody>"
-        foreach ($b in ($backups | Sort-Object database_name)) {
-            $fh=0.0; [double]::TryParse($b.full_backup_age_hours,[ref]$fh) | Out-Null
-            $lh=0.0; [double]::TryParse($b.log_backup_age_hours, [ref]$lh) | Out-Null
-            $fCls = if (-not $b.last_full_backup -or $b.last_full_backup -eq '') { 'sv sv-red' } elseif ($fh -gt 25) { 'sv sv-orange' } else { 'sv sv-green' }
-            $fDisp = if (-not $b.last_full_backup -or $b.last_full_backup -eq '') { '<span class="sv sv-red">NONE</span>' } else { Html-Escape $b.last_full_backup }
-            if ($b.recovery_model_desc -eq 'SIMPLE') {
-                $lDisp = '<span class="null-val">—</span>'; $lhDisp = '<span class="null-val">—</span>'
-            } else {
-                $lDisp  = if (-not $b.last_log_backup -or $b.last_log_backup -eq '') { '<span class="sv sv-red">NONE</span>' } else { Html-Escape $b.last_log_backup }
-                $lhCls  = if (-not $b.last_log_backup -or $b.last_log_backup -eq '' -or $lh -gt 4) { 'sv sv-orange' } else { 'sv sv-green' }
-                $lhDisp = "<span class='$lhCls'>$([Math]::Round($lh,1))</span>"
-            }
-            $html += "<tr><td>$(Html-Escape $b.database_name)</td><td>$($b.recovery_model_desc)</td><td>$fDisp</td><td><span class='$fCls'>$([Math]::Round($fh,1))</span></td><td>$lDisp</td><td>$lhDisp</td></tr>"
-        }
-        $html += "</tbody></table></div>"
-    }
-
-    # ── transaction log usage ──────────────────────────────────────────────────
-    if ($tlogs.Count -gt 0) {
-        $html += "<hr class='mini-sep'><h2>Transaction Log Usage</h2><div class='table-wrap'><table>"
-        $html += "<thead><tr><th>Database</th><th>Recovery</th><th>Log Size (MB)</th><th>Used (MB)</th><th>Free (MB)</th><th>Used %</th></tr></thead><tbody>"
-        foreach ($t in ($tlogs | Sort-Object { [double]($_.log_used_pct -as [double]) } -Descending)) {
-            $lp = [double]($t.log_used_pct -as [double])
-            $lpCls = if ($lp -gt 80) { 'sv sv-red' } elseif ($lp -gt 50) { 'sv sv-orange' } else { 'sv sv-green' }
-            $html += "<tr><td>$(Html-Escape $t.database_name)</td><td>$($t.recovery_model_desc)</td><td>$(Fmt-Mb $t.log_size_mb)</td><td>$(Fmt-Mb $t.log_used_mb)</td><td>$(Fmt-Mb $t.log_free_mb)</td><td><span class='$lpCls'>$(Fmt-Pct $lp)%</span></td></tr>"
-        }
-        $html += "</tbody></table></div>"
-    }
-
-    # ── wait statistics ─────────────────────────────────────────────────────────
-    if ($waits.Count -gt 0) {
-        $topWaits = @($waits | Sort-Object { [double]($_.pct_total_wait -as [double]) } -Descending | Select-Object -First 12)
-        $html += "<hr class='section-sep'><h2>Top Wait Types</h2><div class='table-wrap'><table>"
-        $html += "<thead><tr><th>Wait Type</th><th>Total Wait (ms)</th><th>Avg Wait (ms)</th><th>Count</th><th>% of Total</th></tr></thead><tbody>"
-        foreach ($w in $topWaits) {
-            $pct=0.0; [double]::TryParse($w.pct_total_wait,[ref]$pct) | Out-Null
-            $concern = $cWaits.ContainsKey($w.wait_type)
-            $wCls = if ($concern -and $pct -gt 10) { 'sv sv-orange' } elseif ($concern) { 'sv sv-blue' } else { '' }
-            $wDisp = if ($wCls) { "<span class='$wCls'>$(Html-Escape $w.wait_type)</span>" } else { Html-Escape $w.wait_type }
-            $bar = "<span class='mini-bar-track'><span class='mini-bar-fill $(if ($pct -gt 10 -and $concern) { 'bar-warn' } elseif ($pct -gt 30) { 'bar-crit' } else { 'bar-ok' })' style='width:$([Math]::Min($pct*2,100))%'></span></span>"
-            $html += "<tr><td>$wDisp</td><td>$($w.total_wait_ms)</td><td>$($w.avg_wait_ms)</td><td>$($w.waiting_tasks_count)</td><td>$([Math]::Round($pct,1))% $bar</td></tr>"
-        }
-        $html += "</tbody></table></div>"
-    }
+    $html += "</details>"
 
     # ── active sessions ─────────────────────────────────────────────────────────
     if ($sessions.Count -gt 0) {
         $blkCount = $blkSess.Count
         $runCount = @($sessions | Where-Object { $_.status -eq 'running' }).Count
-        $html += "<hr class='mini-sep'><h2>Active Sessions ($($sessions.Count))</h2>"
+        $html += "<hr class='section-sep'><details class='rv-section' open><summary>Active Sessions ($($sessions.Count))</summary>"
         $html += "<div class='info-card-grid'>"
         $html += "<div class='info-card'><div class='info-label'>Total connected</div><div class='info-val'>$($sessions.Count)</div></div>"
         $html += "<div class='info-card'><div class='info-label'>Blocked</div><div class='info-val'>$(if ($blkCount -gt 0) { "<span class='sv sv-red'>$blkCount</span>" } else { "<span class='sv sv-green'>0</span>" })</div></div>"
@@ -1775,61 +1815,126 @@ async function runHealthcheck(page){
             }
             $html += "</tbody></table></div>"
         }
+        $html += "</details>"
+    }
+
+    # ── databases ──────────────────────────────────────────────────────────────
+    if ($dbHealth.Count -gt 0) {
+        $html += "<hr class='section-sep'><details class='rv-section' open><summary>Databases ($($dbHealth.Count))</summary><div class='table-wrap'><table>"
+        $html += "<thead><tr><th>Database</th><th>State</th><th>Recovery</th><th>Auto-Shrink</th><th>Auto-Close</th></tr></thead><tbody>"
+        foreach ($db in ($dbHealth | Sort-Object database_name)) {
+            $stCls  = if ($db.state_desc -ne 'ONLINE') { 'sv sv-red' } else { 'sv sv-green' }
+            $shCls  = if ($db.is_auto_shrink_on -in @('True','1','YES')) { 'sv sv-orange' } else { 'sv sv-green' }
+            $clCls  = if ($db.is_auto_close_on  -in @('True','1','YES')) { 'sv sv-orange' } else { 'sv sv-green' }
+            $shTxt  = if ($db.is_auto_shrink_on -in @('True','1','YES')) { 'ON' } else { 'OFF' }
+            $clTxt  = if ($db.is_auto_close_on  -in @('True','1','YES')) { 'ON' } else { 'OFF' }
+            $html += "<tr><td>$(Html-Escape $db.database_name)</td><td><span class='$stCls'>$($db.state_desc)</span></td><td>$($db.recovery_model_desc)</td><td><span class='$shCls'>$shTxt</span></td><td><span class='$clCls'>$clTxt</span></td></tr>"
+        }
+        $html += "</tbody></table></div></details>"
+    }
+
+    # ── backup status ───────────────────────────────────────────────────────────
+    if ($backups.Count -gt 0) {
+        $html += "<hr class='mini-sep'><details class='rv-section' open><summary>Backup Status</summary><div class='table-wrap'><table>"
+        $html += "<thead><tr><th>Database</th><th>Recovery</th><th>Last Full</th><th>Full Age (h)</th><th>Last Log</th><th>Log Age (h)</th></tr></thead><tbody>"
+        foreach ($b in ($backups | Sort-Object database_name)) {
+            $fh=0.0; [double]::TryParse($b.full_backup_age_hours,[ref]$fh) | Out-Null
+            $lh=0.0; [double]::TryParse($b.log_backup_age_hours, [ref]$lh) | Out-Null
+            $fCls = if ((-not $b.last_full_backup -or $b.last_full_backup -eq '') -or $fh -gt 24) { 'sv sv-red' } else { 'sv sv-green' }
+            $fDisp = if (-not $b.last_full_backup -or $b.last_full_backup -eq '') { '<span class="sv sv-red">NONE</span>' } else { Html-Escape $b.last_full_backup }
+            if ($b.recovery_model_desc -eq 'SIMPLE') {
+                $lDisp = '<span class="null-val">—</span>'; $lhDisp = '<span class="null-val">—</span>'
+            } else {
+                $lDisp  = if (-not $b.last_log_backup -or $b.last_log_backup -eq '') { '<span class="sv sv-red">NONE</span>' } else { Html-Escape $b.last_log_backup }
+                $lhCls  = if (-not $b.last_log_backup -or $b.last_log_backup -eq '' -or $lh -gt 4) { 'sv sv-orange' } else { 'sv sv-green' }
+                $lhDisp = "<span class='$lhCls'>$([Math]::Round($lh,1))</span>"
+            }
+            $html += "<tr><td>$(Html-Escape $b.database_name)</td><td>$($b.recovery_model_desc)</td><td>$fDisp</td><td><span class='$fCls'>$([Math]::Round($fh,1))</span></td><td>$lDisp</td><td>$lhDisp</td></tr>"
+        }
+        $html += "</tbody></table></div></details>"
+    }
+
+    # ── transaction log usage ──────────────────────────────────────────────────
+    if ($tlogs.Count -gt 0) {
+        $html += "<hr class='mini-sep'><details class='rv-section' open><summary>Transaction Log Usage</summary><div class='table-wrap'><table>"
+        $html += "<thead><tr><th>Database</th><th>Recovery</th><th>Log Size (MB)</th><th>Used (MB)</th><th>Free (MB)</th><th>Used %</th></tr></thead><tbody>"
+        foreach ($t in ($tlogs | Sort-Object { [double]($_.log_used_pct -as [double]) } -Descending)) {
+            $lp = [double]($t.log_used_pct -as [double])
+            $lpCls = if ($lp -gt 80) { 'sv sv-red' } elseif ($lp -gt 50) { 'sv sv-orange' } else { 'sv sv-green' }
+            $html += "<tr><td>$(Html-Escape $t.database_name)</td><td>$($t.recovery_model_desc)</td><td>$(Fmt-Mb $t.log_size_mb)</td><td>$(Fmt-Mb $t.log_used_mb)</td><td>$(Fmt-Mb $t.log_free_mb)</td><td><span class='$lpCls'>$(Fmt-Pct $lp)%</span></td></tr>"
+        }
+        $html += "</tbody></table></div></details>"
+    }
+
+    # ── wait statistics ─────────────────────────────────────────────────────────
+    if ($waits.Count -gt 0) {
+        $topWaits = @($waits | Sort-Object { [double]($_.pct_total_wait -as [double]) } -Descending | Select-Object -First 12)
+        $html += "<hr class='section-sep'><details class='rv-section' open><summary>Top Wait Types</summary><div class='table-wrap'><table>"
+        $html += "<thead><tr><th>Wait Type</th><th>Total Wait (ms)</th><th>Avg Wait (ms)</th><th>Count</th><th>% of Total</th></tr></thead><tbody>"
+        foreach ($w in $topWaits) {
+            $pct=0.0; [double]::TryParse($w.pct_total_wait,[ref]$pct) | Out-Null
+            $concern = $cWaits.ContainsKey($w.wait_type)
+            $wCls = if ($concern -and $pct -gt 10) { 'sv sv-orange' } elseif ($concern) { 'sv sv-blue' } else { '' }
+            $wDisp = if ($wCls) { "<span class='$wCls'>$(Html-Escape $w.wait_type)</span>" } else { Html-Escape $w.wait_type }
+            $bar = "<span class='mini-bar-track'><span class='mini-bar-fill $(if ($pct -gt 10 -and $concern) { 'bar-warn' } elseif ($pct -gt 30) { 'bar-crit' } else { 'bar-ok' })' style='width:$([Math]::Min($pct*2,100))%'></span></span>"
+            $html += "<tr><td>$wDisp</td><td>$($w.total_wait_ms)</td><td>$($w.avg_wait_ms)</td><td>$($w.waiting_tasks_count)</td><td>$([Math]::Round($pct,1))% $bar</td></tr>"
+        }
+        $html += "</tbody></table></div></details>"
     }
 
     # ── tempdb usage ───────────────────────────────────────────────────────────
     if ($tempdb.Count -gt 0) {
-        $html += "<hr class='mini-sep'><h2>TempDB File Usage</h2><div class='table-wrap'><table>"
+        $html += "<hr class='mini-sep'><details class='rv-section' open><summary>TempDB File Usage</summary><div class='table-wrap'><table>"
         $html += "<thead><tr><th>File</th><th>Type</th><th>Size (MB)</th><th>Used (MB)</th><th>Free (MB)</th><th>User Obj (MB)</th><th>Version Store (MB)</th><th>Used %</th></tr></thead><tbody>"
         foreach ($tf in ($tempdb | Sort-Object { [double]($_.pct_used -as [double]) } -Descending)) {
             $tp = [double]($tf.pct_used -as [double])
             $tpCls = if ($tp -gt 80) { 'sv sv-red' } elseif ($tp -gt 60) { 'sv sv-orange' } else { 'sv sv-green' }
             $html += "<tr><td>$(Html-Escape $tf.logical_name)</td><td>$($tf.file_type)</td><td>$(Fmt-Mb $tf.size_mb)</td><td>$(Fmt-Mb $tf.used_mb)</td><td>$(Fmt-Mb $tf.free_mb)</td><td>$(Fmt-Mb $tf.user_objects_mb)</td><td>$(Fmt-Mb $tf.version_store_mb)</td><td><span class='$tpCls'>$(Fmt-Pct $tp)%</span></td></tr>"
         }
-        $html += "</tbody></table></div>"
+        $html += "</tbody></table></div></details>"
     }
 
     # ── job failures ───────────────────────────────────────────────────────────
     if ($jobs.Count -gt 0) {
-        $html += "<hr class='section-sep'><h2>Job Failures — Last 7 Days ($($jobs.Count) rows)</h2><div class='table-wrap'><table>"
+        $html += "<hr class='section-sep'><details class='rv-section' open><summary>Job Failures — Last 7 Days ($($jobs.Count) rows)</summary><div class='table-wrap'><table>"
         $html += "<thead><tr><th>Job</th><th>Step</th><th>Run Time</th><th>Duration</th><th>Message</th></tr></thead><tbody>"
         foreach ($j in $jobs) {
             $msgShort = if ($j.message.Length -gt 200) { $j.message.Substring(0,200) + '…' } else { $j.message }
             $html += "<tr><td>$(Html-Escape $j.job_name)</td><td>$(Html-Escape $j.step_name)</td><td>$(($j.run_datetime -replace '\.\d+$',''))</td><td>$(Html-Escape $j.run_duration)</td><td style='font-size:.75rem;color:#8b949e'>$(Html-Escape $msgShort)</td></tr>"
         }
-        $html += "</tbody></table></div>"
+        $html += "</tbody></table></div></details>"
     }
 
     # ── DBCC CHECKDB ───────────────────────────────────────────────────────────
     if ($checkdb.Count -gt 0) {
-        $html += "<hr class='mini-sep'><h2>DBCC CHECKDB</h2><div class='table-wrap'><table>"
+        $html += "<hr class='mini-sep'><details class='rv-section' open><summary>DBCC CHECKDB</summary><div class='table-wrap'><table>"
         $html += "<thead><tr><th>Database</th><th>Last Good CHECKDB</th><th>Days Ago</th><th>Status</th></tr></thead><tbody>"
         foreach ($c in ($checkdb | Sort-Object { [int]($_.days_since_checkdb -as [int]) } -Descending)) {
             $days = $c.days_since_checkdb -as [int]
             $dayCls = if ($null -eq $days -or -not $c.last_good_checkdb -or $c.last_good_checkdb -eq '') { 'sv sv-red' } `
-                      elseif ($days -gt 7) { 'sv sv-orange' } else { 'sv sv-green' }
+                      elseif ($days -gt 14) { 'sv sv-red' } elseif ($days -gt 7) { 'sv sv-orange' } else { 'sv sv-green' }
             $daysDisp = if ($null -eq $days) { '—' } else { $days }
             $lastDisp = if (-not $c.last_good_checkdb -or $c.last_good_checkdb -eq '') { '<span class="sv sv-red">NEVER</span>' } `
                         else { Html-Escape ($c.last_good_checkdb -replace '\.\d+$','') }
             $html += "<tr><td>$(Html-Escape $c.database_name)</td><td>$lastDisp</td><td><span class='$dayCls'>$daysDisp</span></td><td>$(Html-Escape $c.checkdb_status)</td></tr>"
         }
-        $html += "</tbody></table></div>"
+        $html += "</tbody></table></div></details>"
     }
 
     # ── suspect pages ──────────────────────────────────────────────────────────
     if ($suspects.Count -gt 0) {
-        $html += "<hr class='mini-sep'><h2>Suspect Pages ($($suspects.Count))</h2><div class='table-wrap'><table>"
+        $html += "<hr class='mini-sep'><details class='rv-section' open><summary>Suspect Pages ($($suspects.Count))</summary><div class='table-wrap'><table>"
         $html += "<thead><tr><th>Database</th><th>File</th><th>Page</th><th>Event Type</th><th>Error Count</th><th>Last Update</th></tr></thead><tbody>"
         foreach ($sp in $suspects) {
             $evCls = if ($sp.event_type -match 'Restored|Repaired|Deallocated') { 'sv sv-gray' } else { 'sv sv-red' }
             $html += "<tr><td>$(Html-Escape $sp.database_name)</td><td>$($sp.file_id)</td><td>$($sp.page_id)</td><td><span class='$evCls'>$(Html-Escape $sp.event_type)</span></td><td>$($sp.error_count)</td><td>$(($sp.last_update_date -replace '\.\d+$',''))</td></tr>"
         }
-        $html += "</tbody></table></div>"
+        $html += "</tbody></table></div></details>"
     }
 
     # ── I/O stats ──────────────────────────────────────────────────────────────
     if ($ioStats.Count -gt 0) {
-        $html += "<hr class='mini-sep'><h2>I/O Usage (since SQL Server restart)</h2><div class='table-wrap'><table>"
+        $html += "<hr class='mini-sep'><details class='rv-section' open><summary>I/O Usage (since SQL Server restart)</summary><div class='table-wrap'><table>"
         $html += "<thead><tr><th>Database</th><th>MB Read</th><th>MB Written</th><th>Read Stall (ms)</th><th>Read Stall %</th><th>Write Stall (ms)</th><th>Write Stall %</th></tr></thead><tbody>"
         foreach ($io in ($ioStats | Sort-Object { [double]($_.pct_total_write_stall -as [double]) } -Descending)) {
             $rStall = [double]($io.pct_total_read_stall  -as [double])
@@ -1840,12 +1945,12 @@ async function runHealthcheck(page){
             $wDisp = if ($wCls) { "<span class='$wCls'>$(Fmt-Pct $wStall)%</span>" } else { "$(Fmt-Pct $wStall)%" }
             $html += "<tr><td>$(Html-Escape $io.database_name)</td><td>$(Fmt-Mb $io.total_mb_read)</td><td>$(Fmt-Mb $io.total_mb_written)</td><td>$(Fmt-Mb $io.total_read_stall_ms)</td><td>$rDisp</td><td>$(Fmt-Mb $io.total_write_stall_ms)</td><td>$wDisp</td></tr>"
         }
-        $html += "</tbody></table></div>"
+        $html += "</tbody></table></div></details>"
     }
 
     # ── missing indexes ────────────────────────────────────────────────────────
     if ($missingIdx.Count -gt 0) {
-        $html += "<hr class='mini-sep'><h2>Missing Index Candidates ($($missingIdx.Count))</h2>"
+        $html += "<hr class='mini-sep'><details class='rv-section' open><summary>Missing Index Candidates ($($missingIdx.Count))</summary>"
         $html += "<p class='no-data' style='margin-bottom:12px'>Impact scores reset on SQL Server restart. Review carefully — creating every suggestion causes index bloat and write overhead.</p>"
         $html += "<div class='table-wrap'><table><thead><tr><th>Table</th><th>Impact Score</th><th>Improvement %</th><th>Seeks</th><th>Equality Cols</th><th>Inequality Cols</th><th>Include Cols</th><th>Suggested Statement</th></tr></thead><tbody>"
         foreach ($ix in ($missingIdx | Sort-Object { [double]($_.impact_score -as [double]) } -Descending)) {
@@ -1855,12 +1960,12 @@ async function runHealthcheck(page){
             $stmtShort = if ($ix.suggested_statement.Length -gt 80) { $ix.suggested_statement.Substring(0,80) + '…' } else { $ix.suggested_statement }
             $html += "<tr><td>$(Html-Escape $ix.table_name)</td><td>$impDisp</td><td>$(Fmt-Pct ($ix.avg_improvement_pct -as [double]))%</td><td>$($ix.user_seeks)</td><td style='font-size:.75rem'>$(Html-Escape $ix.equality_columns)</td><td style='font-size:.75rem'>$(Html-Escape $ix.inequality_columns)</td><td style='font-size:.75rem'>$(Html-Escape $ix.included_columns)</td><td><code style='font-size:.7rem;color:#8b949e;word-break:break-all'>$(Html-Escape $stmtShort)</code></td></tr>"
         }
-        $html += "</tbody></table></div>"
+        $html += "</tbody></table></div></details>"
     }
 
     # ── security — weak logins ──────────────────────────────────────────────────
     if ($logins.Count -gt 0) {
-        $html += "<hr class='section-sep'><h2>Login Security</h2><div class='table-wrap'><table>"
+        $html += "<hr class='section-sep'><details class='rv-section' open><summary>Login Security</summary><div class='table-wrap'><table>"
         $html += "<thead><tr><th>Login</th><th>Risk</th><th>Locked</th><th>Must Change Pwd</th><th>Password Last Set</th></tr></thead><tbody>"
         foreach ($l in ($logins | Sort-Object risk_flag, login_name)) {
             $rCls = switch ($l.risk_flag) {
@@ -1873,45 +1978,67 @@ async function runHealthcheck(page){
             $pwdDisp = if ($l.password_last_set -and $l.password_last_set -ne '') { $l.password_last_set -replace '\.\d+$','' } else { '—' }
             $html += "<tr><td>$(Html-Escape $l.login_name)</td><td><span class='$rCls'>$(Html-Escape $l.risk_flag)</span></td><td><span class='$lkCls'>$($l.is_locked)</span></td><td><span class='$mcCls'>$($l.must_change_password)</span></td><td>$pwdDisp</td></tr>"
         }
-        $html += "</tbody></table></div>"
+        $html += "</tbody></table></div></details>"
     }
 
-    # ── memory config ──────────────────────────────────────────────────────────
-    if ($memConfig.Count -gt 0) {
-        $mc = $memConfig[0]
-        $html += "<hr class='mini-sep'><h2>Memory Configuration</h2><div class='info-card-grid'>"
-        $mcFields = @(
-            @{ f='min_server_memory_mb';   l='Min Server Memory (MB)' }
-            @{ f='max_server_memory_mb';   l='Max Server Memory (MB)' }
-            @{ f='server_physical_memory_gb'; l='Physical RAM (GB)' }
-            @{ f='sql_memory_in_use_mb';   l='SQL Memory In Use (MB)' }
-            @{ f='sql_committed_mb';       l='SQL Committed (MB)' }
-        )
-        foreach ($mf in $mcFields) {
-            if ($mc.PSObject.Properties[$mf.f]) {
-                $v = $mc.($mf.f)
-                $disp = if ($mf.f -like '*_mb') { Fmt-Mb $v } else { [Math]::Round(($v -as [double]),2) }
-                $html += "<div class='info-card'><div class='info-label'>$($mf.l)</div><div class='info-val'>$(Html-Escape $disp)</div></div>"
+    # ── failed logins ──────────────────────────────────────────────────────────
+    if ($failedLogins.Count -gt 0) {
+        $html += "<hr class='mini-sep'><details class='rv-section' open><summary>Failed Logins ($($failedLogins.Count))</summary>"
+        $html += "<p class='no-data' style='margin-bottom:12px;font-size:.8rem'>From current error log (xp_readerrorlog). Resets on SQL Server restart or when the error log cycles.</p>"
+        $html += "<div class='table-wrap'><table><thead><tr><th>Login</th><th>Client</th><th>Failures</th><th>Error</th><th>First Seen</th><th>Last Seen</th><th>Locked</th><th>Status</th></tr></thead><tbody>"
+        foreach ($fl in ($failedLogins | Sort-Object { [int]($_.failure_count -as [int]) } -Descending)) {
+            $stCls = switch -Wildcard ($fl.status) {
+                'CRITICAL*' { 'sv sv-red'    }
+                'WARN*'     { 'sv sv-orange' }
+                default     { 'sv sv-blue'   }
             }
+            $lockedDisp = if ($fl.is_currently_locked -in @('1','True','true')) {
+                "<span class='sv sv-red'>YES</span>"
+            } elseif ($fl.is_currently_locked -in @('0','False','false')) {
+                "<span class='sv sv-green'>no</span>"
+            } else { '<span class="null-val">—</span>' }
+            $stShort = $fl.status -replace '^(CRITICAL|WARN|INFO) — ',''
+            $html += "<tr>"
+            $html += "<td>$(Html-Escape $fl.login_name)</td>"
+            $html += "<td style='font-size:.75rem'>$(Html-Escape ($fl.client_host ?? '—'))</td>"
+            $html += "<td><strong>$($fl.failure_count)</strong></td>"
+            $html += "<td style='font-size:.75rem'>$(Html-Escape $fl.error_description)</td>"
+            $html += "<td style='white-space:nowrap;font-size:.75rem'>$(($fl.first_failure_approx -replace '\.\d+$',''))</td>"
+            $html += "<td style='white-space:nowrap;font-size:.75rem'>$(($fl.last_failure_approx -replace '\.\d+$',''))</td>"
+            $html += "<td>$lockedDisp</td>"
+            $html += "<td><span class='$stCls'>$(Html-Escape $stShort)</span></td>"
+            $html += "</tr>"
         }
-        $maxMb = 0L; [long]::TryParse($mc.max_server_memory_mb,[ref]$maxMb) | Out-Null
-        if ($maxMb -ge 2147483647) {
-            $html += "<div class='info-card' style='border-color:#ffa657'><div class='info-label'>Warning</div><div class='info-val' style='color:#ffa657'>Max memory unconfigured</div></div>"
-        }
-        $html += "</div>"
+        $html += "</tbody></table></div></details>"
+    } elseif ($failedLogins.Count -eq 0 -and (Test-Path (Join-Path $folder 'failed-logins.csv'))) {
+        $html += "<hr class='mini-sep'><details class='rv-section' open><summary>Failed Logins</summary><p class='no-data'>No failed login attempts in the current error log.</p></details>"
     }
 
     # ── error log ──────────────────────────────────────────────────────────────
     if ($errors.Count -gt 0) {
-        $html += "<hr class='mini-sep'><h2>Error Log — Last 24h ($($errors.Count) entries)</h2><div class='table-wrap'><table>"
+        $html += "<hr class='mini-sep'><details class='rv-section' open><summary>Error Log — Last 24h ($($errors.Count) entries)</summary><div class='table-wrap'><table>"
         $html += "<thead><tr><th>Time</th><th>Source</th><th>Message</th></tr></thead><tbody>"
         foreach ($e in $errors) {
             $msgShort = if ($e.log_text.Length -gt 300) { $e.log_text.Substring(0,300) + '…' } else { $e.log_text }
             $html += "<tr><td style='white-space:nowrap'>$(($e.log_date -replace '\.\d+$',''))</td><td>$(Html-Escape $e.process_info)</td><td style='font-size:.75rem'>$(Html-Escape $msgShort)</td></tr>"
         }
-        $html += "</tbody></table></div>"
+        $html += "</tbody></table></div></details>"
     }
 
+    $html += "<script>
+function filterFindings(btn){
+  var sev=btn.getAttribute('data-sev');
+  var isActive=btn.classList.contains('active');
+  document.querySelectorAll('.sev-filter-btn').forEach(function(b){b.classList.remove('active')});
+  document.querySelectorAll('.finding-row').forEach(function(r){r.style.display=''});
+  if(!isActive){
+    btn.classList.add('active');
+    document.querySelectorAll('.finding-row').forEach(function(r){
+      if(!r.classList.contains('f-'+sev))r.style.display='none';
+    });
+  }
+}
+</script>"
     Wrap-Page 'Health Check' $html '' 'review'
 }
 
@@ -2284,7 +2411,7 @@ try {
                         $psWrapper = $null
                         if ($wrapCategory) {
                             $psWrapper = Get-ChildItem -Path (Join-Path $repoRoot "powershell\wrappers\$wrapCategory") `
-                                -Filter "$sName.ps1" -File -ErrorAction SilentlyContinue |
+                                -Recurse -Filter "$sName.ps1" -File -ErrorAction SilentlyContinue |
                                 Select-Object -First 1
                         }
                         # Generate-* DDL scripts may live in powershell/migration/ or powershell/

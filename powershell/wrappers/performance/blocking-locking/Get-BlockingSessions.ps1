@@ -37,8 +37,8 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-$repoRoot  = Resolve-Path (Join-Path $PSScriptRoot '..\..\..')
-$sqlScript = Join-Path $repoRoot 'sql\performance\Get-BlockingSessions.sql'
+$repoRoot  = Resolve-Path (Join-Path $PSScriptRoot '..\..\..\..')
+$sqlScript = Join-Path $repoRoot 'sql\performance\blocking-locking\Get-BlockingSessions.sql'
 $runner    = Join-Path $repoRoot 'tools\local-sql\Invoke-RepoSql.ps1'
 
 Write-Host 'Running blocking-sessions review...' -ForegroundColor Cyan

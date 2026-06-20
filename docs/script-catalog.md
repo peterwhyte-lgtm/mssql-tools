@@ -15,6 +15,7 @@ All SQL scripts and unique PowerShell scripts in the repo. Thin PS wrappers exis
 | Get-CdcAndChangeTracking | CDC (Change Data Capture) and Change Tracking enabled databases with retention, cleanup settings, and latency indicators. Both features impact transaction log growth and can stall if cleanup jobs are absent or delayed. |
 | Get-DatabaseFilesDetail | Per-file details for all user databases: path, size, max size, growth settings |
 | Get-DatabaseGrowthEvents | Recent autogrowth events from the default trace for capacity planning |
+| Get-DatabaseGrowthForecast | Projects when database files will exhaust their configured size limits, using historical file size changes recorded by the DatabaseGrowth temporal collector. Requires Generate-CollectorJob-DatabaseGrowth.sql to be installed and collecting. |
 | Get-DatabaseGrowthRisk | Flag databases approaching their configured file size limits |
 | Get-DatabaseHealth | Health and sizing posture of user databases |
 | Get-DatabaseIntegrityChecks | Pre-check database readiness for integrity validation runs |
@@ -177,9 +178,9 @@ SQL Agent job generators and delta-query scripts for the DBAMonitor collection i
 | Script | Purpose |
 |--------|---------|
 | Generate-CollectorAlertJob | Generates DDL to create the DBA - Collector Alert SQL Agent job. The job queries [DBAMonitor].[collector].* tables, applies threshold checks, outputs findings, and RAISERRORs on any CRITICAL result. |
-| Generate-CollectorJob-AgHealth | Generates DDL to create the DBA - Collect AG Health SQL Agent job. Creates the target database and collector.AgHealth table if absent, then outputs T-SQL to install a recurring AG replica state snapshot job. |
+| Generate-CollectorJob-AgHealth | Generates DDL to create the DBA - Collect AG Health SQL Agent job. Creates the target database and collector.AgHealthCurrent temporal table if absent, then outputs T-SQL to install a recurring AG replica state MERGE job. |
 | Generate-CollectorJob-Blocking | Generates DDL to create the DBA - Collect Blocking SQL Agent job. Creates the target database and collector.Blocking table if absent, then outputs T-SQL to install a recurring blocking-chain collection job. |
-| Generate-CollectorJob-DatabaseGrowth | Generates DDL to create the DBA - Collect Database Growth SQL Agent job. Creates the target database and collector.DatabaseGrowth table if absent, then outputs T-SQL to install a recurring database file size snapshot job. |
+| Generate-CollectorJob-DatabaseGrowth | Generates DDL to create the DBA - Collect Database Growth SQL Agent job. Creates the target database and collector.DatabaseGrowthCurrent temporal table if absent, then outputs T-SQL to install a recurring database file size MERGE job. |
 | Generate-CollectorJob-Deadlocks | Generates DDL to create the DBA - Collect Deadlocks SQL Agent job. Creates the target database and collector.Deadlocks table if absent, then outputs T-SQL to install a recurring deadlock collection job. |
 | Generate-CollectorJob-ErrorLog | Generates DDL to create the DBA - Collect Error Log SQL Agent job. Creates the target database and collector.ErrorLog table if absent, then outputs T-SQL to install a recurring error log collection job. |
 | Generate-CollectorJob-IndexFragmentation | Generates DDL to create the DBA - Collect Index Fragmentation SQL Agent job. Creates the target database and collector.IndexFragmentation table if absent, then outputs T-SQL to install a weekly index fragmentation snapshot job. |
@@ -187,7 +188,7 @@ SQL Agent job generators and delta-query scripts for the DBAMonitor collection i
 | Generate-CollectorJob-QueryStore | Generates DDL to create the DBA - Collect Query Store SQL Agent job. Creates the target database and collector.QueryStore table if absent, then outputs T-SQL to install a recurring Query Store collection job. |
 | Generate-CollectorJob-StorageIO | Generates DDL to create the DBA - Collect Storage IO SQL Agent job. Creates the target database and collector.StorageIO table if absent, then outputs T-SQL to install a recurring I/O stats snapshot job. |
 | Generate-CollectorJob-Tempdb | Generates DDL to create the DBA - Collect TempDB SQL Agent job. Creates the target database and collector.Tempdb table if absent, then outputs T-SQL to install a recurring TempDB space snapshot job. |
-| Generate-CollectorJob-VlfCount | Generates DDL to create the DBA - Collect VLF Count SQL Agent job. Creates the target database and collector.VlfCount table if absent, then outputs T-SQL to install a daily VLF count snapshot job. |
+| Generate-CollectorJob-VlfCount | Generates DDL to create the DBA - Collect VLF Count SQL Agent job. Creates the target database and collector.VlfCountCurrent temporal table if absent, then outputs T-SQL to install a daily VLF count MERGE job. |
 | Generate-CollectorJob-WaitStats | Generates DDL to create the DBA - Collect Wait Stats SQL Agent job. Creates the target database and collector.WaitStats table if absent, then outputs T-SQL to install a recurring wait stats snapshot job. |
 | Get-PerfmonDelta | Computes interval deltas for cumulative performance counters between the two most recent snapshots in [DBAMonitor].[collector].[Perfmon]. |
 | Get-StorageIODelta | Computes interval I/O deltas between the two most recent snapshots in [DBAMonitor].[collector].[StorageIO]. Shows read/write counts, bytes transferred, and derived average latency for the interval. |

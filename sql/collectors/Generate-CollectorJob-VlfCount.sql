@@ -2,25 +2,27 @@
 Script Name : Generate-CollectorJob-VlfCount
 Category    : collectors
 Purpose     : Generates DDL to create the DBA - Collect VLF Count SQL Agent job.
-              Creates the target database and collector.VlfCount table if absent,
-              then outputs T-SQL to install a daily VLF count snapshot job.
-              High VLF counts slow log backup, restore, and recovery.
-              Collect daily to catch accumulation before it becomes critical.
+              Creates the target database and a system-versioned (temporal) collector table
+              if absent, then outputs T-SQL to install a daily VLF count MERGE job.
+              Each run upserts current VLF counts per database — SQL Server automatically
+              records every change in the paired history table, capturing exactly when
+              VLF counts spiked (autogrowth) or dropped (log maintenance).
               Edit parameters, review output, then run on the target instance.
 Author      : Peter Whyte (https://sqldba.blog)
 Requires    : sysadmin (to run generated DDL); VIEW SERVER STATE, VIEW DATABASE STATE at job runtime
 Notes       : Default schedule: daily at 02:00. Requires SQL Server 2016+ (sys.dm_db_log_info).
               Thresholds: <100 OK, 100-999 MONITOR, 1000+ WARNING, 10000+ CRITICAL.
+              If upgrading from the non-temporal version, drop collector.VlfCount manually first.
 */
 -- SAFE:ReadOnly
 -- IMPACT:Low
 SET NOCOUNT ON;
 
 -- ── Parameters ────────────────────────────────────────────────────────────────
-DECLARE @TargetDatabase  sysname       = N'DBAMonitor';   -- created if absent
-DECLARE @JobOwner        sysname       = N'sa';
+DECLARE @TargetDatabase  sysname  = N'DBAMonitor';
+DECLARE @JobOwner        sysname  = N'sa';
 DECLARE @CategoryName    nvarchar(128) = N'DBA Collectors';
-DECLARE @RunHour         tinyint       = 2;               -- hour (0-23) for daily run
+DECLARE @RunHour         tinyint  = 2;
 -- ─────────────────────────────────────────────────────────────────────────────
 
 DECLARE @q        nchar(1)      = NCHAR(39);
@@ -33,31 +35,48 @@ DECLARE @stepCmd  nvarchar(max);
 -- ── Step command (| = single-quote placeholder) ────────────────────────────────
 SET @stepCmd = REPLACE(
 N'SET NOCOUNT ON;
-INSERT INTO [<<DB>>].[collector].[VlfCount]
-    (server_name, collection_time, database_name, recovery_model_desc,
-     log_reuse_wait_desc, vlf_count, log_file_size_mb, vlf_status)
-SELECT
-    @@SERVERNAME                                        AS server_name,
-    GETDATE()                                           AS collection_time,
-    d.name                                              AS database_name,
-    d.recovery_model_desc,
-    d.log_reuse_wait_desc,
-    COUNT(li.file_id)                                   AS vlf_count,
-    CAST(mf.size * 8.0 / 1024 AS decimal(10,2))        AS log_file_size_mb,
-    CASE
-        WHEN COUNT(li.file_id) >= 10000 THEN |CRITICAL|
-        WHEN COUNT(li.file_id) >= 1000  THEN |WARNING|
-        WHEN COUNT(li.file_id) >= 100   THEN |MONITOR|
-        ELSE |OK|
-    END                                                 AS vlf_status
-FROM sys.databases d
-JOIN sys.master_files mf
-    ON mf.database_id = d.database_id
-   AND mf.type = 1
-CROSS APPLY sys.dm_db_log_info(d.database_id) li
-WHERE d.state_desc = |ONLINE|
-  AND d.database_id > 4
-GROUP BY d.name, d.recovery_model_desc, d.log_reuse_wait_desc, mf.size;'
+MERGE [<<DB>>].[collector].[VlfCountCurrent] AS target
+USING (
+    SELECT
+        @@SERVERNAME                                        AS server_name,
+        d.name                                              AS database_name,
+        d.recovery_model_desc,
+        d.log_reuse_wait_desc,
+        COUNT(li.file_id)                                   AS vlf_count,
+        CAST(mf.size * 8.0 / 1024 AS decimal(10,2))        AS log_file_size_mb,
+        CASE
+            WHEN COUNT(li.file_id) >= 10000 THEN |CRITICAL|
+            WHEN COUNT(li.file_id) >= 1000  THEN |WARNING|
+            WHEN COUNT(li.file_id) >= 100   THEN |MONITOR|
+            ELSE |OK|
+        END                                                 AS vlf_status
+    FROM sys.databases d
+    JOIN sys.master_files mf
+        ON mf.database_id = d.database_id
+       AND mf.type = 1
+    CROSS APPLY sys.dm_db_log_info(d.database_id) li
+    WHERE d.state_desc = |ONLINE|
+      AND d.database_id > 4
+    GROUP BY d.name, d.recovery_model_desc, d.log_reuse_wait_desc, mf.size
+) AS source
+ON  target.server_name   = source.server_name
+AND target.database_name = source.database_name
+WHEN MATCHED AND (
+    target.vlf_count    <> source.vlf_count    OR
+    target.vlf_status   <> source.vlf_status   OR
+    ISNULL(target.log_reuse_wait_desc, |_|) <> ISNULL(source.log_reuse_wait_desc, |_|)
+) THEN UPDATE SET
+    recovery_model_desc  = source.recovery_model_desc,
+    log_reuse_wait_desc  = source.log_reuse_wait_desc,
+    vlf_count            = source.vlf_count,
+    log_file_size_mb     = source.log_file_size_mb,
+    vlf_status           = source.vlf_status
+WHEN NOT MATCHED BY TARGET THEN
+    INSERT (server_name, database_name, recovery_model_desc, log_reuse_wait_desc,
+            vlf_count, log_file_size_mb, vlf_status)
+    VALUES (source.server_name, source.database_name, source.recovery_model_desc,
+            source.log_reuse_wait_desc, source.vlf_count, source.log_file_size_mb,
+            source.vlf_status);'
 , N'|', NCHAR(39));
 
 SET @stepCmd = REPLACE(@stepCmd, N'<<DB>>', @TargetDatabase);
@@ -85,23 +104,30 @@ SET @ddl +=
     N'    EXEC [' + @TargetDatabase + N'].sys.sp_executesql N' + @q + N'CREATE SCHEMA collector' + @q + N';'              + @crlf +
     N'GO' + @crlf + @crlf;
 
--- ── 3. VlfCount table ─────────────────────────────────────────────────────────
+-- ── 3. VlfCountCurrent temporal table ─────────────────────────────────────────
 SET @ddl +=
     N'IF NOT EXISTS (' + @crlf +
-    N'    SELECT 1 FROM [' + @TargetDatabase + N'].sys.objects o'                                                        + @crlf +
-    N'    JOIN [' + @TargetDatabase + N'].sys.schemas s ON s.schema_id = o.schema_id'                                    + @crlf +
-    N'    WHERE o.name = N' + @q + N'VlfCount' + @q + N' AND s.name = N' + @q + N'collector' + @q + N')'               + @crlf +
-    N'CREATE TABLE [' + @TargetDatabase + N'].[collector].[VlfCount] ('                                                  + @crlf +
-    N'    id                   bigint IDENTITY(1,1) PRIMARY KEY,'                                                         + @crlf +
-    N'    server_name          nvarchar(128) NOT NULL,'                                                                    + @crlf +
-    N'    collection_time      datetime2     NOT NULL,'                                                                    + @crlf +
-    N'    database_name        nvarchar(128),'                                                                             + @crlf +
-    N'    recovery_model_desc  nvarchar(60),'                                                                              + @crlf +
-    N'    log_reuse_wait_desc  nvarchar(60),'                                                                              + @crlf +
-    N'    vlf_count            int,'                                                                                       + @crlf +
-    N'    log_file_size_mb     decimal(10,2),'                                                                             + @crlf +
-    N'    vlf_status           nvarchar(20)'                                                                               + @crlf +
-    N');'                                                                                                                  + @crlf +
+    N'    SELECT 1 FROM [' + @TargetDatabase + N'].sys.objects o'                                                              + @crlf +
+    N'    JOIN [' + @TargetDatabase + N'].sys.schemas s ON s.schema_id = o.schema_id'                                          + @crlf +
+    N'    WHERE o.name = N' + @q + N'VlfCountCurrent' + @q + N' AND s.name = N' + @q + N'collector' + @q + N')'              + @crlf +
+    N'BEGIN' + @crlf +
+    N'CREATE TABLE [' + @TargetDatabase + N'].[collector].[VlfCountCurrent] ('                 + @crlf +
+    N'    server_name          nvarchar(128)  NOT NULL,'                                        + @crlf +
+    N'    database_name        nvarchar(128)  NOT NULL,'                                        + @crlf +
+    N'    recovery_model_desc  nvarchar(60)   NULL,'                                            + @crlf +
+    N'    log_reuse_wait_desc  nvarchar(60)   NULL,'                                            + @crlf +
+    N'    vlf_count            int            NULL,'                                            + @crlf +
+    N'    log_file_size_mb     decimal(10,2)  NULL,'                                            + @crlf +
+    N'    vlf_status           nvarchar(20)   NULL,'                                            + @crlf +
+    N'    SysStartTime         datetime2(2)   GENERATED ALWAYS AS ROW START NOT NULL,'         + @crlf +
+    N'    SysEndTime           datetime2(2)   GENERATED ALWAYS AS ROW END   NOT NULL,'         + @crlf +
+    N'    PERIOD FOR SYSTEM_TIME (SysStartTime, SysEndTime),'                                  + @crlf +
+    N'    CONSTRAINT [PK_VlfCountCurrent]'                                                     + @crlf +
+    N'        PRIMARY KEY (server_name, database_name)'                                        + @crlf +
+    N') WITH (SYSTEM_VERSIONING = ON ('                                                        + @crlf +
+    N'    HISTORY_TABLE        = [collector].[VlfCountHistory],'                               + @crlf +
+    N'    DATA_CONSISTENCY_CHECK = ON));'                                                       + @crlf +
+    N'END' + @crlf +
     N'GO' + @crlf + @crlf;
 
 -- ── 4. Agent category ─────────────────────────────────────────────────────────
@@ -128,7 +154,7 @@ SET @ddl +=
     N'EXEC msdb.dbo.sp_add_jobstep'                                                + @crlf +
     N'    @job_name          = N' + @q + @jobName + @q + N','                      + @crlf +
     N'    @step_id           = 1,'                                                  + @crlf +
-    N'    @step_name         = N' + @q + N'Snapshot VLF counts' + @q + N','        + @crlf +
+    N'    @step_name         = N' + @q + N'Merge VLF counts' + @q + N','           + @crlf +
     N'    @subsystem         = N' + @q + N'TSQL' + @q + N','                       + @crlf +
     N'    @database_name     = N' + @q + N'master' + @q + N','                     + @crlf +
     N'    @command           = N' + @q + REPLACE(@stepCmd, @q, @q + @q) + @q + N',' + @crlf +
@@ -138,9 +164,9 @@ SET @ddl +=
 
     N'EXEC msdb.dbo.sp_add_schedule'                                               + @crlf +
     N'    @schedule_name          = N' + @q + @jobName + N' Daily ' + CAST(@RunHour AS nvarchar(2)) + N':00' + @q + N',' + @crlf +
-    N'    @freq_type              = 4,'                                             + @crlf +   -- daily
+    N'    @freq_type              = 4,'                                             + @crlf +
     N'    @freq_interval          = 1,'                                             + @crlf +
-    N'    @freq_subday_type       = 1,'                                             + @crlf +   -- once
+    N'    @freq_subday_type       = 1,'                                             + @crlf +
     N'    @active_start_time      = ' + CAST(@schedTS AS nvarchar(10)) + N';'      + @crlf + @crlf +
 
     N'EXEC msdb.dbo.sp_attach_schedule'                                            + @crlf +

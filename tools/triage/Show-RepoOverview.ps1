@@ -7,11 +7,15 @@ $ErrorActionPreference = 'Stop'
 $repoRoot = Resolve-Path (Join-Path $PSScriptRoot '..\..')
 
 $sqlDesc = @{
-    'performance' = 'Wait stats, blocking, long queries, missing indexes, I/O, plan cache'
-    'monitoring'  = 'DB health, memory, MAXDOP, jobs, AG, TempDB, DBCC, suspect pages'
+    'performance' = 'blocking/locking, indexes, query analysis, query store, active sessions'
+    'monitoring'  = 'instance config, database health, disk space, tempdb, jobs, error log, features'
+    'inventory'   = 'version, OS, databases, services, linked servers, patch level, job/login lists'
     'backups'     = 'Backup coverage, history, DR estimates, restore script generation'
-    'security'    = 'Roles, permissions, orphans, weak logins, xp_cmdshell surface area'
-    'migration'   = 'DB/login/job/linked-server inventory for instance migrations'
+    'security'    = 'access (logins/users/permissions), encryption/TDE, surface area audit'
+    'migration'   = 'Pre-migration assessment, compatibility, deprecated features, DDL generators'
+    'high-availability' = 'AG, FCI, mirroring, replication, log shipping'
+    'maintenance' = 'Index maintenance, backup jobs, maintenance job status'
+    'collectors'  = 'SQL Agent collector job DDL generators, ad-hoc collector queries'
     'lab'         = 'Test and development scripts — not for production use'
 }
 
@@ -37,7 +41,7 @@ function Show-CategoryTable {
     $dirs  = Get-ChildItem -Path $RootPath -Directory | Sort-Object Name
     $total = 0
     $rows  = foreach ($dir in $dirs) {
-        $count = @(Get-ChildItem -Path $dir.FullName -File -Filter "*.$Extension" -ErrorAction SilentlyContinue).Count
+        $count = @(Get-ChildItem -Path $dir.FullName -Recurse -File -Filter "*.$Extension" -ErrorAction SilentlyContinue).Count
         $total += $count
         [PSCustomObject]@{
             Category    = $dir.Name
@@ -86,7 +90,7 @@ Write-Host ""
 Write-Host "  [1]  Verify you can connect to SQL Server" -ForegroundColor Green
 Write-Host "       .\tools\local-sql\Test-SqlConnectivity.ps1 -ServerInstance ." -ForegroundColor White
 Write-Host ""
-Write-Host "  [2]  Run a full healthcheck (collects 19 scripts, surfaces CRITICAL/WARNING)" -ForegroundColor Green
+Write-Host "  [2]  Run a full healthcheck (collects 32 scripts, surfaces CRITICAL/WARNING)" -ForegroundColor Green
 Write-Host "       .\powershell\reporting\Invoke-HealthCheckCollection.ps1 -ServerInstance ." -ForegroundColor White
 Write-Host "       .\powershell\reporting\Review-HealthCheckOutput.ps1" -ForegroundColor White
 Write-Host ""

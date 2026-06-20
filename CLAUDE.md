@@ -62,7 +62,7 @@ pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\tools\local-sql\Invoke-R
 
 Full healthcheck workflow:
 ```powershell
-# Collect 27 scripts, save CSVs to output-files\healthcheck\<server>-<timestamp>\
+# Collect 32 scripts, save CSVs to output-files\healthcheck\<server>-<timestamp>\
 .\powershell\reporting\Invoke-HealthCheckCollection.ps1 -ServerInstance .
 
 # Review the latest collection folder and surface CRITICAL / WARNING / INFO findings
@@ -102,6 +102,7 @@ Use the following primary categories when deciding where a script or post belong
 1. **Core DBA operations**
    - performance
    - monitoring
+   - inventory
    - maintenance
    - backup-recovery
    - security
@@ -132,6 +133,34 @@ Use the following primary categories when deciding where a script or post belong
    - cloud (inactive unless needed)
 
 This framework is mainly an internal reference model for repo organization and content planning. It does not need to be exposed in a rigid way to every user, but it should guide how scripts and docs are classified and how future content is prioritized.
+
+### Repo structure as blog taxonomy signal
+
+The `sql/<category>/` directory maps to a blog primary category. The `sql/<category>/<subfolder>/` maps loosely to blog tags — not a rigid 1:1, but a directional guide:
+
+| sql/ path | Blog category | Tag signal |
+|---|---|---|
+| `sql/inventory/` | inventory | instance, databases, services |
+| `sql/monitoring/instance/` | monitoring | instance-config, memory |
+| `sql/monitoring/databases/` | monitoring | database-health, integrity |
+| `sql/monitoring/disk-space/` | monitoring | disk-space, growth, transaction-log, vlf |
+| `sql/monitoring/tempdb/` | monitoring | tempdb |
+| `sql/monitoring/jobs/` | monitoring | sql-agent |
+| `sql/monitoring/error-log/` | monitoring | error-log |
+| `sql/monitoring/features/` | monitoring | cdc, query-store, extended-events, service-broker |
+| `sql/performance/blocking-locking/` | performance | blocking, locking, deadlocks |
+| `sql/performance/indexes/` | performance | indexes, fragmentation |
+| `sql/performance/queries/` | performance | query-tuning, plan-cache, statistics |
+| `sql/performance/query-store/` | performance | query-store |
+| `sql/performance/active-sessions/` | performance | active-sessions |
+| `sql/security/access/` | security | logins, users, permissions, roles |
+| `sql/security/encryption/` | security | tde, encryption, certificates |
+| `sql/high-availability/always-on/` | high-availability | availability-groups |
+| `sql/high-availability/replication/` | high-availability | replication |
+| `sql/backups/` | backup-recovery | — |
+| `sql/migration/` | migration-upgrades | — |
+
+A post series (e.g., wait statistics, index series) can introduce more granular tags than the subfolder suggests — the subfolder is a starting point, not a ceiling.
 
 ### Script post standard (for blog-worthy scripts)
 
@@ -190,13 +219,51 @@ Use one of these patterns only:
 
 ```text
 sql/
-  monitoring/     — health, memory, MAXDOP, jobs, TempDB, DBCC, suspect pages, instance config
-  performance/    — waits, blocking, long queries, missing indexes, I/O, plan cache, active requests
-  high-availability/          — AG replica state, AG latency (guards against non-AG instances)
-  backups/        — coverage, history, DR estimates, restore generation
-  security/       — roles, permissions, orphans, weak logins, surface area
+  inventory/      — server/instance cataloguing: version, OS, databases, services, linked servers,
+                    patch level, database/login/job/linked-server inventory lists
+  monitoring/     — ongoing health monitoring; subfolders by area:
+    instance/     — OS config, trace flags, CPU topology, instance config score/snapshot, MAXDOP,
+                    resource governor, memory config
+    databases/    — database health, integrity checks, DBCC CHECKDB history, suspect pages
+    disk-space/   — database sizes, free space, file detail, filegroup space, disk space, tlog size/usage,
+                    VLF count, growth risk, growth events, autogrowth history
+    tempdb/       — TempDB configuration, file balance, hotspots, usage
+    jobs/         — SQL Agent job failures, overview, duration trends, schedule summary, alerts/operators
+    error-log/    — recent error log entries, error log patterns, schema change history
+    features/     — CDC/change tracking, Query Store status, Extended Events, Service Broker,
+                    compression candidates, cross-database dependencies, collation conflicts, DB Mail queue
+    (root)        — active connections by database, linked server connectivity
+  performance/    — query and workload performance; subfolders by area:
+    blocking-locking/ — blocking chains (+plan), blocking sessions/summary, open transactions,
+                        lock escalation stats, deadlock summary, contention analysis
+    indexes/      — missing indexes, unused indexes, index usage stats, duplicate indexes, heaps,
+                    index design issues, fragmentation (single-db and cross-db)
+    queries/      — top CPU/IO queries, slow queries from cache, plan cache health, SP performance,
+                    implicit conversions, memory grant spills, query variance, statistics health
+    query-store/  — Query Store top queries, forced plans, regressions
+    active-sessions/ — active requests (+plan), active sessions, long-running queries, worker threads
+    (root)        — wait statistics, database I/O usage, table sizes, backup/restore progress
+  high-availability/ — already subfoldered:
+    always-on/    — AG failover readiness, replica state, latency, readable secondary usage
+    fci/          — last node blip
+    mirroring/    — endpoint health, mirroring status
+    replication/  — distribution agent, log reader agent, replication status, undistributed commands
+    logshipping/  — (placeholder)
+    azure/        — (placeholder)
+  backups/        — coverage, history, encryption status, completion time, duration estimates,
+                    size trend, restore history, last backup times, restore script generation
+  security/       — subfolders by area:
+    access/       — database/server role members, login/user/database permissions, orphaned users,
+                    sysadmin members, user permissions audit, weak login settings, failed login summary,
+                    login last activity
+    encryption/   — certificates and keys, certificate expiry warnings, TDE status
+    (root)        — audit specifications, DB Mail/xp_cmdshell surface area, DDL triggers,
+                    linked server security, proxy and credentials
   maintenance/    — maintenance job scripts (Generate-* and Get-MaintenanceJobStatus)
-  migration/      — migration SQL scripts (Get-MigrationRiskAssessment, Generate-LoginScript, etc.)
+  migration/      — pre-migration assessment: compatibility audit, deprecated features, edition feature
+                    usage, migration login audit, migration risk assessment, post-migration validation,
+                    version upgrade readiness; DDL generators: Generate-Login/AgentJob/UserMapping/
+                    LinkedServer/RestoreWithMove scripts; Fix-OrphanedUsers
   collectors/     — Generate-CollectorJob-*.sql: one script per collector, creates SQL Agent job + DBAMonitor table
   lab/            — test scripts — dev/test only
 
@@ -205,21 +272,38 @@ powershell/
                         Invoke-MultiServerHealthCheck, Get-ActiveRequests, Get-BlockingChains
   reporting/multi-server/ — MultiServer-Get*.ps1 scripts (disk, wait stats, patch level, blocking, etc.)
   disk-space/         — Get-DiskSpaceSummary, Get-LargestFolders, Get-OldestBackupFolderFiles, Get-BackupAge
-  wrappers/
-    backups/          — Generate-FullBackupScript, Generate-DiffBackupScript, Generate-TLogBackupScript, Generate-RestoreScript,
-                        Get-BackupAge, Get-BackupCoverage, Get-DatabaseBackupHistory, Get-BackupChainIntegrity, etc.
-    maintenance/      — Generate-BackupJobs, Generate-IndexMaintenanceJobs, Generate-MaintenanceJobs, Get-MaintenanceJobStatus
-    monitoring/       — thin wrappers for sql/monitoring/ scripts
-    performance/      — thin wrappers for sql/performance/ scripts
-    security/         — thin wrappers for sql/security/ scripts
-    high-availability/ — thin wrappers for sql/high-availability/ scripts
-    migration/        — thin wrappers for sql/migration/ scripts
+  wrappers/           — thin wrappers; mirror the sql/ category+subfolder structure exactly
+    inventory/        — wrappers for sql/inventory/ scripts
+    backups/          — wrappers for sql/backups/ scripts
+    maintenance/      — wrappers for sql/maintenance/ scripts
+    high-availability/ — wrappers for sql/high-availability/ scripts
+    migration/        — wrappers for sql/migration/ scripts (excluding inventory scripts)
+    monitoring/       — wrappers for sql/monitoring/ scripts; same subfolders:
+      instance/       — wrappers for sql/monitoring/instance/
+      databases/      — wrappers for sql/monitoring/databases/
+      disk-space/     — wrappers for sql/monitoring/disk-space/
+      tempdb/         — wrappers for sql/monitoring/tempdb/
+      jobs/           — wrappers for sql/monitoring/jobs/
+      error-log/      — wrappers for sql/monitoring/error-log/
+      features/       — wrappers for sql/monitoring/features/
+      (root)          — wrappers for sql/monitoring/ root scripts
+    performance/      — wrappers for sql/performance/ scripts; same subfolders:
+      blocking-locking/ — wrappers for sql/performance/blocking-locking/
+      indexes/          — wrappers for sql/performance/indexes/
+      queries/          — wrappers for sql/performance/queries/
+      query-store/      — wrappers for sql/performance/query-store/
+      active-sessions/  — wrappers for sql/performance/active-sessions/
+      (root)            — wrappers for sql/performance/ root scripts
+    security/         — wrappers for sql/security/ scripts; same subfolders:
+      access/           — wrappers for sql/security/access/
+      encryption/       — wrappers for sql/security/encryption/
+      (root)            — wrappers for sql/security/ root scripts
   installation/       — install-sql.ps1, configure-sql.ps1, pre-install-check.ps1, post-install-validation.ps1,
                         uninstall-sql.ps1, generate-install-report.ps1, templates/
   migration/          — Generate-LoginScript, Generate-AgentJobScript, Generate-UserMappingScript,
                         Generate-LinkedServerScript, Generate-RestoreWithMoveScript,
                         Invoke-MigrationExport, Invoke-PreMigrationAssessment, Export-MigrationBaseline,
-                        Get-DatabaseInventory, Get-LoginInventory, Get-JobInventory, Get-MigrationRiskAssessment, etc.
+                        Invoke-MigrationPreFlightCheck
   patching/           — patch-summary.ps1 (SQL + SSMS status overview, stays at this level)
     sql/              — Invoke-SqlPatch.ps1 (multi-server auto-patch), patch-config.psd1
     ssms/             — install-ssms.ps1 (handles SSMS ≤20 and 21+), uninstall-ssms.ps1
@@ -294,7 +378,7 @@ Every thin wrapper in `powershell/wrappers/<category>/*.ps1` follows this patter
 2. Builds `$sqlScript = Join-Path $repoRoot 'sql\<category>\<Name>.sql'` (or `sql\migration\` for migration scripts)
 3. Delegates to `tools\local-sql\Invoke-RepoSql.ps1` with `-ScriptPath`, `-ServerInstance`, `-Database`, `-OutputFormat`, `-OutputPath`
 
-**Web UI contract:** A SQL script in `sql/` only appears in the web UI if it has a matching wrapper in `powershell/wrappers/<same-category>/`. The wrapper IS the web UI entry point — the web UI launches wrappers, not SQL files directly. Every new SQL script in `sql/` must therefore get a paired wrapper.
+**Web UI contract:** A SQL script in `sql/` only appears in the web UI if it has a matching wrapper in `powershell/wrappers/<same-category>/<same-subfolder>/` (mirroring the sql/ path exactly). The wrapper IS the web UI entry point — the web UI launches wrappers, not SQL files directly. Every new SQL script must have a paired wrapper at the same relative path under `powershell/wrappers/`.
 
 `Invoke-RepoSql.ps1` tries `Invoke-Sqlcmd` first (SqlServer module), falls back to `sqlcmd.exe`. Always writes a CSV to `output-files\reviews\<category>\<scriptname>-<timestamp>.csv` and prints a table preview. If neither tool is available it throws.
 
@@ -339,9 +423,14 @@ Add `HealthCheck : Yes` (after `Requires`) to any script that runs as part of `I
 
 ## Adding new scripts
 
-New SQL script: `sql/<category>/Get-Something.sql` using the header above.
+New SQL script: `sql/<category>/<subfolder>/Get-Something.sql` (or `sql/<category>/Get-Something.sql` if it belongs at the category root).
 
-New PS wrapper: copy any existing wrapper from `powershell/wrappers/<category>/` (matching the sql/ category), update the three variables (`$sqlScript` path, synopsis, `Write-Host` message). Use `$PSScriptRoot '..\..\..'` — wrappers are three levels from root (`powershell/wrappers/<category>/`). The wrapper must be present for the script to appear in the web UI.
+New PS wrapper: copy any existing wrapper from the same level under `powershell/wrappers/`. Path depth rules:
+- `powershell/wrappers/<category>/` (root-level scripts) → `$PSScriptRoot '..\..\..'` (3 levels)
+- `powershell/wrappers/<category>/<subfolder>/` (subfoldered) → `$PSScriptRoot '..\..\..\..'` (4 levels)
+- Update `$sqlScript` to match the sql/ path exactly. The wrapper must be present for the script to appear in the web UI.
+
+Use `New-Wrapper.ps1` to scaffold: it will need the category and subfolder to set the correct depth.
 
 New orchestrator PS script (has real logic, not a thin wrapper): add to `powershell/<subfolder>/` (e.g. `reporting/`, `maintenance/`, `migration/`). Use `$PSScriptRoot '..\..'` to resolve repo root.
 
@@ -351,7 +440,7 @@ New orchestrator PS script (has real logic, not a thin wrapper): add to `powersh
 
 ## Healthcheck collection — what it covers
 
-`Invoke-HealthCheckCollection.ps1` runs 27 scripts and saves named CSVs:
+`Invoke-HealthCheckCollection.ps1` runs 32 scripts and saves named CSVs:
 
 | CSV label | SQL script |
 |-----------|-----------|
@@ -382,8 +471,13 @@ New orchestrator PS script (has real logic, not a thin wrapper): add to `powersh
 | linked-server-security | Get-LinkedServerSecurity.sql |
 | vlf-count | Get-VlfCount.sql |
 | maintenance-jobs | Get-MaintenanceJobStatus.sql (msdb) |
+| failed-logins | Get-FailedLoginSummary.sql |
+| query-store-status | Get-QueryStoreStatus.sql |
+| extended-events | Get-ExtendedEventsSessions.sql |
+| cdc-and-ct | Get-CdcAndChangeTracking.sql |
+| service-broker | Get-ServiceBrokerHealth.sql |
 
-`Review-HealthCheckOutput.ps1` reads those CSVs and fires on: databases not ONLINE, missing backups, stale full/log backups, tlog >80% used, auto-shrink, auto-close, percent-based autogrowth, DBCC CHECKDB not run in >7 days, any suspect pages (CRITICAL), SA enabled (CRITICAL), weak SQL login settings, I/O latency >50ms, specific wait type patterns (PAGEIOLATCH, WRITELOG, RESOURCE_SEMAPHORE, CXPACKET), max server memory unconfigured, data files <10% free, VLF count >200 (WARNING) or >1000 (CRITICAL), and DBA maintenance job missing/failed/disabled.
+`Review-HealthCheckOutput.ps1` reads those CSVs and fires on: databases not ONLINE, missing backups, full backup older than 24h (CRITICAL), stale log backups, tlog >80% used, auto-shrink, auto-close, percent-based autogrowth, DBCC CHECKDB stale >7 days (WARNING) or overdue >14 days / never (CRITICAL), any suspect pages (CRITICAL), SA enabled (CRITICAL), weak SQL login settings, I/O latency >50ms, specific wait type patterns (PAGEIOLATCH, WRITELOG, RESOURCE_SEMAPHORE, CXPACKET), max server memory unconfigured, data files <10% free, VLF count >200 (WARNING) or >1000 (CRITICAL), DBA maintenance job missing/failed/disabled, failed logins (locked accounts and repeated failures), Query Store switched to READ_ONLY, active user Extended Events sessions (INFO), CDC/Change Tracking warnings, and Service Broker CRITICAL/WARNING status.
 
 ## Important caveats
 

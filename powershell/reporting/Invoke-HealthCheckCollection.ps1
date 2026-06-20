@@ -42,6 +42,11 @@ Scripts collected:
   linked-server-security - linked server login mappings with risk level assessment
   vlf-count             - virtual log file count per database (high counts degrade recovery)
   maintenance-jobs      - DBA maintenance job deployment and last-run status
+  failed-logins         - failed login attempts from current error log with lockout status
+  query-store-status    - Query Store state (enabled, READ_ONLY, fill %) per database
+  extended-events       - active XE sessions — targets and estimated overhead
+  cdc-and-ct            - CDC and Change Tracking enabled databases with retention settings
+  service-broker        - Service Broker enabled databases with queue/transmission health
 
 .PARAMETER ServerInstance
 SQL Server instance to query. Defaults to '.'.
@@ -77,7 +82,7 @@ $runner   = Join-Path $repoRoot 'tools\local-sql\Invoke-RepoSql.ps1'
 
 if (-not (Test-Path -LiteralPath $runner)) { throw "Runner not found: $runner" }
 
-$env:DBASCRIPTS_BATCH = '1'  # tells Invoke-RepoSql not to open 19 browser tabs
+$env:DBASCRIPTS_BATCH = '1'  # tells Invoke-RepoSql not to open a browser tab per script
 
 if (-not $OutputRoot) {
     $OutputRoot = Join-Path $repoRoot 'output-files\healthcheck'
@@ -105,23 +110,23 @@ Write-Host ''
 $scripts = @(
     [PSCustomObject]@{
         Label = 'server-info'
-        Paths = @('sql\monitoring\Get-VersionAndEdition.sql')
+        Paths = @('sql\inventory\Get-VersionAndEdition.sql')
     }
     [PSCustomObject]@{
         Label = 'os-hardware'
-        Paths = @('sql\monitoring\Get-OsAndHardwareInfo.sql')
+        Paths = @('sql\inventory\Get-OsAndHardwareInfo.sql')
     }
     [PSCustomObject]@{
         Label = 'database-health'
-        Paths = @('sql\monitoring\Get-DatabaseHealth.sql')
+        Paths = @('sql\monitoring\databases\Get-DatabaseHealth.sql')
     }
     [PSCustomObject]@{
         Label = 'database-sizes'
-        Paths = @('sql\monitoring\Get-DatabaseSizesAndFreeSpace.sql')
+        Paths = @('sql\monitoring\disk-space\Get-DatabaseSizesAndFreeSpace.sql')
     }
     [PSCustomObject]@{
         Label = 'database-files'
-        Paths = @('sql\monitoring\Get-DatabaseFilesDetail.sql')
+        Paths = @('sql\monitoring\disk-space\Get-DatabaseFilesDetail.sql')
     }
     [PSCustomObject]@{
         Label = 'backup-times'
@@ -133,11 +138,11 @@ $scripts = @(
     }
     [PSCustomObject]@{
         Label = 'tlog-usage'
-        Paths = @('sql\monitoring\Get-TransactionLogSizeAndUsage.sql')
+        Paths = @('sql\monitoring\disk-space\Get-TransactionLogSizeAndUsage.sql')
     }
     [PSCustomObject]@{
         Label = 'memory-config'
-        Paths = @('sql\monitoring\Get-MemoryConfigurationAndUsage.sql')
+        Paths = @('sql\monitoring\instance\Get-MemoryConfigurationAndUsage.sql')
     }
     [PSCustomObject]@{
         Label = 'wait-stats'
@@ -145,27 +150,27 @@ $scripts = @(
     }
     [PSCustomObject]@{
         Label = 'active-sessions'
-        Paths = @('sql\performance\Get-ActiveSessions.sql')
+        Paths = @('sql\performance\active-sessions\Get-ActiveSessions.sql')
     }
     [PSCustomObject]@{
         Label = 'tempdb-usage'
-        Paths = @('sql\monitoring\Get-TempdbUsage.sql')
+        Paths = @('sql\monitoring\tempdb\Get-TempdbUsage.sql')
     }
     [PSCustomObject]@{
         Label = 'job-failures'
-        Paths = @('sql\monitoring\Get-SqlAgentJobFailureSummary.sql')
+        Paths = @('sql\monitoring\jobs\Get-SqlAgentJobFailureSummary.sql')
     }
     [PSCustomObject]@{
         Label = 'recent-errors'
-        Paths = @('sql\monitoring\Get-RecentErrorLogEntries.sql')
+        Paths = @('sql\monitoring\error-log\Get-RecentErrorLogEntries.sql')
     }
     [PSCustomObject]@{
         Label = 'dbcc-checkdb'
-        Paths = @('sql\monitoring\Get-LastDbccCheckdb.sql')
+        Paths = @('sql\monitoring\databases\Get-LastDbccCheckdb.sql')
     }
     [PSCustomObject]@{
         Label = 'suspect-pages'
-        Paths = @('sql\monitoring\Get-SuspectPages.sql')
+        Paths = @('sql\monitoring\databases\Get-SuspectPages.sql')
     }
     [PSCustomObject]@{
         Label = 'io-usage'
@@ -173,11 +178,11 @@ $scripts = @(
     }
     [PSCustomObject]@{
         Label = 'disk-space'
-        Paths = @('sql\monitoring\Get-DiskSpace.sql')
+        Paths = @('sql\monitoring\disk-space\Get-DiskSpace.sql')
     }
     [PSCustomObject]@{
         Label = 'growth-risk'
-        Paths = @('sql\monitoring\Get-DatabaseGrowthRisk.sql')
+        Paths = @('sql\monitoring\disk-space\Get-DatabaseGrowthRisk.sql')
     }
     [PSCustomObject]@{
         Label = 'security-surface-area'
@@ -185,19 +190,19 @@ $scripts = @(
     }
     [PSCustomObject]@{
         Label = 'weak-logins'
-        Paths = @('sql\security\Get-WeakLoginSettings.sql')
+        Paths = @('sql\security\access\Get-WeakLoginSettings.sql')
     }
     [PSCustomObject]@{
         Label = 'missing-indexes'
-        Paths = @('sql\performance\Get-MissingIndexes.sql')
+        Paths = @('sql\performance\indexes\Get-MissingIndexes.sql')
     }
     [PSCustomObject]@{
         Label = 'tempdb-config'
-        Paths = @('sql\monitoring\Get-TempDbConfiguration.sql')
+        Paths = @('sql\monitoring\tempdb\Get-TempDbConfiguration.sql')
     }
     [PSCustomObject]@{
         Label = 'plan-cache'
-        Paths = @('sql\performance\Get-PlanCacheHealth.sql')
+        Paths = @('sql\performance\queries\Get-PlanCacheHealth.sql')
     }
     [PSCustomObject]@{
         Label = 'linked-server-security'
@@ -205,12 +210,32 @@ $scripts = @(
     }
     [PSCustomObject]@{
         Label = 'vlf-count'
-        Paths = @('sql\monitoring\Get-VlfCount.sql')
+        Paths = @('sql\monitoring\disk-space\Get-VlfCount.sql')
     }
     [PSCustomObject]@{
         Label    = 'maintenance-jobs'
         Paths    = @('sql\maintenance\Get-MaintenanceJobStatus.sql')
         Database = 'msdb'
+    }
+    [PSCustomObject]@{
+        Label = 'failed-logins'
+        Paths = @('sql\security\access\Get-FailedLoginSummary.sql')
+    }
+    [PSCustomObject]@{
+        Label = 'query-store-status'
+        Paths = @('sql\monitoring\features\Get-QueryStoreStatus.sql')
+    }
+    [PSCustomObject]@{
+        Label = 'extended-events'
+        Paths = @('sql\monitoring\features\Get-ExtendedEventsSessions.sql')
+    }
+    [PSCustomObject]@{
+        Label = 'cdc-and-ct'
+        Paths = @('sql\monitoring\features\Get-CdcAndChangeTracking.sql')
+    }
+    [PSCustomObject]@{
+        Label = 'service-broker'
+        Paths = @('sql\monitoring\features\Get-ServiceBrokerHealth.sql')
     }
 )
 

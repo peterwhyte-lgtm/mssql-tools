@@ -8,6 +8,7 @@ Purpose     : Service Broker health across all user databases. Orphaned/disconne
               transmission queue depth, and queue activation status.
 Author      : Peter Whyte (https://sqldba.blog)
 Requires    : VIEW ANY DATABASE, VIEW DATABASE STATE
+HealthCheck : Yes
 */
 -- SAFE:ReadOnly
 -- IMPACT:Low

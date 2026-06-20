@@ -44,40 +44,45 @@ $null = $sb.AppendLine('')
 $null = $sb.AppendLine('Run directly in SSMS / Azure Data Studio, or via `.\run.ps1 <ScriptName>`.')
 $null = $sb.AppendLine('')
 
-$sqlDirs = Get-ChildItem -Path (Join-Path $repoRoot 'sql') -Directory |
+$sqlTopDirs = Get-ChildItem -Path (Join-Path $repoRoot 'sql') -Directory |
     Where-Object { $_.Name -ne 'lab' } |
     Sort-Object Name
 
-foreach ($dir in $sqlDirs) {
-    $files = Get-ChildItem -Path $dir.FullName -File -Filter '*.sql' | Sort-Object Name
-    if (-not $files) { continue }
+foreach ($dir in $sqlTopDirs) {
+    $allFiles = @(Get-ChildItem -Path $dir.FullName -Recurse -File -Filter '*.sql' |
+        Where-Object { $_.Name -ne 'README.md' } | Sort-Object FullName)
+    if (-not $allFiles) { continue }
 
-    $null = $sb.AppendLine("### $($dir.Name)  ($($files.Count) scripts)")
+    $null = $sb.AppendLine("### $($dir.Name)  ($($allFiles.Count) scripts)")
     $null = $sb.AppendLine('')
-    $null = $sb.AppendLine('| Script | Purpose |')
-    $null = $sb.AppendLine('|--------|---------|')
 
-    foreach ($file in $files) {
-        $purpose = Get-SqlPurpose $file.FullName
-        $null = $sb.AppendLine("| ``$($file.BaseName)`` | $purpose |")
+    # Root-level files first (if any)
+    $rootFiles = @(Get-ChildItem -Path $dir.FullName -File -Filter '*.sql' | Sort-Object Name)
+    if ($rootFiles) {
+        $null = $sb.AppendLine('| Script | Purpose |')
+        $null = $sb.AppendLine('|--------|---------|')
+        foreach ($file in $rootFiles) {
+            $purpose = Get-SqlPurpose $file.FullName
+            $null = $sb.AppendLine("| ``$($file.BaseName)`` | $purpose |")
+        }
+        $null = $sb.AppendLine('')
     }
-    $null = $sb.AppendLine('')
-}
 
-# ── Migration SQL scripts ─────────────────────────────────────────────────────
-$migrationSqlPath = Join-Path $repoRoot 'sql\migration'
-$migrationFiles   = Get-ChildItem -Path $migrationSqlPath -File -Filter '*.sql' -ErrorAction SilentlyContinue |
-    Where-Object { $_.Name -ne 'README.md' } | Sort-Object Name
-if ($migrationFiles) {
-    $null = $sb.AppendLine("### migration  ($($migrationFiles.Count) scripts)")
-    $null = $sb.AppendLine('')
-    $null = $sb.AppendLine('| Script | Purpose |')
-    $null = $sb.AppendLine('|--------|---------|')
-    foreach ($file in $migrationFiles) {
-        $purpose = Get-SqlPurpose $file.FullName
-        $null = $sb.AppendLine("| ``$($file.BaseName)`` | $purpose |")
+    # Subfolders
+    $subDirs = Get-ChildItem -Path $dir.FullName -Directory | Sort-Object Name
+    foreach ($sub in $subDirs) {
+        $subFiles = @(Get-ChildItem -Path $sub.FullName -File -Filter '*.sql' | Sort-Object Name)
+        if (-not $subFiles) { continue }
+        $null = $sb.AppendLine("#### $($dir.Name)/$($sub.Name)  ($($subFiles.Count) scripts)")
+        $null = $sb.AppendLine('')
+        $null = $sb.AppendLine('| Script | Purpose |')
+        $null = $sb.AppendLine('|--------|---------|')
+        foreach ($file in $subFiles) {
+            $purpose = Get-SqlPurpose $file.FullName
+            $null = $sb.AppendLine("| ``$($file.BaseName)`` | $purpose |")
+        }
+        $null = $sb.AppendLine('')
     }
-    $null = $sb.AppendLine('')
 }
 
 # ── PowerShell scripts ───────────────────────────────────────────────────────
@@ -87,11 +92,11 @@ $null = $sb.AppendLine('Wrappers and orchestrators. Run via `.\run.ps1 <ScriptNa
 $null = $sb.AppendLine('')
 
 $psDirs = Get-ChildItem -Path (Join-Path $repoRoot 'powershell') -Directory |
-    Where-Object { $_.Name -ne 'lab' } |
+    Where-Object { $_.Name -notin @('lab', 'wrappers') } |
     Sort-Object Name
 
 foreach ($dir in $psDirs) {
-    $files = Get-ChildItem -Path $dir.FullName -File -Filter '*.ps1' | Sort-Object Name
+    $files = @(Get-ChildItem -Path $dir.FullName -Recurse -File -Filter '*.ps1' | Sort-Object Name)
     if (-not $files) { continue }
 
     $null = $sb.AppendLine("### $($dir.Name)  ($($files.Count) scripts)")
@@ -104,6 +109,44 @@ foreach ($dir in $psDirs) {
         $null = $sb.AppendLine("| ``$($file.BaseName)`` | $synopsis |")
     }
     $null = $sb.AppendLine('')
+}
+
+# ── Wrappers (category/subcategory structure) ────────────────────────────────
+$wrappersRoot = Join-Path $repoRoot 'powershell\wrappers'
+$wrapperCats  = Get-ChildItem -Path $wrappersRoot -Directory | Sort-Object Name
+
+foreach ($cat in $wrapperCats) {
+    $allFiles = @(Get-ChildItem -Path $cat.FullName -Recurse -File -Filter '*.ps1' | Sort-Object FullName)
+    if (-not $allFiles) { continue }
+
+    $null = $sb.AppendLine("### wrappers/$($cat.Name)  ($($allFiles.Count) wrappers)")
+    $null = $sb.AppendLine('')
+
+    $rootFiles = @(Get-ChildItem -Path $cat.FullName -File -Filter '*.ps1' | Sort-Object Name)
+    if ($rootFiles) {
+        $null = $sb.AppendLine('| Script | Synopsis |')
+        $null = $sb.AppendLine('|--------|---------|')
+        foreach ($file in $rootFiles) {
+            $synopsis = Get-PsSynopsis $file.FullName
+            $null = $sb.AppendLine("| ``$($file.BaseName)`` | $synopsis |")
+        }
+        $null = $sb.AppendLine('')
+    }
+
+    $subDirs = Get-ChildItem -Path $cat.FullName -Directory | Sort-Object Name
+    foreach ($sub in $subDirs) {
+        $subFiles = @(Get-ChildItem -Path $sub.FullName -File -Filter '*.ps1' | Sort-Object Name)
+        if (-not $subFiles) { continue }
+        $null = $sb.AppendLine("#### wrappers/$($cat.Name)/$($sub.Name)  ($($subFiles.Count) wrappers)")
+        $null = $sb.AppendLine('')
+        $null = $sb.AppendLine('| Script | Synopsis |')
+        $null = $sb.AppendLine('|--------|---------|')
+        foreach ($file in $subFiles) {
+            $synopsis = Get-PsSynopsis $file.FullName
+            $null = $sb.AppendLine("| ``$($file.BaseName)`` | $synopsis |")
+        }
+        $null = $sb.AppendLine('')
+    }
 }
 
 $sb.ToString().TrimEnd() | Set-Content -Path $outFile -Encoding UTF8

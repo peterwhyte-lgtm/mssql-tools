@@ -9,7 +9,7 @@ RiskLevel    : SAFE
 Purpose      : Top queries from Query Store by CPU, duration, execution count, or plan regressions.
 
 .DESCRIPTION
-Wraps sql\performance\Get-QueryStoreTopQueries.sql. Query Store is per-database — pass
+Wraps sql\performance\query-store\Get-QueryStoreTopQueries.sql. Query Store is per-database — pass
 -Database with the name of the user database you want to analyse. Returns a status row
 if Query Store is not enabled on the target database.
 
@@ -50,8 +50,8 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-$repoRoot  = Resolve-Path (Join-Path $PSScriptRoot '..\..\..')
-$sqlScript = Join-Path $repoRoot 'sql\performance\Get-QueryStoreTopQueries.sql'
+$repoRoot  = Resolve-Path (Join-Path $PSScriptRoot '..\..\..\..')
+$sqlScript = Join-Path $repoRoot 'sql\performance\query-store\Get-QueryStoreTopQueries.sql'
 $runner    = Join-Path $repoRoot 'tools\local-sql\Invoke-RepoSql.ps1'
 
 if (-not (Test-Path -LiteralPath $sqlScript)) { throw "SQL script not found: $sqlScript" }

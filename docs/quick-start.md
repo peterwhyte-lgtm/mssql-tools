@@ -96,7 +96,7 @@ Browse all available scripts:
 Collect all key monitoring data in one pass and review the findings:
 
 ```powershell
-# Collect 27 scripts, save named CSVs to output-files\healthcheck\<server>-<timestamp>\
+# Collect 32 scripts, save named CSVs to output-files\healthcheck\<server>-<timestamp>\
 .\powershell\reporting\Invoke-HealthCheckCollection.ps1 -ServerInstance PROD01\SQL2019
 
 # Review findings — surfaces CRITICAL / WARNING / INFO

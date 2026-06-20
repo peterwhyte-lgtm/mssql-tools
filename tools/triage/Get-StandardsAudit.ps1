@@ -86,7 +86,9 @@ if (-not $sqlFiles) {
 $results = foreach ($file in $sqlFiles) {
     $content = [System.IO.File]::ReadAllText($file.FullName, [System.Text.Encoding]::UTF8)
     $rel     = $file.FullName.Substring($repoRoot.Path.Length + 1).Replace('\', '/')
-    $cat     = if ($rel -match 'sql/migration/') { 'migration' } else { $file.Directory.Name }
+    $cat     = if ($rel -match '^sql/([^/]+)/([^/]+)/') { "$($Matches[1])/$($Matches[2])" }
+               elseif ($rel -match '^sql/([^/]+)/') { $Matches[1] }
+               else { $file.Directory.Name }
 
     $fails = [System.Collections.Generic.List[string]]::new()
     $warns = [System.Collections.Generic.List[string]]::new()

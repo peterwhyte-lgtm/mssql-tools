@@ -45,7 +45,7 @@ Once setup passes the server is saved for the session, every script picks it up 
 
 You're mid-incident. Blocking is taking down an application, a backup question just landed from management, or a migration window opens in two hours and you still need to know what's on the source server. You know what you need to look at — you just need the query in front of you, fast.
 
-This is a copy-paste toolkit for production SQL Server DBAs. SQL scripts you open and paste directly into SSMS. PowerShell wrappers that run the same scripts at scale and export CSVs. A health check that collects 27 scripts in a single pass. Operational runbooks and change orders for the planned work when there's time to do it right.
+This is a copy-paste toolkit for production SQL Server DBAs. SQL scripts you open and paste directly into SSMS. PowerShell wrappers that run the same scripts at scale and export CSVs. A health check that collects 32 scripts in a single pass. Operational runbooks and change orders for the planned work when there's time to do it right.
 
 Everything is read-only by default. Every script has a header with what permissions it needs and what it touches. Nothing phones home, nothing requires a framework.
 

@@ -17,14 +17,14 @@ Rules applied:
   CRITICAL  - database with no full backup ever
   CRITICAL  - suspect pages recorded in msdb.dbo.suspect_pages
   CRITICAL  - sa login is enabled
-  WARNING   - full backup older than 25 hours
+  CRITICAL  - full backup older than 24 hours
   WARNING   - log backup older than 4 hours for FULL recovery databases
   WARNING   - transaction log > 80% used
   WARNING   - auto_shrink enabled on any database
   WARNING   - SQL Agent job failures in the last 7 days
   WARNING   - percent-based autogrowth configured on any file
+  CRITICAL  - DBCC CHECKDB never recorded or not run in over 14 days
   WARNING   - DBCC CHECKDB not run in over 7 days
-  WARNING   - DBCC CHECKDB never recorded for a database
   WARNING   - read or write I/O latency > 50 ms
   WARNING   - SQL login with password policy or expiration disabled
   WARNING   - max server memory left at SQL Server default (unconfigured)
@@ -38,6 +38,13 @@ Rules applied:
   WARNING   - VLF count > 200 on any database log file
   INFO      - VLF count > 50 on any database log file
   WARNING   - DBA maintenance job missing, failed, or disabled
+  CRITICAL  - login account locked out due to failed login attempts
+  CRITICAL  - login with repeated failures flagged as likely brute-force
+  WARNING   - login with repeated failures in error log
+  WARNING   - Query Store switched to READ_ONLY (storage full or error)
+  INFO      - user Extended Events sessions running
+  WARNING   - CDC or Change Tracking configuration warnings
+  CRITICAL/WARNING - Service Broker queue or transmission issues
   INFO      - sessions with active blocking
   INFO      - sessions with open transactions
   INFO      - error log entries present (requires manual review)
@@ -135,9 +142,9 @@ foreach ($row in $backups) {
     }
     elseif ([double]::TryParse($row.full_backup_age_hours, [ref]$null)) {
         $ageH = [double]$row.full_backup_age_hours
-        if ($ageH -gt 25) {
-            Add-Finding 'WARNING' 'Backup' $dbName (
-                "Full backup is $([Math]::Round($ageH, 1)) hours old (threshold: 25h)")
+        if ($ageH -gt 24) {
+            Add-Finding 'CRITICAL' 'Backup' $dbName (
+                "Full backup is $([Math]::Round($ageH, 1)) hours old (threshold: 24h)")
         }
     }
 
@@ -220,14 +227,17 @@ if ($errors.Count -gt 0) {
 $checkdb = Read-Csv-Safe 'dbcc-checkdb'
 foreach ($row in $checkdb) {
     if (-not $row.last_good_checkdb -or $row.last_good_checkdb -eq '') {
-        Add-Finding 'WARNING' 'DBCC CHECKDB' $row.database_name (
-            'No CHECKDB on record for this database on this instance')
+        Add-Finding 'CRITICAL' 'DBCC CHECKDB' $row.database_name (
+            'No CHECKDB ever recorded — integrity of this database is unknown')
     }
     elseif ([int]::TryParse($row.days_since_checkdb, [ref]$null)) {
         $days = [int]$row.days_since_checkdb
-        if ($days -gt 7) {
+        if ($days -gt 14) {
+            Add-Finding 'CRITICAL' 'DBCC CHECKDB' $row.database_name (
+                "CHECKDB overdue — $days days since last integrity check (run immediately)")
+        } elseif ($days -gt 7) {
             Add-Finding 'WARNING' 'DBCC CHECKDB' $row.database_name (
-                "Last good CHECKDB was $days days ago (threshold: 7 days)")
+                "CHECKDB stale — $days days since last integrity check (run soon)")
         }
     }
 }
@@ -390,6 +400,55 @@ if (Test-Path -LiteralPath $maintJobsFile) {
         if ($row.status -eq 'Disabled') {
             Add-Finding 'WARNING' 'Maintenance Job' $row.job_name "Job is disabled — no scheduled maintenance running."
         }
+    }
+}
+
+# ── failed-logins ─────────────────────────────────────────────────────────────
+$failedLogins = Read-Csv-Safe 'failed-logins'
+foreach ($row in $failedLogins) {
+    if ($row.is_currently_locked -in @('1','True','true')) {
+        Add-Finding 'CRITICAL' 'Failed Logins' $row.login_name 'Login is currently locked out'
+    }
+    if ($row.status -like 'CRITICAL*') {
+        Add-Finding 'CRITICAL' 'Failed Logins' $row.login_name "$($row.failure_count) failures in error log — likely brute-force or app misconfiguration"
+    } elseif ($row.status -like 'WARN*') {
+        Add-Finding 'WARNING' 'Failed Logins' $row.login_name "$($row.failure_count) repeated failures in error log"
+    }
+}
+
+# ── query-store-status ────────────────────────────────────────────────────────
+$qsStatus = Read-Csv-Safe 'query-store-status'
+foreach ($row in $qsStatus) {
+    if ($row.qs_state -eq 'READ_ONLY' -and $row.qs_desired_state -in @('READ_WRITE','AUTO')) {
+        $fp = if ($row.fill_pct -and $row.fill_pct -ne '') { " ($([Math]::Round([double]$row.fill_pct,1))% full)" } else { '' }
+        Add-Finding 'WARNING' 'Query Store' $row.database_name "QS switched to READ_ONLY$fp — storage full or error; plan history is paused"
+    }
+}
+
+# ── extended-events ───────────────────────────────────────────────────────────
+$xeSessions = Read-Csv-Safe 'extended-events'
+$sysXeNames = @('system_health','AlwaysOn_health','telemetry_xevents','hkenginexesession')
+$userXE     = @($xeSessions | Where-Object { $_.session_name -notin $sysXeNames })
+if ($userXE.Count -gt 0) {
+    Add-Finding 'INFO' 'Extended Events' "$($userXE.Count) user session(s) running" (
+        ($userXE | Select-Object -ExpandProperty session_name) -join ', ')
+}
+
+# ── cdc-and-ct ────────────────────────────────────────────────────────────────
+$cdcCt = Read-Csv-Safe 'cdc-and-ct'
+foreach ($row in $cdcCt) {
+    if ($row.status -like 'WARN*') {
+        Add-Finding 'WARNING' 'CDC / Change Tracking' $row.database_name $row.status
+    }
+}
+
+# ── service-broker ────────────────────────────────────────────────────────────
+$svcBroker = Read-Csv-Safe 'service-broker'
+foreach ($row in $svcBroker) {
+    if ($row.status -like 'CRITICAL*') {
+        Add-Finding 'CRITICAL' 'Service Broker' $row.database_name $row.status
+    } elseif ($row.status -like 'WARN*') {
+        Add-Finding 'WARNING' 'Service Broker' $row.database_name $row.status
     }
 }
 

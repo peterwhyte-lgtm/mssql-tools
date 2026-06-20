@@ -34,8 +34,8 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-$repoRoot  = Resolve-Path (Join-Path $PSScriptRoot '..\..\..')
-$sqlScript = Join-Path $repoRoot 'sql\security\Get-UserPermissionsAudit.sql'
+$repoRoot  = Resolve-Path (Join-Path $PSScriptRoot '..\..\..\..')
+$sqlScript = Join-Path $repoRoot 'sql\security\access\Get-UserPermissionsAudit.sql'
 $runner    = Join-Path $repoRoot 'tools\local-sql\Invoke-RepoSql.ps1'
 
 if (-not (Test-Path -LiteralPath $sqlScript)) { throw "SQL script not found: $sqlScript" }

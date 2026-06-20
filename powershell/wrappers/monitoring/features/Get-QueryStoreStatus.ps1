@@ -19,8 +19,8 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-$repoRoot  = Resolve-Path (Join-Path $PSScriptRoot '..\..\..')
-$sqlScript = Join-Path $repoRoot 'sql\monitoring\Get-QueryStoreStatus.sql'
+$repoRoot  = Resolve-Path (Join-Path $PSScriptRoot '..\..\..\..')
+$sqlScript = Join-Path $repoRoot 'sql\monitoring\features\Get-QueryStoreStatus.sql'
 $runner    = Join-Path $repoRoot 'tools\local-sql\Invoke-RepoSql.ps1'
 
 if (-not (Test-Path -LiteralPath $sqlScript)) { throw "Script not found: $sqlScript" }

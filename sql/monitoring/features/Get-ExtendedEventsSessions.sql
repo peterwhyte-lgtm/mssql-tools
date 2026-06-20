@@ -5,6 +5,7 @@ Purpose     : Active Extended Events sessions — name, state, targets, and esti
               Surfaces unexpected or high-overhead XE sessions on inherited servers.
 Author      : Peter Whyte (https://sqldba.blog)
 Requires    : VIEW SERVER STATE
+HealthCheck : Yes
 */
 -- SAFE:ReadOnly
 -- IMPACT:Low
@@ -23,7 +24,7 @@ SELECT
     s.dropped_buffer_count                          AS dropped_buffers,
     s.blocked_event_fire_time                       AS blocked_fire_time_ms,
     STUFF((
-        SELECT ', ' + t.name
+        SELECT ', ' + t.target_name
         FROM   sys.dm_xe_session_targets t
         WHERE  t.event_session_address = s.address
         FOR XML PATH(''), TYPE
@@ -32,7 +33,7 @@ SELECT
         WHEN EXISTS (
             SELECT 1 FROM sys.dm_xe_session_targets t
             WHERE  t.event_session_address = s.address
-              AND  t.name IN ('asynchronous_file_target', 'ring_buffer')
+              AND  t.target_name IN ('asynchronous_file_target', 'ring_buffer')
         ) THEN 'File/ring buffer — potential I/O or memory overhead'
         ELSE 'OK'
     END                                             AS overhead_note,

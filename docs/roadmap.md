@@ -7,7 +7,7 @@ Fully functional production DBA toolkit. The repo has a category-first layout: `
 **What is complete:**
 - SQL diagnostic layer — 80+ scripts across monitoring, performance, high-availability, backups, security, maintenance, migration
 - Wrapper layer — 81 thin PS wrappers, one per SQL script, colocated with the web UI
-- PowerShell orchestration — healthcheck collection (27 scripts), review, assessment report, multi-server health check
+- PowerShell orchestration — healthcheck collection (32 scripts), review, assessment report, multi-server health check
 - Migration toolkit — full pre/post assessment, DDL generators (logins, jobs, linked servers, user mappings), baseline export
 - Collectors — 12 scheduled data collectors with paired SQL + PS, READMEs, SQL Agent T-SQL
 - Collector analysis — `Compare-CollectorSnapshots.ps1`, `Invoke-CollectorAlert.ps1`
@@ -77,4 +77,4 @@ The repo's internal documentation layer is the script header only (Purpose, Requ
 | 2026-06-03 | Multi-server scripts — 12 self-contained scripts, parallel execution, credential template, result collection with Server column |
 | 2026-05-29 | Full canonical layout, all scripts single-result-set, standard headers, no NOLOCK, no deprecated catalog views |
 | 2026-05-29 | 8 initial collectors — wait-stats, blocking, deadlocks, tempdb, perfmon, ag-health, storage-io, database-growth |
-| 2026-05-29 | `Invoke-HealthCheckCollection.ps1` (27 scripts) + `Review-HealthCheckOutput.ps1` |
+| 2026-05-29 | `Invoke-HealthCheckCollection.ps1` (32 scripts) + `Review-HealthCheckOutput.ps1` |

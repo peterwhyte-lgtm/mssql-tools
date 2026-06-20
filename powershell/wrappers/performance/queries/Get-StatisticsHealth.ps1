@@ -9,7 +9,7 @@ RiskLevel    : SAFE
 Purpose      : Identifies stale, low-sample, and never-updated statistics in the current database.
 
 .DESCRIPTION
-Wraps sql\performance\Get-StatisticsHealth.sql. Statistics are per-database — pass
+Wraps sql\performance\queries\Get-StatisticsHealth.sql. Statistics are per-database — pass
 -Database with the name of the user database you want to analyse.
 
 Health statuses returned:
@@ -53,8 +53,8 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-$repoRoot  = Resolve-Path (Join-Path $PSScriptRoot '..\..\..')
-$sqlScript = Join-Path $repoRoot 'sql\performance\Get-StatisticsHealth.sql'
+$repoRoot  = Resolve-Path (Join-Path $PSScriptRoot '..\..\..\..')
+$sqlScript = Join-Path $repoRoot 'sql\performance\queries\Get-StatisticsHealth.sql'
 $runner    = Join-Path $repoRoot 'tools\local-sql\Invoke-RepoSql.ps1'
 
 if (-not (Test-Path -LiteralPath $sqlScript)) { throw "SQL script not found: $sqlScript" }

@@ -5,6 +5,7 @@ Purpose     : Query Store enablement, fill ratio, capture mode, and health acros
               Surfaces databases where QS is off, full, or auto-switched to READ_ONLY.
 Author      : Peter Whyte (https://sqldba.blog)
 Requires    : VIEW ANY DATABASE, VIEW DATABASE STATE
+HealthCheck : Yes
 */
 -- SAFE:ReadOnly
 -- IMPACT:Low

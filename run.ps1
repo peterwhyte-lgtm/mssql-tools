@@ -56,13 +56,22 @@ if ($List -or -not $ScriptName) {
 
     # ── Full script listing by category ───────────────────────────────────────
     $sqlRoot = Join-Path $repoRoot 'sql'
-    foreach ($folder in (Get-ChildItem $sqlRoot -Directory -ErrorAction SilentlyContinue | Sort-Object Name)) {
-        $scripts = Get-ChildItem $folder.FullName -Filter '*.sql' -ErrorAction SilentlyContinue | Sort-Object Name
-        if ($scripts.Count -gt 0) {
-            Write-Host "  sql/$($folder.Name)/" -ForegroundColor Yellow
-            $scripts | ForEach-Object { Write-Host "    $($_.BaseName)" -ForegroundColor DarkGray }
-            Write-Host ''
+    foreach ($catDir in (Get-ChildItem $sqlRoot -Directory -ErrorAction SilentlyContinue | Sort-Object Name)) {
+        $allScripts = @(Get-ChildItem $catDir.FullName -Recurse -Filter '*.sql' -ErrorAction SilentlyContinue)
+        if ($allScripts.Count -eq 0) { continue }
+
+        Write-Host "  sql/$($catDir.Name)/  ($($allScripts.Count))" -ForegroundColor Yellow
+
+        $rootScripts = @(Get-ChildItem $catDir.FullName -Filter '*.sql' -ErrorAction SilentlyContinue | Sort-Object Name)
+        foreach ($s in $rootScripts) { Write-Host "    $($s.BaseName)" -ForegroundColor DarkGray }
+
+        foreach ($subDir in (Get-ChildItem $catDir.FullName -Directory -ErrorAction SilentlyContinue | Sort-Object Name)) {
+            $subScripts = @(Get-ChildItem $subDir.FullName -Filter '*.sql' -ErrorAction SilentlyContinue | Sort-Object Name)
+            if ($subScripts.Count -eq 0) { continue }
+            Write-Host "    [$($subDir.Name)]" -ForegroundColor DarkCyan
+            foreach ($s in $subScripts) { Write-Host "      $($s.BaseName)" -ForegroundColor DarkGray }
         }
+        Write-Host ''
     }
 
     $psRoot = Join-Path $repoRoot 'powershell'

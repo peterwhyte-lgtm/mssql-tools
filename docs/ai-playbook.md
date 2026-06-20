@@ -106,7 +106,7 @@ Latency thresholds: >20ms read or >10ms write on data files is concerning.
 .\powershell\reporting\Review-HealthCheckOutput.ps1
 ```
 
-The 27 scripts in the healthcheck suite are tagged `HealthCheck : Yes` in their headers — the web UI groups them as "Health Check Suite."
+The 32 scripts in the healthcheck suite are tagged `HealthCheck : Yes` in their headers — the web UI groups them as "Health Check Suite."
 
 **Flags raised by Review-HealthCheckOutput:**
 - CRITICAL: suspect pages, SA enabled, database not ONLINE, no full backup ever

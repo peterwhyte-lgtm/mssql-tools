@@ -49,12 +49,17 @@ if (-not (Test-Path -LiteralPath $absPath)) {
 $sqlFile = Get-Item -LiteralPath $absPath
 $relPath = $sqlFile.FullName.Replace($repoRoot.Path + '\', '').Replace('\', '/')
 
-# ── Determine category and sql-path string for the wrapper body ───────────────
+# ── Determine category/subfolder and sql-path string for the wrapper body ─────
 $isMigration = $relPath -match '^sql/migration/'
-$category    = if ($isMigration) {
-    'migration'
+if ($isMigration) {
+    $category  = 'migration'
+    $subfolder = $null
+} elseif ($relPath -match '^sql/([^/]+)/([^/]+)/[^/]+$') {
+    $category  = $Matches[1]
+    $subfolder = $Matches[2]
 } elseif ($relPath -match '^sql/([^/]+)/') {
-    $Matches[1]
+    $category  = $Matches[1]
+    $subfolder = $null
 } else {
     throw "Cannot determine category from path: $relPath`nExpected: sql/<cat>/ or sql/migration/"
 }
@@ -62,9 +67,11 @@ $category    = if ($isMigration) {
 $sqlRelForBody = $relPath.Replace('/', '\')   # backslash for Join-Path in the wrapper
 
 # ── Derive names ──────────────────────────────────────────────────────────────
-$name    = $sqlFile.BaseName
-$outDir  = Join-Path $repoRoot "powershell\wrappers\$category"
-$outFile = Join-Path $outDir "$name.ps1"
+$name      = $sqlFile.BaseName
+$wrapDepth = if ($subfolder) { '..\..\..\..' } else { '..\..\..' }
+$wrapCat   = if ($subfolder) { "$category\$subfolder" } else { $category }
+$outDir    = Join-Path $repoRoot "powershell\wrappers\$wrapCat"
+$outFile   = Join-Path $outDir "$name.ps1"
 
 if (-not (Test-Path $outDir)) {
     New-Item -ItemType Directory -Path $outDir -Force | Out-Null
@@ -110,7 +117,7 @@ Optional file path to save the output.
 .\run.ps1 $name
 
 .EXAMPLE
-.\powershell\wrappers\$category\$name.ps1 -ServerInstance PROD01\SQL2019 -OutputFormat Csv
+.\powershell\wrappers\$wrapCat\$name.ps1 -ServerInstance PROD01\SQL2019 -OutputFormat Csv
 #>
 
 param(
@@ -122,7 +129,7 @@ param(
 
 `$ErrorActionPreference = 'Stop'
 
-`$repoRoot  = Resolve-Path (Join-Path `$PSScriptRoot '..\..\..')
+`$repoRoot  = Resolve-Path (Join-Path `$PSScriptRoot '$wrapDepth')
 `$sqlScript = Join-Path `$repoRoot '$sqlRelForBody'
 `$runner    = Join-Path `$repoRoot 'tools\local-sql\Invoke-RepoSql.ps1'
 
@@ -137,5 +144,5 @@ Write-Host 'Running $name...' -ForegroundColor Cyan
 "@
 
 Set-Content -Path $outFile -Value $content -Encoding UTF8
-Write-Host "Created: powershell\wrappers\$category\$name.ps1" -ForegroundColor Green
+Write-Host "Created: powershell\wrappers\$wrapCat\$name.ps1" -ForegroundColor Green
 Write-Host "Review and adjust the -Database default if needed." -ForegroundColor DarkGray
