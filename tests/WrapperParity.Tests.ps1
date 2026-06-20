@@ -48,8 +48,9 @@ $testCases = @($sqlFiles | ForEach-Object {
 
 Describe 'Wrapper parity' {
 
-    It 'found SQL scripts to check' {
-        $sqlFiles.Count | Should -BeGreaterThan 0
+    It 'found SQL scripts to check' -TestCases @(@{ Count = $sqlFiles.Count }) {
+        param($Count)
+        $Count | Should -BeGreaterThan 0
     }
 
     It '<SqlRelPath> has a matching wrapper in powershell/wrappers/' -TestCases $testCases {

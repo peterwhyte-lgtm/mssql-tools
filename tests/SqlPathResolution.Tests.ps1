@@ -37,8 +37,9 @@ $testCases = @($allPairs | ForEach-Object {
 
 Describe 'PS wrapper SQL path resolution' {
 
-    It 'found at least one wrapper with a SQL reference' {
-        $allPairs.Count | Should -BeGreaterThan 0
+    It 'found at least one wrapper with a SQL reference' -TestCases @(@{ Count = $allPairs.Count }) {
+        param($Count)
+        $Count | Should -BeGreaterThan 0
     }
 
     It 'wrapper <Wrapper> references existing SQL file <SqlRelPath>' -TestCases $testCases {
