@@ -22,6 +22,7 @@ Use the direct wrapper path only when scripting a specific invocation or when `r
 ## Incident triage — symptom to script
 
 ### Database is slow / unexplained performance degradation
+
 1. `Get-WaitStatistics` — the first look. Identifies dominant wait type. Run this before anything else.
 2. If CXPACKET dominant → `Get-MaxdopConfiguration`, check parallelism settings
 3. If PAGEIOLATCH dominant → `Get-DatabaseIoUsage`, then `Get-MissingIndexes`
@@ -31,6 +32,7 @@ Use the direct wrapper path only when scripting a specific invocation or when `r
 7. `Get-LongRunningQueries` — find what's been running longest right now
 
 ### Active blocking
+
 1. `Get-BlockingSummary` — quick view: head blockers and count of affected sessions
 2. `Get-BlockingChains` — full chain tree with queries and wait details
 3. `Get-ActiveSessions` — all connections with wait type and elapsed time
@@ -42,11 +44,13 @@ For a blocking chain with a query plan:
 ```
 
 ### High CPU
+
 1. `Get-WaitStatistics` — confirm CPU is the bottleneck (SOS_SCHEDULER_YIELD, high signal_wait_time)
 2. `Get-TopCpuQueries` — top queries by CPU from plan cache
 3. `Get-SlowQueriesFromCache` — top queries by elapsed time
 
 ### I/O pressure
+
 1. `Get-WaitStatistics` — look for PAGEIOLATCH_SH / PAGEIOLATCH_EX / WRITELOG
 2. `Get-DatabaseIoUsage` — per-database read/write latency breakdown
 3. `Get-TopIoQueries` — queries driving I/O
@@ -55,23 +59,27 @@ For a blocking chain with a query plan:
 Latency thresholds: >20ms read or >10ms write on data files is concerning.
 
 ### TempDB pressure
+
 1. `Get-TempdbUsage` — file sizes, free space, allocation per file
 2. `Get-TempdbHotspots` — sessions consuming TempDB right now
 3. `Get-TempDbConfiguration` — file count, sizing parity, autogrowth type
 4. `Get-ContentionAnalysis` — latch waits and TempDB allocation bitmap contention
 
 ### Memory pressure
+
 1. `Get-MemoryConfigurationAndUsage` — max server memory vs actual committed
 2. `Get-WaitStatistics` — RESOURCE_SEMAPHORE = memory grant waits
 3. `Get-PlanCacheHealth` — single-use plan bloat consuming buffer pool
 
 ### Backup concern
+
 1. `Get-BackupCoverage` — backup status per database (CURRENT / STALE / MISSING)
 2. `Get-LastDatabaseBackupTimes` — last full/diff/log per database
 3. `Get-DatabaseBackupHistory` — history with durations for trend analysis
 4. `Get-BackupRestoreCompletionTime` — live progress if a backup is running now
 
 ### Security review
+
 1. `Get-SysadminMembers` — who has sysadmin
 2. `Get-WeakLoginSettings` — SQL logins with policy/expiration off
 3. `Get-DatabaseMailAndXpCmdShell` — surface area (xp_cmdshell, CLR, Database Mail enabled)
@@ -80,6 +88,7 @@ Latency thresholds: >20ms read or >10ms write on data files is concerning.
 6. `Get-ServerRoleMembers`, `Get-DatabaseRoleMembers` — full role membership audit
 
 ### Pre-migration / instance inventory
+
 1. `Get-MigrationRiskAssessment` — compatibility gaps, edition features, deprecations
 2. `Get-DatabaseInventory`, `Get-LoginInventory`, `Get-JobInventory`, `Get-LinkedServerInventory`
 3. `Invoke-PreMigrationAssessment` — orchestrates all of the above in one pass
@@ -149,7 +158,7 @@ To clear before a fresh run: `.\tools\maintenance\Clear-OutputFiles.ps1`
 
 ## Key paths — quick reference
 
-```
+```text
 sql/                          ← SQL scripts by category
 powershell/wrappers/          ← thin PS wrappers (one per SQL script; mirrors sql/ categories)
 powershell/migration/         ← migration toolkit (DDL generators, orchestrators)
