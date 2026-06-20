@@ -49,12 +49,12 @@ $testCases = @($sqlFiles | ForEach-Object {
 Describe 'Wrapper parity' {
 
     It 'found SQL scripts to check' {
-        $sqlFiles.Count | Should BeGreaterThan 0
+        $sqlFiles.Count | Should -BeGreaterThan 0
     }
 
     It '<SqlRelPath> has a matching wrapper in powershell/wrappers/' -TestCases $testCases {
         param($SqlRelPath, $ScriptName)
         $match = Get-ChildItem $wrapperRoot -Recurse -Filter "$ScriptName.ps1" -File -ErrorAction SilentlyContinue
-        $match.Count | Should BeGreaterThan 0
+        $match.Count | Should -BeGreaterThan 0
     }
 }
