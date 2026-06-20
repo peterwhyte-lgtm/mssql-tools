@@ -11,8 +11,8 @@ Purpose      : Deep-dive blocking diagnostic. Shows every session in every activ
                Exits cleanly with a message when the server is not blocked.
 
 .DESCRIPTION
-Wrapper around sql\performance\Get-BlockingChains.sql. When -IncludePlan is set,
-runs sql\performance\Get-BlockingChainsWithPlan.sql and writes each session's
+Wrapper around sql\performance\blocking-locking\Get-BlockingChains.sql. When -IncludePlan is set,
+runs sql\performance\blocking-locking\Get-BlockingChainsWithPlan.sql and writes each session's
 query_plan XML to a separate plan-<session_id>-<yyyyMMdd-HHmmss>.xml file.
 
 Key output columns:
@@ -66,7 +66,7 @@ $repoRoot  = Resolve-Path (Join-Path $PSScriptRoot '..\..')
 $runner    = Join-Path $repoRoot 'tools\local-sql\Invoke-RepoSql.ps1'
 
 $sqlName   = if ($IncludePlan) { 'Get-BlockingChainsWithPlan.sql' } else { 'Get-BlockingChains.sql' }
-$sqlScript = Join-Path $repoRoot "sql\performance\$sqlName"
+$sqlScript = Join-Path $repoRoot "sql\performance\blocking-locking\$sqlName"
 
 if (-not (Test-Path -LiteralPath $sqlScript)) { throw "SQL script not found: $sqlScript" }
 if (-not (Test-Path -LiteralPath $runner))    { throw "Runner not found: $runner" }

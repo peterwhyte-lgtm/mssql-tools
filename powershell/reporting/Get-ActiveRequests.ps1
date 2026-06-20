@@ -11,8 +11,8 @@ Purpose      : Triage runaway queries, blocking chains, and TempDB consumers.
                for analysis in SSMS or Azure Data Studio.
 
 .DESCRIPTION
-Wrapper around sql\performance\Get-ActiveRequests.sql. When -IncludePlan is set, runs
-sql\performance\Get-ActiveRequestsWithPlan.sql and writes each session's query_plan
+Wrapper around sql\performance\active-sessions\Get-ActiveRequests.sql. When -IncludePlan is set, runs
+sql\performance\active-sessions\Get-ActiveRequestsWithPlan.sql and writes each session's query_plan
 XML to a separate plan-<session_id>-<yyyyMMdd-HHmmss>.xml file.
 
 An ISO 8601 collection_time column is prepended to every CSV row. Results are
@@ -59,7 +59,7 @@ $repoRoot  = Resolve-Path (Join-Path $PSScriptRoot '..\..')
 $runner    = Join-Path $repoRoot 'tools\local-sql\Invoke-RepoSql.ps1'
 
 $sqlName   = if ($IncludePlan) { 'Get-ActiveRequestsWithPlan.sql' } else { 'Get-ActiveRequests.sql' }
-$sqlScript = Join-Path $repoRoot "sql\performance\$sqlName"
+$sqlScript = Join-Path $repoRoot "sql\performance\active-sessions\$sqlName"
 
 if (-not (Test-Path -LiteralPath $sqlScript)) { throw "SQL script not found: $sqlScript" }
 if (-not (Test-Path -LiteralPath $runner))    { throw "Runner not found: $runner" }
