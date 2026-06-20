@@ -1,6 +1,21 @@
-﻿# Contributing
+# Contributing
 
-Bug reports, fixes, and improvements to existing scripts are welcome. This is a production DBA toolkit, so the bar for changes is correctness and safety — not feature completeness.
+This is Peter Whyte's production SQL Server toolkit — built by a working DBA, for working DBAs. The goal is a single repo that covers every diagnostic, monitoring, performance, security, and migration script a production DBA actually needs. The brain. The efficiency layer. The thing you reach for first.
+
+It's open source because that's the right model for shared professional tooling. You're welcome to use it, fork it, and contribute to it. Peter is the lead — he decides direction, scope, and standards. That's not gatekeeping, it's just how a focused, opinionated toolkit stays useful.
+
+---
+
+## What belongs here
+
+Scripts that a production DBA would actually run during an incident, a health check, a migration, or a routine review. If it answers a real operational question against a real SQL Server instance, it belongs here.
+
+What doesn't belong:
+
+- Scripts that require elevated permissions beyond `VIEW SERVER STATE` / `VIEW ANY DATABASE` without a strong reason
+- Scripts that modify data or schema (unless clearly labelled, categorised separately, and safe to run twice)
+- Vendor-specific tooling or non-SQL-Server scripts
+- Abstract frameworks or wrappers around wrappers
 
 ---
 
@@ -18,22 +33,22 @@ For security issues, see [SECURITY.md](SECURITY.md).
 
 ## Pull requests
 
-Small, focused PRs are preferred over large ones. Before opening a PR:
+Small, focused PRs. One script, one fix, one idea per PR. Before opening one:
 
-- Check that the script runs cleanly against SQL Server 2016+ (the minimum supported version)
-- Confirm it is read-only if it claims to be — no unintended writes
-- Run it against at least one real instance before submitting
+- Run the script against a real SQL Server instance (2016+ minimum)
+- Confirm it is read-only if it claims to be
+- Check it returns a single result set — multi-result-set scripts can't be exported as CSV via the runner
 
 ### SQL script standards
 
-Every SQL script must have this header immediately before `SET NOCOUNT ON`:
+Every SQL script must have this header:
 
 ```sql
 /*
 Script Name : Get-ExampleScript
-Category    : performance-troubleshooting
+Category    : performance
 Purpose     : One-line description of what this returns.
-Author      : Your Name
+Author      : Peter Whyte (https://sqldba.blog)
 Requires    : VIEW SERVER STATE
 */
 -- SAFE:ReadOnly
@@ -41,49 +56,59 @@ Requires    : VIEW SERVER STATE
 SET NOCOUNT ON;
 ```
 
-`-- SAFE:` values: `ReadOnly` / `WritesData` / `CreatesObjects` — `-- IMPACT:` values: `Low` / `Medium` / `High`
+`-- SAFE:` values: `ReadOnly` / `WritesData` / `CreatesObjects`
+`-- IMPACT:` values: `Low` / `Medium` / `High`
 
 Additional rules:
 
-- Single result set — multi-result-set scripts cannot be exported as CSV via the repo runner
 - No `USE database; GO` — pass `-Database` at execution time instead
-- No `WITH (NOLOCK)` without a comment explaining why
+- No `WITH (NOLOCK)` without a comment explaining the trade-off
 - Modern DMVs only — `sys.objects` not `sys.sysobjects`, `sys.server_principals` not `sys.syslogins`
 - `OUTER APPLY` not `CROSS APPLY` when the applied function may return no rows
+- Single result set per script
+- No trailing blank lines
 
 ### PowerShell script standards
 
-Wrappers follow a thin-wrapper pattern — SQL logic stays in external `.sql` files, not in PowerShell strings.
+SQL logic stays in `.sql` files. Wrappers delegate to `tools\local-sql\Invoke-RepoSql.ps1` — they don't re-implement execution.
 
 ```powershell
-# Standard wrapper shape — lives at powershell/wrappers/<category>/, three levels from root
-$repoRoot  = Resolve-Path (Join-Path $PSScriptRoot '..\..\..')
-$sqlScript = Join-Path $repoRoot 'sql\<category>\Get-Something.sql'
+# Standard thin wrapper — lives at powershell/wrappers/<category>/<subfolder>/
+$repoRoot  = Resolve-Path (Join-Path $PSScriptRoot '..\..\..\..')  # 4 levels if subfoldered, 3 if at category root
+$sqlScript = Join-Path $repoRoot 'sql\<category>\<subfolder>\Get-Something.sql'
 $runner    = Join-Path $repoRoot 'tools\local-sql\Invoke-RepoSql.ps1'
 & $runner -ScriptPath $sqlScript -ServerInstance $ServerInstance -Database $Database -OutputFormat $OutputFormat -OutputPath $OutputPath
 ```
 
-Full standards reference: [docs/standards.md](docs/standards.md)
+Required `.NOTES` fields:
 
-Required `.NOTES` fields: `ScriptType` (runner / automation / hybrid), `TargetScope` (single server / multi-server), `RiskLevel` (SAFE / MEDIUM / HIGH IMPACT).
+| Field | Values |
+|-------|--------|
+| `ScriptType` | `runner` / `automation` / `hybrid` |
+| `TargetScope` | `single server` / `multi-server` |
+| `RiskLevel` | `SAFE` / `MEDIUM` / `HIGH IMPACT` |
 
 ### Where new scripts go
 
 | Type | Location |
 |------|----------|
-| New SQL diagnostic or monitoring script | `sql/<category>/Get-Something.sql` |
-| New PowerShell wrapper for a SQL script | `powershell/wrappers/<category>/Get-Something.ps1` (required for web UI) |
-| New unique PowerShell script (orchestration, automation) | `powershell/<subfolder>/` |
-| New change order template | `docs/ops/change-orders/` |
-| New operational checklist | `docs/ops/checklists/` |
+| SQL diagnostic or monitoring script | `sql/<category>/<subfolder>/Get-Something.sql` |
+| PowerShell wrapper for a SQL script | `powershell/wrappers/<category>/<subfolder>/Get-Something.ps1` — required for web UI |
+| PowerShell orchestration script | `powershell/<subfolder>/` |
+| Change order template | `docs/ops/change-orders/` |
+| Operational checklist | `docs/ops/checklists/` |
 
-If the right category doesn't exist, open an issue first rather than creating a new top-level folder.
+The wrapper must mirror the SQL path exactly. The web UI discovers scripts through wrappers, not SQL files directly. If a new top-level category is needed, open an issue first.
 
 ---
 
-## What's out of scope
+## Running tests before submitting
 
-- Scripts that require elevated permissions beyond `VIEW SERVER STATE` / `VIEW ANY DATABASE` without a strong reason
-- Scripts that modify data or schema (unless clearly labelled and placed in a separate category)
-- Vendor-specific or non-SQL-Server scripts
-- Test frameworks or CI tooling changes without prior discussion
+```powershell
+$cfg = New-PesterConfiguration
+$cfg.Run.Path = 'tests'
+$cfg.Output.Verbosity = 'Detailed'
+Invoke-Pester -Configuration $cfg
+```
+
+All tests must pass. The suite checks SQL header standards, SQL path resolution, and wrapper parity.

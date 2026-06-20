@@ -484,4 +484,4 @@ New orchestrator PS script (has real logic, not a thin wrapper): add to `powersh
 - AG scripts (`sql/high-availability/Get-AvailabilityGroupReplicaState.sql`, `Get-AvailabilityGroupLatency.sql`) guard against non-AG instances and return a status row instead of throwing.
 - Multi-result-set SQL scripts cannot be cleanly exported as a single CSV via `Invoke-RepoSql.ps1`. All scripts in `sql/` are single-result-set by design.
 - `output-files/` CSV files accumulate and should not be committed. Clear with `.\tools\maintenance\Clear-OutputFiles.ps1` before a fresh assessment run.
-- `docs/standards.md` is outdated — it shows an older header format. The header in this file is authoritative.
+- `docs/standards.md` is the detailed standards reference — the header in this file is the condensed authoritative version. Keep both in sync when standards change.

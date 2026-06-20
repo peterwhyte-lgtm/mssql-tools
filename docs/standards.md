@@ -83,8 +83,11 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-$repoRoot  = Resolve-Path (Join-Path $PSScriptRoot '..\..\..')   # powershell/wrappers/<cat>/ is 3 levels deep
-$sqlScript = Join-Path $repoRoot 'sql\<category>\Get-Something.sql'
+# Depth depends on location:
+#   powershell/wrappers/<cat>/           → 3 levels up  (..\..\..)
+#   powershell/wrappers/<cat>/<subfolder>/ → 4 levels up (..\..\..\..)
+$repoRoot  = Resolve-Path (Join-Path $PSScriptRoot '..\..\..')
+$sqlScript = Join-Path $repoRoot 'sql\<category>\<subfolder>\Get-Something.sql'
 $runner    = Join-Path $repoRoot 'tools\local-sql\Invoke-RepoSql.ps1'
 
 if (-not (Test-Path -LiteralPath $sqlScript)) { throw "SQL script not found: $sqlScript" }
@@ -96,7 +99,9 @@ Write-Host 'Running...' -ForegroundColor Cyan
 ```
 
 **Key points:**
-- `$PSScriptRoot '..\..\..'` — wrappers sit at `powershell/wrappers/<category>/`, three levels from root.
+- Category-root wrappers (`powershell/wrappers/<cat>/`) resolve root with `$PSScriptRoot '..\..\..'` (3 levels).
+- Subfoldered wrappers (`powershell/wrappers/<cat>/<subfolder>/`) use `$PSScriptRoot '..\..\..\..'` (4 levels).
+- SQL path must mirror the sql/ structure exactly, including subfolder: `sql\<category>\<subfolder>\Get-Something.sql`.
 - Migration script wrappers use `sql\migration\` instead of `sql\<category>\`.
 - Always validate with `Test-Path` before invoking — gives a clear error instead of a cryptic PS exception.
 

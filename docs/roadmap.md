@@ -58,6 +58,11 @@ The repo's internal documentation layer is the script header only (Purpose, Requ
 
 | Date | Item |
 |------|------|
+| 2026-06-20 | CONTRIBUTING.md rewrite — Peter Whyte as lead and author established; mission statement; SQL header Author field fixed to Peter Whyte (https://sqldba.blog); Pester test instructions added |
+| 2026-06-20 | README.md — author identity added to What This Is; health check count corrected 27→32; AssessedBy placeholder fixed; Contributing blurb updated |
+| 2026-06-20 | docs/standards.md — wrapper depth updated to cover both 3-level and 4-level cases with subfoldered path example |
+| 2026-06-20 | CLAUDE.md — outdated standards.md caveat corrected; both files now described as in sync |
+| 2026-06-20 | CI fix — Get-ActiveRequests.ps1 and Get-BlockingChains.ps1 path references corrected to active-sessions/ and blocking-locking/ subdirs; 4 Pester failures resolved; 635/635 passing |
 | 2026-06-17 | Phase 4 CI — SQL standards audit job added to ci.yaml; Get-StandardsAudit.ps1 updated to exit 1 on failures and validate annotation position; WrapperParity.Tests.ps1 added; blog/ role and Phase 3 definition clarified in CLAUDE.md, roadmap, and standards.md; sub-READMEs (tools/, powershell/, tools/local-sql/) updated to remove stale script references |
 | 2026-06-17 | CLAUDE.md update — SQL header standard revised: Safe/Impact removed from block comment, inline annotations moved above SET NOCOUNT ON; 146 SQL scripts, 3 doc files, CONTRIBUTING.md, and Get-StandardsAudit.ps1 updated to match; blog posts corruption fixed (40 files); repo-structure.md, standards.md, quick-start.md aligned to CLAUDE.md layout; Get-Databases.ps1 wrapper added |
 | 2026-06-15 | Moved thin wrappers to `powershell/wrappers/<cat>/` — clean separation from orchestrators; PSScriptRoot depth 3 levels; all tooling and docs updated |

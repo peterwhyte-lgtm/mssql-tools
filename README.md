@@ -43,6 +43,8 @@ Once setup passes the server is saved for the session, every script picks it up 
 
 ## What This Is
 
+I'm Peter Whyte — production SQL Server DBA, running [sqldba.blog](https://sqldba.blog). This is the toolkit I actually use. Every script in here came from a real situation: an incident, a migration window, a client handover, or a routine check that needed to be fast and safe.
+
 You're mid-incident. Blocking is taking down an application, a backup question just landed from management, or a migration window opens in two hours and you still need to know what's on the source server. You know what you need to look at — you just need the query in front of you, fast.
 
 This is a copy-paste toolkit for production SQL Server DBAs. SQL scripts you open and paste directly into SSMS. PowerShell wrappers that run the same scripts at scale and export CSVs. A health check that collects 32 scripts in a single pass. Operational runbooks and change orders for the planned work when there's time to do it right.
@@ -94,7 +96,7 @@ The same scripts, callable by name from any directory. No paths, no module depen
   <br><em>.\run.ps1 — resolves any script by name, outputs to terminal or CSV</em>
 </p>
 
-### Health Check — 27 Scripts, One Pass
+### Health Check — 32 Scripts, One Pass
 
 ```powershell
 .\powershell\reporting\Invoke-HealthCheckCollection.ps1 -ServerInstance PROD01\SQL2025
@@ -111,7 +113,7 @@ Flags: missing or stale backups, databases not online, stale DBCC CHECKDB, suspe
 For a client handover or ownership review, the assessment report generates a scored markdown document:
 
 ```powershell
-.\powershell\reporting\Invoke-AssessmentReport.ps1 -ServerInstance PROD01\SQL2025 -AssessedBy "Your Name"
+.\powershell\reporting\Invoke-AssessmentReport.ps1 -ServerInstance PROD01\SQL2025 -AssessedBy "Peter Whyte"
 ```
 
 ---
@@ -179,7 +181,7 @@ Install-Module -Name SqlServer -Scope CurrentUser -Force
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md). Scripts should be read-only, single result set, and include the standard header. Bug reports and improvements welcome.
+See [CONTRIBUTING.md](CONTRIBUTING.md). This is Peter's toolkit — contributions are welcome, but scope and direction are his call. Scripts must be read-only, single result set, and include the standard header.
 
 ---
 
